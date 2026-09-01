@@ -102,6 +102,11 @@
         }
         .btn-login-header:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
 
+        /* HEADER USER PROFILE STYLES */
+        .header-user-profile { display: flex; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .header-user-profile:hover { transform: scale(1.05); }
+        .header-avatar { width: 36px; height: 36px; border: 2px solid var(--primary); padding: 2px; }
+
         main { max-width: 1200px; margin: 0 auto; padding: 32px 20px; flex: 1; width: 100%; display: none; animation: fadeIn 0.3s ease; }
         main.active-view { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -288,8 +293,15 @@
                 <a onclick="switchTab('view-explore', this)" class="active">Khám phá</a>
                 <a onclick="switchTab('view-games', this)">Trò chơi</a>
                 <a onclick="switchTab('view-apps', this)">Ứng dụng</a>
-                <a onclick="switchTab('view-forum', this)">Diễn đàn Creator</a>
-                <button class="btn-login-header" onclick="openAuthModal()">Đăng nhập</button>
+                <a id="nav-tab-forum" onclick="switchTab('view-forum', this)">Diễn đàn Creator</a>
+                
+                <!-- Nút đăng nhập -->
+                <button id="header-login-btn" class="btn-login-header" onclick="openAuthModal()">Đăng nhập</button>
+                
+                <!-- Khu vực User Profile thay thế khi đăng nhập thành công -->
+                <div id="header-user-profile" class="header-user-profile" style="display: none;" onclick="openProfileFromHeader()" title="Xem hồ sơ">
+                    <img src="" class="avatar-box sync-user-avatar header-avatar" alt="Profile">
+                </div>
             </nav>
         </div>
     </header>
@@ -322,7 +334,7 @@
         
         <aside class="forum-sidebar">
             <div class="forum-menu-item active" onclick="switchForumSection('section-feed', this)">Bảng tin cộng đồng</div>
-            <div class="forum-menu-item" onclick="switchForumSection('section-profile', this)">Hồ sơ & Bài viết của tôi</div>
+            <div id="menu-sec-profile" class="forum-menu-item" onclick="switchForumSection('section-profile', this)">Hồ sơ & Bài viết của tôi</div>
             <div class="forum-menu-item" onclick="switchForumSection('section-leaderboard', this)">Bảng xếp hạng</div>
             <div class="forum-menu-item" onclick="switchForumSection('section-qa', this)">Câu hỏi Q&A</div>
             <div class="forum-menu-item" onclick="switchForumSection('section-sourcecode', this)">Góc chia sẻ mã nguồn</div>
@@ -772,6 +784,19 @@
             document.querySelectorAll('.sync-user-avatar').forEach(img => img.src = currentUser.avatar);
             document.getElementById('user-display-name').innerText = currentUser.name;
             
+            // XỬ LÝ ẨN/HIỆN NÚT ĐĂNG NHẬP VÀ AVATAR HEADER KHI ĐÃ ĐĂNG NHẬP
+            const loginBtn = document.getElementById('header-login-btn');
+            const profileAvt = document.getElementById('header-user-profile');
+            
+            // User ẩn danh tạo ban đầu không có email, user login qua Firebase/Form sẽ có email
+            if (currentUser && currentUser.email) {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (profileAvt) profileAvt.style.display = 'flex';
+            } else {
+                if (loginBtn) loginBtn.style.display = 'inline-flex';
+                if (profileAvt) profileAvt.style.display = 'none';
+            }
+
             const expReq = getExpRequired(currentUser.level);
             ['post','like','cmt','dl','5star','review','top','code'].forEach(id => {
                 let multiplier = {post:15, like:2, cmt:5, dl:35, '5star':50, review:100, top:1500, code:800}[id];
@@ -1097,6 +1122,17 @@
             document.querySelectorAll('.forum-menu-item').forEach(i => i.classList.remove('active'));
             document.querySelectorAll('.forum-content-section').forEach(s => s.classList.remove('active-section'));
             el.classList.add('active'); document.getElementById(secId).classList.add('active-section');
+        }
+        
+        // HÀM MỚI: XỬ LÝ MỞ HỒ SƠ TỪ AVATAR TRÊN HEADER
+        function openProfileFromHeader() {
+            // Chuyển sang tab Diễn Đàn Creator
+            const tabForumBtn = document.getElementById('nav-tab-forum');
+            if (tabForumBtn) switchTab('view-forum', tabForumBtn);
+            
+            // Chuyển sang Section Hồ Sơ & Bài viết
+            const secProfileBtn = document.getElementById('menu-sec-profile');
+            if (secProfileBtn) switchForumSection('section-profile', secProfileBtn);
         }
 
         window.onclick = function(e) {
