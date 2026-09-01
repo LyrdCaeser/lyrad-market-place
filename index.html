@@ -617,11 +617,20 @@
             </div>
 
             <div id="tab-laa" class="admin-grid">
+                
                 <div class="admin-card">
                     <h4>ĐIỀU 1: BẢN QUYỀN (File Integrity)</h4>
                     <input type="text" class="admin-input" id="admin-input-1" placeholder="Nhập UID (LYR-xxxx)...">
                     <div class="admin-btn-group">
                         <button class="admin-btn btn-red" onclick="executeLAA('Bị Khóa (Perma-ban)', 'admin-input-1')">Ban Vĩnh Viễn Thiết Bị</button>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h4>ĐIỀU 2: AN NINH MẠNG & KIỂM DUYỆT</h4>
+                    <input type="text" class="admin-input" id="admin-input-2" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn btn-red" onclick="executeLAA('Tiêu Hủy File', 'admin-input-2')">Tiêu Hủy File & Khóa UID</button>
                     </div>
                 </div>
 
@@ -635,6 +644,14 @@
                     </div>
                 </div>
 
+                <div class="admin-card">
+                    <h4>ĐIỀU 4: KỶ LUẬT TÀI CHÍNH</h4>
+                    <input type="text" class="admin-input" id="admin-input-4" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn btn-yellow" onclick="executeLAA('Đóng Băng Giao Dịch', 'admin-input-4')">Đóng Băng Dòng Tiền</button>
+                    </div>
+                </div>
+
                 <div class="admin-card god-mode-card">
                     <h4 style="color: #ff3b30; border-bottom-color: rgba(255,59,48,0.5);">ĐIỀU 5: QUYỀN LỰC TỐI CAO (Ban Quản Trị)</h4>
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Các hành động dưới đây ghi đè mọi quy tắc tự động, không yêu cầu giải trình.</p>
@@ -644,6 +661,17 @@
                         <button class="admin-btn god-mode-btn" onclick="executeLAA('Bị Khóa (Perma-ban)', 'admin-input-5')">THANH TRỪNG (PURGE)</button>
                     </div>
                 </div>
+
+                <!-- NEW: ĐIỀU 6 - XÓA TÀI KHOẢN VĨNH VIỄN -->
+                <div class="admin-card god-mode-card">
+                    <h4 style="color: #ff3b30; border-bottom-color: rgba(255,59,48,0.5);">ĐIỀU 6: XÓA TÀI KHOẢN (Chống Spam)</h4>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Xóa bỏ hoàn toàn Database của người dùng này, không thể khôi phục.</p>
+                    <input type="text" class="admin-input" id="admin-input-6" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn god-mode-btn" onclick="executeLAA('Xóa Tài Khoản', 'admin-input-6')">XÓA VĨNH VIỄN ACCOUNT</button>
+                    </div>
+                </div>
+
             </div>
 
             <div id="tab-users" class="admin-table-wrapper" style="display: none;">
@@ -1093,7 +1121,12 @@
             if(userIndex === -1) return alert("HỆ THỐNG LAA: Không tìm thấy người dùng này trong Database!");
 
             if(confirm(`[CẢNH BÁO BQT]\nÁp dụng án phạt [ ${actionName} ] cho UID: ${targetUID} ?`)) {
-                if(actionName === 'Thu Hồi Tài Sản') {
+                
+                // THÊM LOGIC XÓA TÀI KHOẢN KHỎI DATABASE
+                if (actionName === 'Xóa Tài Khoản') {
+                    users.splice(userIndex, 1);
+                } 
+                else if(actionName === 'Thu Hồi Tài Sản') {
                     users[userIndex].level = 1; users[userIndex].currentExp = 0;
                 } else {
                     users[userIndex].status = actionName;
@@ -1102,9 +1135,17 @@
                 localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
                 
                 if(targetUID === currentUser.uid) {
-                    currentUser = users[userIndex];
-                    localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
-                    updateExpUI();
+                    // Nếu chính admin lỡ xóa bản thân
+                    if (actionName === 'Xóa Tài Khoản') {
+                        localStorage.removeItem(DB_KEY_SESSION);
+                        alert("Tài khoản của bạn đã bị xóa khỏi hệ thống. Trang sẽ tự tải lại!");
+                        location.reload();
+                        return;
+                    } else {
+                        currentUser = users[userIndex];
+                        localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
+                        updateExpUI();
+                    }
                 }
                 
                 document.getElementById(inputId).value = '';
