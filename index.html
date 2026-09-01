@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Lyrad - Market Place</title>
     
-    <!-- SCRIPT TỐI ƯU MÀN HÌNH: ÉP BUỘC DESKTOP MODE CHO MAC VÀ MOBILE -->
+    <!-- SCRIPT TỐI ƯU MÀN HÌNH -->
     <script>
         const ua = navigator.userAgent.toLowerCase();
         const isMobileOrMac = /iphone|ipad|ipod|android|macintosh|mac os x/i.test(ua);
@@ -14,6 +14,10 @@
             document.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
         }
     </script>
+
+    <!-- FIREBASE SDK CORE & AUTH (VERSION 10.8.1 COMPAT) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
     <style>
         :root {
@@ -78,87 +82,31 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .search-bar {
-            flex: 1;
-            max-width: 480px;
-        }
-
+        .search-bar { flex: 1; max-width: 480px; }
         .search-bar input {
-            width: 100%;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 12px;
-            background-color: rgba(0, 0, 0, 0.04);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-main);
-            transition: all 0.3s ease;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+            width: 100%; padding: 10px 16px; border: none; border-radius: 12px;
+            background-color: rgba(0, 0, 0, 0.04); font-size: 14px; font-weight: 500;
+            color: var(--text-main); transition: all 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
         }
+        .search-bar input:focus { background-color: #fff; box-shadow: 0 0 0 2px var(--primary), var(--shadow-md); outline: none; }
 
-        .search-bar input:focus {
-            background-color: #fff;
-            box-shadow: 0 0 0 2px var(--primary), var(--shadow-md);
-            outline: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-sub);
-            align-items: center;
-        }
-
+        .nav-links { display: flex; gap: 20px; font-weight: 600; font-size: 14px; color: var(--text-sub); align-items: center; }
         .nav-links a { transition: color 0.2s; cursor: pointer; padding: 6px 0;}
         .nav-links a:hover { color: var(--primary); }
         .nav-links a.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
 
         .btn-login-header {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            background-color: var(--primary); color: white; padding: 8px 18px;
+            border-radius: 20px; font-weight: 600; font-size: 14px; transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2); display: inline-flex; align-items: center; justify-content: center;
         }
-        .btn-login-header:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-        }
+        .btn-login-header:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
 
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px 20px;
-            flex: 1;
-            width: 100%;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
+        main { max-width: 1200px; margin: 0 auto; padding: 32px 20px; flex: 1; width: 100%; display: none; animation: fadeIn 0.3s ease; }
         main.active-view { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 50vh;
-            text-align: center;
-            color: var(--text-sub);
-        }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; text-align: center; color: var(--text-sub); }
         .empty-state h2 { font-size: 24px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
         .empty-state p { font-size: 15px; line-height: 1.5; margin-bottom: 12px;}
         .id-badge-info { font-family: monospace; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; color: var(--text-main); border: 1px solid var(--border); display: inline-block;}
@@ -167,69 +115,32 @@
         #view-forum.active-view { display: grid; grid-template-columns: 240px 1fr 300px; gap: 24px; }
 
         .forum-sidebar { position: sticky; top: 80px; height: calc(100vh - 100px); overflow-y: auto; }
-        .forum-menu-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            border-radius: 12px; font-weight: 600; font-size: 15px;
-            color: var(--text-main); cursor: pointer; transition: background 0.2s;
-        }
+        .forum-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 15px; color: var(--text-main); cursor: pointer; transition: background 0.2s; }
         .forum-menu-item:hover { background: rgba(0, 0, 0, 0.04); }
         .forum-menu-item.active { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
 
         .forum-feed { display: flex; flex-direction: column; gap: 20px; }
-        
         .forum-content-section { display: none; animation: fadeIn 0.3s ease; }
         .forum-content-section.active-section { display: flex; flex-direction: column; gap: 20px; }
 
-        .stories-container {
-            display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
-            scrollbar-width: none;
-        }
+        .stories-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
-        .story-card {
-            width: 110px; height: 180px; border-radius: 16px; flex-shrink: 0;
-            background: var(--bg-card); border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;
-            position: relative; overflow: hidden;
-        }
+        .story-card { width: 110px; height: 180px; border-radius: 16px; flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; position: relative; overflow: hidden; }
         .story-card:hover { transform: scale(1.02); box-shadow: var(--shadow-md); }
-        .story-add-btn {
-            width: 40px; height: 40px; border-radius: 50%; background: var(--primary);
-            color: white; font-size: 24px; display: flex; align-items: center; justify-content: center;
-            margin-bottom: 8px; pointer-events: none;
-        }
+        .story-add-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; font-size: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; pointer-events: none; }
         .story-text { font-size: 13px; font-weight: 600; color: var(--text-main); pointer-events: none; }
         
         .hidden-file-input { display: none; }
 
-        .post-composer {
-            background: var(--bg-card); border-radius: 16px; padding: 16px;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--border);
-        }
+        .post-composer { background: var(--bg-card); border-radius: 16px; padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
         .composer-top { display: flex; gap: 12px; margin-bottom: 12px; }
-        .composer-input {
-            flex: 1; border: none; background: var(--bg-body); border-radius: 20px;
-            padding: 10px 16px; font-size: 15px; outline: none; color: var(--text-main);
-        }
-        .composer-actions {
-            display: flex; justify-content: space-between; border-top: 1px solid var(--border);
-            padding-top: 12px; align-items: center;
-        }
-        .action-btn {
-            display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
-            color: var(--text-sub); padding: 8px 16px; border-radius: 8px; transition: background 0.2s; cursor: pointer;
-            outline: none; border: none; background: transparent; justify-content: center;
-        }
+        .composer-input { flex: 1; border: none; background: var(--bg-body); border-radius: 20px; padding: 10px 16px; font-size: 15px; outline: none; color: var(--text-main); }
+        .composer-actions { display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 12px; align-items: center; }
+        .action-btn { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: var(--text-sub); padding: 8px 16px; border-radius: 8px; transition: background 0.2s; cursor: pointer; outline: none; border: none; background: transparent; justify-content: center; }
         .action-btn:hover { background: var(--bg-body); color: var(--text-main); }
-        .btn-submit-post {
-            background: var(--primary); color: white; font-weight: 600; padding: 8px 20px;
-            border-radius: 8px; font-size: 14px; cursor: pointer; border: none;
-        }
+        .btn-submit-post { background: var(--primary); color: white; font-weight: 600; padding: 8px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; border: none; }
 
-        .file-preview-area {
-            display: none; padding: 10px; border-radius: 8px; background: var(--bg-body);
-            margin-bottom: 12px; font-size: 13px; color: var(--primary); font-weight: 600;
-        }
+        .file-preview-area { display: none; padding: 10px; border-radius: 8px; background: var(--bg-body); margin-bottom: 12px; font-size: 13px; color: var(--primary); font-weight: 600; }
         .file-preview-area.active { display: block; }
 
         /* === POST STYLES REALTIME === */
@@ -239,38 +150,20 @@
         .post-actions { display: flex; justify-content: space-between; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px 0; margin-bottom: 12px;}
         
         .reaction-wrapper { position: relative; display: flex; flex: 1; justify-content: center; }
-        .reaction-bar {
-            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px);
-            background: #fff; border-radius: 50px; padding: 6px 12px; display: flex; gap: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 1px solid var(--border);
-            opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 10;
-        }
+        .reaction-bar { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px); background: #fff; border-radius: 50px; padding: 6px 12px; display: flex; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 1px solid var(--border); opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10; }
         .reaction-bar.active { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(-5px); }
-        .reaction-icon {
-            font-size: 28px; cursor: pointer; transition: transform 0.2s; user-select: none; line-height: 1;
-        }
+        .reaction-icon { font-size: 28px; cursor: pointer; transition: transform 0.2s; user-select: none; line-height: 1; }
         .reaction-icon:hover { transform: scale(1.3) translateY(-4px); }
         
         .comment-item { display: flex; gap: 8px; margin-bottom: 12px; font-size: 14px;}
         .comment-item-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(0,0,0,0.1);}
         .comment-item-content { background: var(--bg-body); padding: 8px 12px; border-radius: 12px; flex: 1; display: flex; flex-direction: column;}
         
-        .forum-messenger {
-            position: sticky; top: 80px; height: calc(100vh - 100px);
-            background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm); display: flex; flex-direction: column;
-        }
+        .forum-messenger { position: sticky; top: 80px; height: calc(100vh - 100px); background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
         .messenger-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; }
         .messenger-list { flex: 1; overflow-y: auto; padding: 8px; }
-        .messenger-input-area {
-            padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center;
-            background: var(--bg-card); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
-        }
-        .messenger-input-field {
-            flex: 1; border: none; background: var(--bg-body); border-radius: 20px; padding: 8px 14px;
-            font-size: 13px; outline: none; color: var(--text-main);
-        }
+        .messenger-input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; background: var(--bg-card); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+        .messenger-input-field { flex: 1; border: none; background: var(--bg-body); border-radius: 20px; padding: 8px 14px; font-size: 13px; outline: none; color: var(--text-main); }
         .messenger-send-btn { color: var(--primary); font-weight: 700; font-size: 14px; cursor: pointer; padding: 0 4px; }
 
         .rules-container { background: var(--bg-card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
@@ -292,30 +185,18 @@
             100% { filter: hue-rotate(360deg) drop-shadow(0 0 8px rgba(255,255,255,0.9)); }
         }
         .exp-bar-container { width: 100%; height: 10px; background: #e5e5ea; border-radius: 10px; margin-top: 6px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
-        .exp-bar-fill {
-            height: 100%; border-radius: 10px; width: 0%;
-            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
-            animation: neonGlowRainbow 3s linear infinite; transition: width 0.4s ease-out;
-        }
+        .exp-bar-fill { height: 100%; border-radius: 10px; width: 0%; background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); animation: neonGlowRainbow 3s linear infinite; transition: width 0.4s ease-out; }
 
         /* === PROFILE DASHBOARD === */
         .profile-dashboard { background: var(--bg-card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); display: flex; gap: 20px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
         .profile-avt-wrapper { position: relative; }
         .profile-avt-large { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
-        .btn-edit-avt {
-            position: absolute; bottom: 0; right: 0; background: var(--text-main); color: #fff;
-            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 12px; cursor: pointer; border: 2px solid #fff; transition: background 0.2s;
-        }
+        .btn-edit-avt { position: absolute; bottom: 0; right: 0; background: var(--text-main); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: 2px solid #fff; transition: background 0.2s; }
         .btn-edit-avt:hover { background: var(--primary); }
-        
         .profile-info { flex: 1; min-width: 250px; }
         .profile-name-container { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
         .profile-name { font-size: 20px; font-weight: 800; color: var(--text-main); }
-        .btn-edit-name { 
-            background: rgba(0,0,0,0.05); border: none; border-radius: 50%; width: 24px; height: 24px; 
-            display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: background 0.2s; margin-right: 8px;
-        }
+        .btn-edit-name { background: rgba(0,0,0,0.05); border: none; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: background 0.2s; margin-right: 8px; }
         .btn-edit-name:hover { background: rgba(0,0,0,0.1); }
         
         .exp-table { background: var(--bg-body); border-radius: 12px; padding: 16px; font-size: 13px; }
@@ -325,59 +206,43 @@
         .exp-plus { color: #34c759; font-weight: 700; }
 
         /* === MODALS === */
-        .auth-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-            z-index: 200; align-items: center; justify-content: center; padding: 16px;
-        }
-        .auth-content {
-            background: var(--bg-card); width: 100%; max-width: 400px;
-            border-radius: 24px; padding: 32px; box-shadow: var(--shadow-md);
-            animation: fadeIn 0.3s ease; position: relative; max-height: 90vh; display: flex; flex-direction: column;
-        }
-        .auth-content.large-modal { max-width: 700px; }
-        .auth-close {
-            position: absolute; top: 16px; right: 20px; font-size: 28px;
-            color: var(--text-sub); cursor: pointer; line-height: 1; transition: color 0.2s;
-        }
+        .auth-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+        .auth-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 24px; padding: 32px; box-shadow: var(--shadow-md); animation: fadeIn 0.3s ease; position: relative; max-height: 90vh; display: flex; flex-direction: column; }
+        .auth-content.large-modal { max-width: 750px; }
+        .auth-close { position: absolute; top: 16px; right: 20px; font-size: 28px; color: var(--text-sub); cursor: pointer; line-height: 1; transition: color 0.2s; }
         .auth-close:hover { color: var(--text-main); }
         .auth-title { font-size: 24px; font-weight: 800; margin-bottom: 24px; text-align: center; }
         
         .auth-tabs { display: flex; margin-bottom: 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;}
-        .auth-tab {
-            flex: 1; text-align: center; padding: 12px; font-weight: 600; color: var(--text-sub);
-            cursor: pointer; transition: color 0.2s; border-bottom: 2px solid transparent;
-        }
+        .auth-tab { flex: 1; text-align: center; padding: 12px; font-weight: 600; color: var(--text-sub); cursor: pointer; transition: color 0.2s; border-bottom: 2px solid transparent; }
         .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
         
         .auth-form { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-bottom: 8px;}
-        .auth-input {
-            width: 100%; padding: 12px 16px; border: 1px solid var(--border);
-            border-radius: 12px; background: var(--bg-body); font-size: 14px; outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s; color: var(--text-main);
-        }
+        .auth-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-body); font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; color: var(--text-main); }
         .auth-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,122,255,0.2); background: #fff;}
-        .auth-submit {
-            width: 100%; padding: 14px; background: var(--primary); color: white;
-            border-radius: 12px; font-weight: 700; font-size: 15px; margin-top: 8px; transition: background 0.2s; border: none; cursor: pointer;
-        }
+        .auth-submit { width: 100%; padding: 14px; background: var(--primary); color: white; border-radius: 12px; font-weight: 700; font-size: 15px; margin-top: 8px; transition: background 0.2s; border: none; cursor: pointer; }
         .auth-submit:hover { background: var(--primary-hover); }
         
         .auth-divider { display: flex; align-items: center; text-align: center; margin: 24px 0; color: var(--text-sub); font-size: 12px; font-weight: 500; }
         .auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
         .auth-divider:not(:empty)::before { margin-right: 12px; }
         .auth-divider:not(:empty)::after { margin-left: 12px; }
-        
-        .btn-google {
-            width: 100%; padding: 12px; background: #fff; border: 1px solid var(--border);
-            border-radius: 12px; font-weight: 600; font-size: 14px; color: var(--text-main);
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            box-shadow: var(--shadow-sm); transition: background 0.2s; cursor: pointer;
-        }
+
+        .btn-google { width: 100%; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; font-weight: 600; font-size: 14px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: var(--shadow-sm); transition: background 0.2s; cursor: pointer; margin-bottom: 8px;}
         .btn-google:hover { background: var(--bg-body); }
 
-        .policy-scrollbox { overflow-y: auto; padding-right: 12px; font-size: 13px; line-height: 1.6; color: var(--text-sub); text-align: justify; }
-        .policy-scrollbox h4 { color: var(--text-main); margin-top: 16px; margin-bottom: 8px; }
+        /* POLICY SCROLLBOX CHUẨN TENCENT */
+        .policy-scrollbox { 
+            overflow-y: auto; padding-right: 16px; font-size: 14px; line-height: 1.7; 
+            color: var(--text-main); text-align: justify; max-height: 60vh;
+        }
+        .policy-scrollbox::-webkit-scrollbar { width: 6px; }
+        .policy-scrollbox::-webkit-scrollbar-track { background: var(--bg-body); border-radius: 4px; }
+        .policy-scrollbox::-webkit-scrollbar-thumb { background: var(--text-sub); border-radius: 4px; }
+        .policy-scrollbox h3 { color: var(--text-main); font-size: 18px; margin-bottom: 16px; text-transform: uppercase; font-weight: 800;}
+        .policy-scrollbox h4 { color: #ff3b30; font-size: 15px; margin-top: 24px; margin-bottom: 12px; font-weight: 700; border-left: 3px solid #ff3b30; padding-left: 10px;}
+        .policy-scrollbox p { margin-bottom: 12px; color: var(--text-sub); }
+        .policy-scrollbox strong { color: var(--text-main); }
 
         footer { background-color: var(--bg-card); border-top: 1px solid var(--border); padding: 24px 20px; text-align: center; color: var(--text-sub); font-size: 13px; font-weight: 500; margin-top: auto; }
         .section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -385,13 +250,10 @@
         /* === ADMIN PANEL - LAA SYSTEM CSS === */
         .admin-theme { background: #111111 !important; color: #fff !important; border: 1px solid #ff3b30 !important;}
         .admin-header { font-size: 24px; font-weight: 900; color: #ff3b30; text-align: center; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,59,48,0.4);}
-        
-        /* Cập nhật Admin Tabs */
         .admin-tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;}
         .admin-tab-btn { background: transparent; color: #888; border: none; font-size: 15px; font-weight: 700; cursor: pointer; padding: 10px 16px; border-radius: 8px; transition: all 0.2s;}
         .admin-tab-btn:hover { color: #ccc; background: rgba(255,255,255,0.05);}
         .admin-tab-btn.active { color: #ff3b30; background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.3);}
-        
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; padding-right: 10px; max-height: 60vh;}
         .admin-card { background: #1c1c1e; border: 1px solid #333; border-radius: 12px; padding: 16px; }
         .admin-card h4 { color: #ff453a; margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #333; padding-bottom: 8px;}
@@ -406,14 +268,11 @@
         .god-mode-card { grid-column: span 2; background: rgba(255,59,48,0.05); border-color: #ff3b30;}
         .god-mode-btn { background: #ff3b30; color: #fff; font-size: 14px; text-transform: uppercase; box-shadow: 0 0 15px rgba(255,59,48,0.5);}
         .god-mode-btn:hover { background: #d70015; transform: scale(1.02);}
-        
-        /* Table Admin */
         .admin-table-wrapper { max-height: 60vh; overflow-y: auto; padding-right: 10px; }
         .admin-table { width: 100%; border-collapse: collapse; color: #fff; font-size: 13px; text-align: left; background: #1c1c1e; border-radius: 12px; overflow: hidden;}
         .admin-table th { padding: 14px 16px; border-bottom: 1px solid #444; color: #ff453a; background: #2c2c2e; font-weight: 800;}
         .admin-table td { padding: 14px 16px; border-bottom: 1px solid #333; font-family: monospace;}
         .admin-table tr:hover { background: rgba(255,255,255,0.03);}
-        
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } .god-mode-card { grid-column: span 1; } }
     </style>
 </head>
@@ -532,14 +391,14 @@
                 </div>
 
                 <div class="exp-table">
-                    <h4>🌟 Hướng dẫn kiếm Danh Vọng (EXP) <span style="font-size: 11px; color: var(--text-sub); font-weight: 500;">(Hệ số cộng thưởng phụ thuộc vào Level hiện tại của bạn)</span></h4>
+                    <h4>🌟 Hướng dẫn kiếm Danh Vọng (EXP)</h4>
                     <div class="exp-table-grid">
-                        <span>Đăng bài viết/Câu hỏi Q&A <span class="exp-plus" id="reward-post"></span></span>
-                        <span>Nhận 1 lượt Thích (Like) <span class="exp-plus" id="reward-like"></span></span>
+                        <span>Đăng bài viết/Câu hỏi <span class="exp-plus" id="reward-post"></span></span>
+                        <span>Nhận 1 lượt Thích <span class="exp-plus" id="reward-like"></span></span>
                         <span>Nhận 1 lượt Bình luận <span class="exp-plus" id="reward-cmt"></span></span>
                         <span>App/Game đạt 1 lượt Tải <span class="exp-plus" id="reward-dl"></span></span>
                         <span>Nhận 1 đánh giá 5 Sao <span class="exp-plus" id="reward-5star"></span></span>
-                        <span>Đánh giá tích cực (Review) <span class="exp-plus" id="reward-review"></span></span>
+                        <span>Đánh giá tích cực <span class="exp-plus" id="reward-review"></span></span>
                         <span>Đạt Top Thịnh Hành <span class="exp-plus" id="reward-top"></span></span>
                         <span>Mã nguồn được duyệt <span class="exp-plus" id="reward-code"></span></span>
                     </div>
@@ -640,6 +499,7 @@
         </div>
     </div>
 
+    <!-- AUTH MODAL CÓ FIREBASE GOOGLE LOGIN -->
     <div id="authModal" class="auth-modal">
         <div class="auth-content">
             <span class="auth-close" onclick="closeAuthModal()">&times;</span>
@@ -663,9 +523,16 @@
                 <input type="password" name="password" class="auth-input" placeholder="Mật khẩu" required>
                 <button type="submit" class="auth-submit">Tạo tài khoản</button>
             </form>
+            
             <div class="auth-divider">hoặc tiếp tục với</div>
-            <a href="/api/auth/google" class="btn-google">Google</a>
-            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-sub); line-height: 1.5;">Bằng việc tiếp tục, bạn đồng ý với <br><a href="javascript:void(0)" onclick="openPolicyModal()" style="color: var(--primary); font-weight: 600;">Chính Sách Bảo Mật và Quyền Riêng Tư</a></div>
+            
+            <!-- NÚT GOOGLE ĐƯỢC CHUYỂN SANG FIREBASE TRIGGER -->
+            <button type="button" class="btn-google" onclick="signInWithFirebaseGoogle()">
+                <svg style="width:18px;height:18px;" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Tiếp tục bằng Google
+            </button>
+            
+            <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-sub); line-height: 1.5;">Bằng việc tiếp tục, bạn đồng ý với <br><a href="javascript:void(0)" onclick="openPolicyModal()" style="color: var(--primary); font-weight: 600;">Chính Sách Bảo Mật và Quyền Riêng Tư</a></div>
         </div>
     </div>
 
@@ -681,11 +548,37 @@
         </div>
     </div>
     
+    <!-- MODAL CHÍNH SÁCH BẢO MẬT (KIỂU DÁNG TENCENT) -->
     <div id="policyModal" class="auth-modal">
         <div class="auth-content large-modal">
             <span class="auth-close" onclick="closePolicyModal()">&times;</span>
-            <div class="auth-title">Chính Sách Bảo Mật</div>
-            <div class="policy-scrollbox"><p>Cập nhật: 2026. Tuân thủ tuyệt đối Luật An ninh mạng.</p></div>
+            <div class="auth-title" style="margin-bottom: 16px;">THỎA THUẬN QUYỀN RIÊNG TƯ & EULA</div>
+            
+            <div class="policy-scrollbox">
+                <h3>Thỏa Thuận Cấp Phép Người Dùng Cuối (EULA) và Chính Sách Bảo Mật Dữ Liệu Lyrad Market Place</h3>
+                <p><strong>Cập nhật lần cuối: 2026.</strong> Văn bản này cấu thành một hợp đồng pháp lý có tính ràng buộc tuyệt đối giữa Bạn (Người Dùng) và Ban Quản Trị (BQT) Lyrad Market Place. Việc ấn "Đăng Nhập" hoặc tiếp tục sử dụng Dịch Vụ đồng nghĩa với việc Bạn chấp nhận vô điều kiện toàn bộ các điều khoản khắc nghiệt dưới đây. Nếu Bạn không đồng ý với bất kỳ điều khoản nào, vui lòng HỦY BỎ cài đặt, XÓA TÀI KHOẢN và RỜI KHỎI hệ sinh thái ngay lập tức.</p>
+
+                <h4>Điều 1: Thu thập Dữ Liệu Nhận Diện & Định Danh Thiết Bị (Device Fingerprinting)</h4>
+                <p>Để đảm bảo an ninh mạng tuyệt đối theo tiêu chuẩn Sandbox LAA, chúng tôi có quyền chủ động thu thập, trích xuất và lưu trữ vĩnh viễn các thông tin sau mà không cần thông báo trước mỗi lần Bạn truy cập:</p>
+                <p>1.1. <strong>Thông tin Thiết bị cốt lõi:</strong> Địa chỉ MAC (MAC Address), số IMEI/MEID, số Serial phần cứng, thông số Bo mạch chủ (Motherboard ID), và phiên bản Hệ điều hành.</p>
+                <p>1.2. <strong>Nhật ký Mạng (Network Logs):</strong> Địa chỉ IP công cộng, lịch sử định tuyến, tên nhà mạng cung cấp (ISP), và dữ liệu vị trí địa lý dựa trên IP theo thời gian thực.</p>
+                <p>1.3. <strong>Hành vi Người dùng:</strong> Toàn bộ thao tác nhấp chuột (Clickstream), thời gian lưu lại trên trang, các biểu mẫu đã nhập, lịch sử tải xuống ứng dụng (App ID) và mã giao dịch thanh toán (TxID).</p>
+
+                <h4>Điều 2: Thẩm Quyền Kiểm Duyệt Của Trí Tuệ Nhân Tạo (LAA System)</h4>
+                <p>2.1. Không có ngoại lệ về quyền riêng tư đối với bất kỳ tệp tin (APK, AAB, Source Code) nào được tải lên máy chủ Lyrad. Hệ thống LAA sẽ tự động tiến hành Dịch ngược (Decompile), phân tích hành vi tĩnh/động trong môi trường Sandbox, và tạo ra <strong>Mã Hash SHA-256</strong> lưu trữ vĩnh viễn.</p>
+                <p>2.2. Nếu phát hiện tệp tin chứa mã độc (Malware, Spyware, Trojan), mã thu thập thông tin trái phép, hoặc vi phạm bản quyền số, hệ thống sẽ tự động thi hành lệnh Hủy Cốt (Purge): Xóa bỏ tệp, truy vết tài khoản (UID) và ban hành lệnh CẤM VĨNH VIỄN (Perma-ban) lên toàn bộ phần cứng (Hardware ID) của người tải lên.</p>
+
+                <h4>Điều 3: Giám Sát Hành Vi & Giới Hạn Ngôn Từ (Zero-Trust Moderation)</h4>
+                <p>3.1. Lyrad Market Place áp dụng cơ chế giám sát Zero-Trust đối với mọi nội dung giao tiếp trên Diễn đàn Creator. Hệ thống AI và Bộ lọc Tự động sẽ quét toàn bộ bài đăng (Post ID), Bình luận, và Tin nhắn riêng (Direct Messages).</p>
+                <p>3.2. Chúng tôi lưu giữ vĩnh viễn Bản sao Dự phòng (Shadow Copies) của mọi nội dung văn bản, hình ảnh, video mà Bạn đăng tải, KỂ CẢ KHI Bạn đã chủ động ấn nút "Xóa" hoặc "Thu hồi". Dữ liệu này sẽ được dùng làm bằng chứng pháp lý trước BQT hoặc Cơ quan An ninh khi phát sinh khiếu nại về hành vi phỉ báng, quấy rối, hay tuyên truyền chống phá pháp luật sở tại.</p>
+
+                <h4>Điều 4: Quyền Sở Hữu Tài Sản Kỹ Thuật Số (Digital Assets)</h4>
+                <p>4.1. Bạn thừa nhận và đồng ý rằng toàn bộ dữ liệu tài khoản bao gồm nhưng không giới hạn ở: <strong>Mã Định Danh (UID), Tên Hiển Thị, Điểm Danh Vọng (EXP), Cấp Độ (Level), Huy hiệu, và Lịch sử Hoạt động</strong> là tài sản thuộc QUYỀN SỞ HỮU ĐỘC QUYỀN CỦA LYRAD MARKET PLACE. Bạn chỉ được cấp Quyền Sử Dụng (Usage Rights) tạm thời và không thể chuyển nhượng.</p>
+                <p>4.2. BQT nắm giữ Quyền Lực Tối Cao (God-Mode) và có thể đơn phương áp dụng các lệnh: Tước Đoạt, Hạ Cấp, Đóng Băng Tài Khoản, hoặc Xóa Bỏ Hoàn Toàn mọi Tài Sản Kỹ Thuật Số của Bạn bất cứ lúc nào nếu nghi ngờ có gian lận, lạm dụng lỗi hệ thống (Bug/Exploit), mà KHÔNG CẦN đưa ra bất kỳ lời giải trình hay bồi thường tài chính nào.</p>
+
+                <h4>Điều 5: Chia Sẻ Dữ Liệu & Phối Hợp Pháp Lý</h4>
+                <p>5.1. BQT Lyrad Market Place cam kết không bán dữ liệu của Bạn cho bên thứ ba với mục đích quảng cáo thương mại. Tuy nhiên, chúng tôi SẼ tự động bàn giao toàn bộ Dữ Liệu Cá Nhân, Lịch Sử Giao Dịch, Nhật Ký Trò Chuyện và Địa Chỉ IP của Bạn (UID) cho <strong>Cơ Quan Cảnh Sát, Lực lượng An Ninh Mạng Quốc Gia, hoặc Tòa Án</strong> ngay lập tức khi nhận được yêu cầu điều tra chính thức (Subpoena) liên quan đến tội phạm an ninh mạng, rửa tiền, hoặc lừa đảo chiếm đoạt tài sản.</p>
+            </div>
         </div>
     </div>
 
@@ -761,17 +654,70 @@
         <p>© 2026 Lyrad Market Place. Cổng phân phối ứng dụng di động & máy tính độc quyền từ NPH QH. | <a href="javascript:void(0)" onclick="openAdminAuth()" style="color: var(--text-sub); text-decoration: underline;">Admin Panel - Manager</a></p>
     </footer>
 
-    <!-- SCRIPT HỆ THỐNG DATABASE LOCAL REALTIME 100% -->
+    <!-- SCRIPT HỆ THỐNG DATABASE LOCAL REALTIME & FIREBASE GOOGLE AUTH -->
     <script>
         const DB_KEY_USERS = 'lyrad_real_users';
         const DB_KEY_POSTS = 'lyrad_real_posts';
         const DB_KEY_SESSION = 'lyrad_real_session';
 
-        // 1. Khởi tạo DB nếu chưa có (Trống hoàn toàn)
+        // 1. CẤU HÌNH FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDC5duA3J8vUKSWUlaQCLAIwXq4-DL8h04",
+            authDomain: "lyrad-market-place.firebaseapp.com",
+            projectId: "lyrad-market-place",
+            storageBucket: "lyrad-market-place.firebasestorage.app",
+            messagingSenderId: "694868154837",
+            appId: "1:694868154837:web:3dfa7bd815bdb6fb83855c",
+            measurementId: "G-KVTY8LYBPQ"
+        };
+
+        // 2. KHỞI TẠO FIREBASE
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // 3. XỬ LÝ ĐĂNG NHẬP POPUP FIREBASE GOOGLE
+        function signInWithFirebaseGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            // Yêu cầu Firebase Popup Đăng nhập
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user; // Lấy dữ liệu Google trả về từ Firebase
+                    
+                    let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+                    let existingUser = users.find(u => u.email === user.email);
+                    
+                    if (existingUser) {
+                        currentUser = existingUser;
+                        currentUser.avatar = user.photoURL; // Cập nhật avatar mới nhất
+                    } else {
+                        // Tạo User mới nếu chưa tồn tại
+                        currentUser = {
+                            uid: 'LYR-' + Math.floor(100000 + Math.random() * 900000),
+                            name: user.displayName, 
+                            email: user.email,
+                            level: 1, currentExp: 0,
+                            status: 'Hoạt Động',
+                            avatar: user.photoURL 
+                        };
+                    }
+                    
+                    saveSession();
+                    updateExpUI();
+                    renderPosts();
+                    closeAuthModal();
+                    alert("Xác thực Firebase thành công! Chào mừng " + currentUser.name);
+                })
+                .catch((error) => {
+                    console.error("Lỗi xác thực Firebase:", error);
+                    alert("Đăng nhập thất bại: " + error.message + "\n\nVui lòng kiểm tra lại Cấu hình Config Firebase của bạn ở phần Script!");
+                });
+        }
+
+        // --- CÁC HÀM XỬ LÝ DATABASE LOCAL HIỆN CÓ ---
         if (!localStorage.getItem(DB_KEY_USERS)) localStorage.setItem(DB_KEY_USERS, JSON.stringify([]));
         if (!localStorage.getItem(DB_KEY_POSTS)) localStorage.setItem(DB_KEY_POSTS, JSON.stringify([]));
 
-        // 2. Quản lý Session Người Dùng
         let currentUser = JSON.parse(localStorage.getItem(DB_KEY_SESSION));
         if (!currentUser) {
             currentUser = {
@@ -846,7 +792,6 @@
             }
         }
         
-        // 3. Hệ Thống POST REALTIME
         function handlePostSubmit(e) {
             e.preventDefault();
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
@@ -1038,13 +983,12 @@
                     currentUser.avatar = e.target.result;
                     saveSession();
                     updateExpUI();
-                    renderPosts(); // Cập nhật hình ở feed
+                    renderPosts();
                 }
                 reader.readAsDataURL(inputElement.files[0]);
             }
         }
 
-        // Modals & Navigation
         function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
         function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
         function toggleAuth(type) {
@@ -1074,7 +1018,6 @@
             closeRenameModal();
         }
 
-        // 4. ADMIN PANEL THỰC TẾ TRÊN DATABASE
         function openAdminAuth() { document.getElementById('adminAuthModal').style.display = 'flex'; }
         function closeAdminAuth() { document.getElementById('adminAuthModal').style.display = 'none'; document.getElementById('admin-pwd-input').value = '';}
         
@@ -1133,7 +1076,6 @@
                 
                 localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
                 
-                // Nếu tự ban chính mình, cập nhật lại session
                 if(targetUID === currentUser.uid) {
                     currentUser = users[userIndex];
                     localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
@@ -1146,7 +1088,6 @@
             }
         }
 
-        // Chuyển UI Chính
         function switchTab(tabId, el) {
             document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
             document.querySelectorAll('main').forEach(m => m.classList.remove('active-view'));
@@ -1167,7 +1108,6 @@
             if (e.target == document.getElementById('adminPanelModal')) closeAdminPanel();
         }
 
-        // Khởi động UI
         updateExpUI();
         renderPosts();
     </script>
