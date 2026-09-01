@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Lyrad - Market Place</title>
+    
+    <!-- SCRIPT TỐI ƯU MÀN HÌNH: ÉP BUỘC DESKTOP MODE CHO MAC VÀ MOBILE -->
+    <script>
+        const ua = navigator.userAgent.toLowerCase();
+        const isMobileOrMac = /iphone|ipad|ipod|android|macintosh|mac os x/i.test(ua);
+        if (isMobileOrMac) {
+            document.write('<meta name="viewport" content="width=1400, user-scalable=yes">');
+        } else {
+            document.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
+        }
+    </script>
+
+    <style>
+        :root {
+            --primary: #007aff;
+            --primary-hover: #0056b3;
+            --bg-body: #f5f5f7;
+            --bg-card: #ffffff;
+            --text-main: #1d1d1f;
+            --text-sub: #86868b;
+            --border: rgba(0, 0, 0, 0.05);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 12px 32px rgba(0, 122, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        button { cursor: pointer; border: none; outline: none; background: transparent; }
+
+        header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #007aff, #34c759);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 12px;
+            background-color: rgba(0, 0, 0, 0.04);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .search-bar input:focus {
+            background-color: #fff;
+            box-shadow: 0 0 0 2px var(--primary), var(--shadow-md);
+            outline: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-sub);
+            align-items: center;
+        }
+
+        .nav-links a { transition: color 0.2s; cursor: pointer; padding: 6px 0;}
+        .nav-links a:hover { color: var(--primary); }
+        .nav-links a.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+
+        .btn-login-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-login-header:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 20px;
+            flex: 1;
+            width: 100%;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        main.active-view { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 50vh;
+            text-align: center;
+            color: var(--text-sub);
+        }
+        .empty-state h2 { font-size: 24px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .empty-state p { font-size: 15px; line-height: 1.5; margin-bottom: 12px;}
+        .id-badge-info { font-family: monospace; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; color: var(--text-main); border: 1px solid var(--border); display: inline-block;}
+
+        #view-forum { max-width: 1400px; display: none; }
+        #view-forum.active-view { display: grid; grid-template-columns: 240px 1fr 300px; gap: 24px; }
+
+        .forum-sidebar { position: sticky; top: 80px; height: calc(100vh - 100px); overflow-y: auto; }
+        .forum-menu-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-radius: 12px; font-weight: 600; font-size: 15px;
+            color: var(--text-main); cursor: pointer; transition: background 0.2s;
+        }
+        .forum-menu-item:hover { background: rgba(0, 0, 0, 0.04); }
+        .forum-menu-item.active { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
+
+        .forum-feed { display: flex; flex-direction: column; gap: 20px; }
+        
+        .forum-content-section { display: none; animation: fadeIn 0.3s ease; }
+        .forum-content-section.active-section { display: flex; flex-direction: column; gap: 20px; }
+
+        .stories-container {
+            display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story-card {
+            width: 110px; height: 180px; border-radius: 16px; flex-shrink: 0;
+            background: var(--bg-card); border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .story-card:hover { transform: scale(1.02); box-shadow: var(--shadow-md); }
+        .story-add-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--primary);
+            color: white; font-size: 24px; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 8px; pointer-events: none;
+        }
+        .story-text { font-size: 13px; font-weight: 600; color: var(--text-main); pointer-events: none; }
+        
+        .hidden-file-input { display: none; }
+
+        .post-composer {
+            background: var(--bg-card); border-radius: 16px; padding: 16px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+        }
+        .composer-top { display: flex; gap: 12px; margin-bottom: 12px; }
+        .composer-input {
+            flex: 1; border: none; background: var(--bg-body); border-radius: 20px;
+            padding: 10px 16px; font-size: 15px; outline: none; color: var(--text-main);
+        }
+        .composer-actions {
+            display: flex; justify-content: space-between; border-top: 1px solid var(--border);
+            padding-top: 12px; align-items: center;
+        }
+        .action-btn {
+            display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
+            color: var(--text-sub); padding: 8px 16px; border-radius: 8px; transition: background 0.2s; cursor: pointer;
+            outline: none; border: none; background: transparent; justify-content: center;
+        }
+        .action-btn:hover { background: var(--bg-body); color: var(--text-main); }
+        .btn-submit-post {
+            background: var(--primary); color: white; font-weight: 600; padding: 8px 20px;
+            border-radius: 8px; font-size: 14px; cursor: pointer; border: none;
+        }
+
+        .file-preview-area {
+            display: none; padding: 10px; border-radius: 8px; background: var(--bg-body);
+            margin-bottom: 12px; font-size: 13px; color: var(--primary); font-weight: 600;
+        }
+        .file-preview-area.active { display: block; }
+
+        /* === POST STYLES REALTIME === */
+        .forum-post { background: var(--bg-card); border-radius: 16px; padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 20px; animation: fadeIn 0.4s ease; }
+        .post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .post-stats { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; padding: 0 4px;}
+        .post-actions { display: flex; justify-content: space-between; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px 0; margin-bottom: 12px;}
+        
+        .reaction-wrapper { position: relative; display: flex; flex: 1; justify-content: center; }
+        .reaction-bar {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px);
+            background: #fff; border-radius: 50px; padding: 6px 12px; display: flex; gap: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 1px solid var(--border);
+            opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+        }
+        .reaction-bar.active { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(-5px); }
+        .reaction-icon {
+            font-size: 28px; cursor: pointer; transition: transform 0.2s; user-select: none; line-height: 1;
+        }
+        .reaction-icon:hover { transform: scale(1.3) translateY(-4px); }
+        
+        .comment-item { display: flex; gap: 8px; margin-bottom: 12px; font-size: 14px;}
+        .comment-item-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(0,0,0,0.1);}
+        .comment-item-content { background: var(--bg-body); padding: 8px 12px; border-radius: 12px; flex: 1; display: flex; flex-direction: column;}
+        
+        .forum-messenger {
+            position: sticky; top: 80px; height: calc(100vh - 100px);
+            background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm); display: flex; flex-direction: column;
+        }
+        .messenger-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; }
+        .messenger-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .messenger-input-area {
+            padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center;
+            background: var(--bg-card); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
+        }
+        .messenger-input-field {
+            flex: 1; border: none; background: var(--bg-body); border-radius: 20px; padding: 8px 14px;
+            font-size: 13px; outline: none; color: var(--text-main);
+        }
+        .messenger-send-btn { color: var(--primary); font-weight: 700; font-size: 14px; cursor: pointer; padding: 0 4px; }
+
+        .rules-container { background: var(--bg-card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .rules-container h3 { margin-bottom: 20px; color: var(--primary); font-size: 22px; font-weight: 800; letter-spacing: -0.5px;}
+        .rules-container p { font-size: 14px; line-height: 1.6; color: var(--text-sub); margin-bottom: 12px; text-align: justify; }
+        .rules-container strong { color: var(--text-main); font-size: 15px; display: block; margin-bottom: 4px;}
+        .rules-container hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+
+        /* === CẤU TRÚC DANH HIỆU & AVATAR === */
+        .avatar-box { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #e5e5ea; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+        .user-lv { font-size: 11px; font-weight: 700; color: #ff2d55; margin-left: 4px; transition: color 0.3s; }
+        .user-lv.level-up-anim { color: #34c759; font-size: 14px; text-shadow: 0 0 8px rgba(52, 199, 89, 0.5); }
+        .user-uid-badge { font-size: 11px; font-family: monospace; background: rgba(0,0,0,0.06); padding: 3px 6px; border-radius: 6px; margin-left: 8px; color: var(--text-sub); border: 1px solid rgba(0,0,0,0.1); cursor: copy; transition: all 0.2s;}
+        .user-uid-badge:hover { background: rgba(0,122,255,0.1); color: var(--primary); border-color: rgba(0,122,255,0.3);}
+
+        /* === THANH DANH VỌNG EXP === */
+        @keyframes neonGlowRainbow {
+            0% { filter: hue-rotate(0deg) drop-shadow(0 0 4px rgba(255,255,255,0.6)); }
+            100% { filter: hue-rotate(360deg) drop-shadow(0 0 8px rgba(255,255,255,0.9)); }
+        }
+        .exp-bar-container { width: 100%; height: 10px; background: #e5e5ea; border-radius: 10px; margin-top: 6px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
+        .exp-bar-fill {
+            height: 100%; border-radius: 10px; width: 0%;
+            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+            animation: neonGlowRainbow 3s linear infinite; transition: width 0.4s ease-out;
+        }
+
+        /* === PROFILE DASHBOARD === */
+        .profile-dashboard { background: var(--bg-card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); display: flex; gap: 20px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .profile-avt-wrapper { position: relative; }
+        .profile-avt-large { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+        .btn-edit-avt {
+            position: absolute; bottom: 0; right: 0; background: var(--text-main); color: #fff;
+            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; cursor: pointer; border: 2px solid #fff; transition: background 0.2s;
+        }
+        .btn-edit-avt:hover { background: var(--primary); }
+        
+        .profile-info { flex: 1; min-width: 250px; }
+        .profile-name-container { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .profile-name { font-size: 20px; font-weight: 800; color: var(--text-main); }
+        .btn-edit-name { 
+            background: rgba(0,0,0,0.05); border: none; border-radius: 50%; width: 24px; height: 24px; 
+            display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: background 0.2s; margin-right: 8px;
+        }
+        .btn-edit-name:hover { background: rgba(0,0,0,0.1); }
+        
+        .exp-table { background: var(--bg-body); border-radius: 12px; padding: 16px; font-size: 13px; }
+        .exp-table h4 { color: var(--text-main); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .exp-table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; color: var(--text-sub); }
+        .exp-table-grid span { display: flex; justify-content: space-between; padding-right: 12px; align-items: center;}
+        .exp-plus { color: #34c759; font-weight: 700; }
+
+        /* === MODALS === */
+        .auth-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 200; align-items: center; justify-content: center; padding: 16px;
+        }
+        .auth-content {
+            background: var(--bg-card); width: 100%; max-width: 400px;
+            border-radius: 24px; padding: 32px; box-shadow: var(--shadow-md);
+            animation: fadeIn 0.3s ease; position: relative; max-height: 90vh; display: flex; flex-direction: column;
+        }
+        .auth-content.large-modal { max-width: 700px; }
+        .auth-close {
+            position: absolute; top: 16px; right: 20px; font-size: 28px;
+            color: var(--text-sub); cursor: pointer; line-height: 1; transition: color 0.2s;
+        }
+        .auth-close:hover { color: var(--text-main); }
+        .auth-title { font-size: 24px; font-weight: 800; margin-bottom: 24px; text-align: center; }
+        
+        .auth-tabs { display: flex; margin-bottom: 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;}
+        .auth-tab {
+            flex: 1; text-align: center; padding: 12px; font-weight: 600; color: var(--text-sub);
+            cursor: pointer; transition: color 0.2s; border-bottom: 2px solid transparent;
+        }
+        .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        
+        .auth-form { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-bottom: 8px;}
+        .auth-input {
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border);
+            border-radius: 12px; background: var(--bg-body); font-size: 14px; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s; color: var(--text-main);
+        }
+        .auth-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,122,255,0.2); background: #fff;}
+        .auth-submit {
+            width: 100%; padding: 14px; background: var(--primary); color: white;
+            border-radius: 12px; font-weight: 700; font-size: 15px; margin-top: 8px; transition: background 0.2s; border: none; cursor: pointer;
+        }
+        .auth-submit:hover { background: var(--primary-hover); }
+        
+        .auth-divider { display: flex; align-items: center; text-align: center; margin: 24px 0; color: var(--text-sub); font-size: 12px; font-weight: 500; }
+        .auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+        .auth-divider:not(:empty)::before { margin-right: 12px; }
+        .auth-divider:not(:empty)::after { margin-left: 12px; }
+        
+        .btn-google {
+            width: 100%; padding: 12px; background: #fff; border: 1px solid var(--border);
+            border-radius: 12px; font-weight: 600; font-size: 14px; color: var(--text-main);
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: var(--shadow-sm); transition: background 0.2s; cursor: pointer;
+        }
+        .btn-google:hover { background: var(--bg-body); }
+
+        .policy-scrollbox { overflow-y: auto; padding-right: 12px; font-size: 13px; line-height: 1.6; color: var(--text-sub); text-align: justify; }
+        .policy-scrollbox h4 { color: var(--text-main); margin-top: 16px; margin-bottom: 8px; }
+
+        footer { background-color: var(--bg-card); border-top: 1px solid var(--border); padding: 24px 20px; text-align: center; color: var(--text-sub); font-size: 13px; font-weight: 500; margin-top: auto; }
+        .section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+        /* === ADMIN PANEL - LAA SYSTEM CSS === */
+        .admin-theme { background: #111111 !important; color: #fff !important; border: 1px solid #ff3b30 !important;}
+        .admin-header { font-size: 24px; font-weight: 900; color: #ff3b30; text-align: center; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,59,48,0.4);}
+        
+        /* Cập nhật Admin Tabs */
+        .admin-tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;}
+        .admin-tab-btn { background: transparent; color: #888; border: none; font-size: 15px; font-weight: 700; cursor: pointer; padding: 10px 16px; border-radius: 8px; transition: all 0.2s;}
+        .admin-tab-btn:hover { color: #ccc; background: rgba(255,255,255,0.05);}
+        .admin-tab-btn.active { color: #ff3b30; background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.3);}
+        
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; padding-right: 10px; max-height: 60vh;}
+        .admin-card { background: #1c1c1e; border: 1px solid #333; border-radius: 12px; padding: 16px; }
+        .admin-card h4 { color: #ff453a; margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #333; padding-bottom: 8px;}
+        .admin-input { width: 100%; padding: 10px; background: #2c2c2e; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 12px; font-size: 13px; outline: none; font-family: monospace;}
+        .admin-input:focus { border-color: #ff3b30; }
+        .admin-btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .admin-btn { flex: 1; min-width: 45%; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; text-align: center;}
+        .btn-red { background: rgba(255, 59, 48, 0.1); color: #ff453a; border: 1px solid rgba(255, 59, 48, 0.3); }
+        .btn-red:hover { background: #ff3b30; color: #fff; }
+        .btn-yellow { background: rgba(255, 204, 0, 0.1); color: #ffd60a; border: 1px solid rgba(255, 204, 0, 0.3); }
+        .btn-yellow:hover { background: #ffcc00; color: #000; }
+        .god-mode-card { grid-column: span 2; background: rgba(255,59,48,0.05); border-color: #ff3b30;}
+        .god-mode-btn { background: #ff3b30; color: #fff; font-size: 14px; text-transform: uppercase; box-shadow: 0 0 15px rgba(255,59,48,0.5);}
+        .god-mode-btn:hover { background: #d70015; transform: scale(1.02);}
+        
+        /* Table Admin */
+        .admin-table-wrapper { max-height: 60vh; overflow-y: auto; padding-right: 10px; }
+        .admin-table { width: 100%; border-collapse: collapse; color: #fff; font-size: 13px; text-align: left; background: #1c1c1e; border-radius: 12px; overflow: hidden;}
+        .admin-table th { padding: 14px 16px; border-bottom: 1px solid #444; color: #ff453a; background: #2c2c2e; font-weight: 800;}
+        .admin-table td { padding: 14px 16px; border-bottom: 1px solid #333; font-family: monospace;}
+        .admin-table tr:hover { background: rgba(255,255,255,0.03);}
+        
+        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } .god-mode-card { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="/" class="logo">Lyrad - Market Place</a>
+            <form class="search-bar" action="/search" method="GET">
+                <input type="text" name="q" placeholder="Tìm kiếm ứng dụng, trò chơi, bài viết..." required>
+            </form>
+            <nav class="nav-links">
+                <a onclick="switchTab('view-explore', this)" class="active">Khám phá</a>
+                <a onclick="switchTab('view-games', this)">Trò chơi</a>
+                <a onclick="switchTab('view-apps', this)">Ứng dụng</a>
+                <a onclick="switchTab('view-forum', this)">Diễn đàn Creator</a>
+                <button class="btn-login-header" onclick="openAuthModal()">Đăng nhập</button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="view-explore" class="active-view">
+        <div class="empty-state">
+            <h2>Chưa có ứng dụng</h2>
+            <p>Cửa hàng đang trống. Xin cảm ơn người dùng!!!</p>
+            <div class="id-badge-info">Lưu ý BQT: Mỗi ứng dụng tải lên sẽ được cấp <strong>App ID</strong> (VD: APP-VN-xxxx) và lưu vết <strong>Mã Hash</strong> tự động.</div>
+        </div>
+    </main>
+
+    <main id="view-games">
+        <div class="empty-state">
+            <h2>Chưa có Trò chơi</h2>
+            <p>Cửa hàng Game đang trống. Vui lòng chờ nhà phát hành đăng tải bản cài đặt APK chính thức.</p>
+            <div class="id-badge-info">Lưu ý BQT: Mọi bản APK tải lên đều gắn chặt với <strong>UID</strong> của người đăng và <strong>App ID</strong> duy nhất.</div>
+        </div>
+    </main>
+
+    <main id="view-apps">
+        <div class="empty-state">
+            <h2>Chưa có Ứng dụng</h2>
+            <p>Kho Ứng dụng đang trống. Các tiện ích sẽ được hiển thị ngay khi nhà phát hành đăng tải.</p>
+            <div class="id-badge-info">Lưu ý BQT: File tải lên sẽ trải qua quét tự động bằng hệ thống LAA phân tích <strong>SHA-256 Hash</strong>.</div>
+        </div>
+    </main>
+
+    <main id="view-forum">
+        
+        <aside class="forum-sidebar">
+            <div class="forum-menu-item active" onclick="switchForumSection('section-feed', this)">Bảng tin cộng đồng</div>
+            <div class="forum-menu-item" onclick="switchForumSection('section-profile', this)">Hồ sơ & Bài viết của tôi</div>
+            <div class="forum-menu-item" onclick="switchForumSection('section-leaderboard', this)">Bảng xếp hạng</div>
+            <div class="forum-menu-item" onclick="switchForumSection('section-qa', this)">Câu hỏi Q&A</div>
+            <div class="forum-menu-item" onclick="switchForumSection('section-sourcecode', this)">Góc chia sẻ mã nguồn</div>
+            <div class="forum-menu-item" style="margin-top: 20px; color: var(--text-sub);" onclick="switchForumSection('section-rules', this)">Nguyên tắc Cộng đồng</div>
+        </aside>
+
+        <section class="forum-feed">
+            <div id="section-feed" class="forum-content-section active-section">
+                <div class="stories-container" id="api-stories-list">
+                    <label class="story-card" for="upload-story">
+                        <div class="story-add-btn">+</div>
+                        <span class="story-text">Tạo Tin</span>
+                        <input type="file" id="upload-story" class="hidden-file-input" accept="image/*,video/*">
+                    </label>
+                </div>
+
+                <div class="post-composer">
+                    <form onsubmit="return handlePostSubmit(event)">
+                        <div class="composer-top">
+                            <img src="https://ui-avatars.com/api/?name=User&background=random" class="avatar-box sync-user-avatar" alt="Avatar">
+                            <input type="text" id="post-content-input" class="composer-input" placeholder="Bạn đang nghĩ gì, hãy chia sẻ cùng cộng đồng Creator..." required autocomplete="off">
+                        </div>
+                        
+                        <div id="file-preview-box" class="file-preview-area"></div>
+
+                        <div class="composer-actions">
+                            <div style="display: flex; gap: 8px;">
+                                <label class="action-btn" for="upload-media">
+                                    📷 Ảnh/Video
+                                    <input type="file" id="upload-media" class="hidden-file-input" accept="image/*,video/*" onchange="previewFile(this)">
+                                </label>
+                                <label class="action-btn" for="upload-file">
+                                    📎 Đính kèm File
+                                    <input type="file" id="upload-file" class="hidden-file-input" onchange="previewFile(this)">
+                                </label>
+                            </div>
+                            <button type="submit" class="btn-submit-post">Đăng bài</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="api-feed-list"></div>
+            </div>
+
+            <div id="section-profile" class="forum-content-section">
+                <div class="profile-dashboard">
+                    <div class="profile-avt-wrapper">
+                        <img src="" class="profile-avt-large sync-user-avatar" alt="Profile Avatar">
+                        <label for="upload-avatar" class="btn-edit-avt" title="Đồng bộ Google hoặc Tải lên từ máy">📷</label>
+                        <input type="file" id="upload-avatar" class="hidden-file-input" accept="image/*" onchange="handleAvatarSync(this)">
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name-container">
+                            <div class="profile-name" id="user-display-name">Người Dùng Ẩn Danh</div>
+                            <button class="btn-edit-name" onclick="editDisplayName()" title="Đổi tên">✏️</button>
+                            <span class="user-lv" id="user-display-level">LV. 1</span>
+                            <span class="user-uid-badge" onclick="navigator.clipboard.writeText(this.innerText.replace('UID: ', '')); alert('Đã sao chép User ID!')" title="ID Định Danh Hệ Thống (Click để copy)" id="user-display-uid">UID: LYR-0000000</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-sub); margin-top: 4px; margin-bottom: 8px;">
+                            Danh vọng: <strong style="color: var(--text-main);" id="user-display-exp-text">0 / 4.100 EXP</strong>
+                        </div>
+                        <div class="exp-bar-container">
+                            <div class="exp-bar-fill" id="user-display-exp-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exp-table">
+                    <h4>🌟 Hướng dẫn kiếm Danh Vọng (EXP) <span style="font-size: 11px; color: var(--text-sub); font-weight: 500;">(Hệ số cộng thưởng phụ thuộc vào Level hiện tại của bạn)</span></h4>
+                    <div class="exp-table-grid">
+                        <span>Đăng bài viết/Câu hỏi Q&A <span class="exp-plus" id="reward-post"></span></span>
+                        <span>Nhận 1 lượt Thích (Like) <span class="exp-plus" id="reward-like"></span></span>
+                        <span>Nhận 1 lượt Bình luận <span class="exp-plus" id="reward-cmt"></span></span>
+                        <span>App/Game đạt 1 lượt Tải <span class="exp-plus" id="reward-dl"></span></span>
+                        <span>Nhận 1 đánh giá 5 Sao <span class="exp-plus" id="reward-5star"></span></span>
+                        <span>Đánh giá tích cực (Review) <span class="exp-plus" id="reward-review"></span></span>
+                        <span>Đạt Top Thịnh Hành <span class="exp-plus" id="reward-top"></span></span>
+                        <span>Mã nguồn được duyệt <span class="exp-plus" id="reward-code"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-leaderboard" class="forum-content-section">
+                <div class="leaderboard-container" style="margin-top: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="color: var(--text-main); font-size: 18px; font-weight: 700; margin: 0;">🏆 Bảng Xếp Hạng Danh Vọng</h3>
+                        <span style="font-size: 12px; color: var(--text-main); font-weight: 600; display: flex; align-items: center;">
+                            <span class="live-indicator"></span> Trực tuyến
+                        </span>
+                    </div>
+                    <div class="lb-list">
+                        <div class="empty-state" style="height: 250px; justify-content: center; text-align: center;">
+                            <p style="font-size: 14px; color: var(--text-sub);">Hệ thống đang chờ dữ liệu người dùng thực.<br>Hãy là người đầu tiên lọt vào bảng xếp hạng!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-qa" class="forum-content-section">
+                <div class="section-header-row">
+                    <h3 style="margin:0; font-size: 20px;">Câu hỏi Q&A</h3>
+                    <button class="btn-login-header" onclick="openQAModal()">+ Đăng câu hỏi</button>
+                </div>
+                <div class="empty-state" style="height: 50vh;">
+                    <h2>Chưa có câu hỏi</h2>
+                    <p>Khu vực Hỏi - Đáp hiện đang trống.</p>
+                </div>
+            </div>
+
+            <div id="section-sourcecode" class="forum-content-section">
+                <div class="section-header-row">
+                    <h3 style="margin:0; font-size: 20px;">Góc chia sẻ mã nguồn</h3>
+                    <label class="btn-login-header" style="cursor: pointer;">+ Đăng tải APK
+                        <input type="file" class="hidden-file-input" accept=".apk">
+                    </label>
+                </div>
+                <div class="empty-state" style="height: 50vh;">
+                    <h2>Chưa có mã nguồn</h2>
+                    <p>Kho lưu trữ mã nguồn đang trống.</p>
+                </div>
+            </div>
+
+            <div id="section-rules" class="forum-content-section">
+                <div class="rules-container">
+                    <h3>Quy Chế & Khế Ước Tham Gia Hệ Sinh Thái Lyrad</h3>
+                    
+                    <strong>Điều 1: Tôn Trọng Tuyệt Đối Bản Quyền & Tính Nguyên Vẹn Của Phần Mềm</strong>
+                    <p>Lyrad Market Place hoạt động dựa trên nguyên tắc tối thượng: BẢO VỆ NHÀ PHÁT TRIỂN. Tuyệt đối nghiêm cấm mọi hành vi can thiệp, chỉnh sửa, dịch ngược (Reverse Engineering), trích xuất trái phép (Unpack/Repack), hoặc cố tình tiêm nhiễm mã ngầm vào tệp tin (APK/AAB) gốc. Bất kỳ vi phạm nào liên quan đến hành vi xâm phạm bản quyền hoặc giả mạo chữ ký số (Signature) sẽ dẫn đến việc khóa vĩnh viễn tài khoản (Perma-ban) theo <strong>UID</strong> và cấm toàn bộ địa chỉ MAC/IP thiết bị của người dùng trên toàn hệ sinh thái mà không cần cảnh báo trước.</p>
+                    <hr>
+                    
+                    <strong>Điều 2: Tiêu Chuẩn An Ninh Mạng & Kiểm Duyệt Nội Dung Gắt Gao</strong>
+                    <p>Sự an toàn của cộng đồng là giới hạn đỏ không thể vượt qua. Tất cả mã nguồn, ứng dụng, trò chơi và các bản cập nhật tải lên hệ thống bắt buộc phải đi qua hệ thống quét bảo mật tĩnh và động qua Môi trường Sandbox của LAA và tạo <strong>Mã Hash</strong>. Bất kỳ phần mềm nào bị hệ thống phát hiện chứa Malware, Spyware, Trojan, mã đào tiền ảo (Cryptojacking), hoặc có hành vi thu thập dữ liệu trái phép vi phạm Luật An Ninh Mạng, sẽ bị tiêu hủy ngay lập tức dựa trên <strong>App ID</strong>. Các hành vi cung cấp thông tin sai lệch trong metadata nhằm đánh lừa người dùng sẽ chịu hình phạt gỡ bỏ nội dung vĩnh viễn.</p>
+                    <hr>
+                    
+                    <strong>Điều 3: Quy Định Giao Tiếp & Kỷ Luật Không Gian Diễn Đàn Creator</strong>
+                    <p>Không gian Diễn đàn Creator là nơi hội tụ trí tuệ công nghệ, không phải bãi rác ngôn từ. Nền tảng áp dụng chính sách "Không Khoan Nhượng" (Zero Tolerance) với các hành vi: Quấy rối cá nhân, xúc phạm danh dự nhân phẩm, phân biệt vùng miền/chủng tộc, kích động thù địch, tuyên truyền văn hóa phẩm đồi trụy hoặc thảo luận các vấn đề chính trị, tôn giáo trái phép. Nghiêm cấm việc chia sẻ liên kết (Link) chứa phần mềm bẻ khóa (Crack/Hack/Cheat). Hệ thống giám sát AI tự động sẽ quét toàn bộ bình luận qua <strong>Post ID</strong>; hình phạt cấu thành từ cảnh cáo (Mute 7 đến 30 ngày) đến tước đoạt toàn bộ danh vọng (EXP) của <strong>UID</strong> và cấm truy cập vĩnh viễn.</p>
+                    <hr>
+                    
+                    <strong>Điều 4: Kỷ Luật Tài Chính & Chống Gian Lận Giao Dịch Đa Tuyến</strong>
+                    <p>Sự minh bạch là nền tảng của thương mại điện tử vững mạnh. Các dịch vụ trả phí, gói đăng ký (Subscription) hoặc In-app Purchase phải được mô tả một cách rõ ràng, tuyệt đối không sử dụng thủ thuật mập mờ, bẫy đăng ký (Dark Patterns). Lyrad Market Place tích hợp hệ thống kiểm soát rủi ro Smart Disputes: Mọi hành vi gian lận thẻ tín dụng (Fraud), lạm dụng chính sách hoàn tiền (Chargeback Abuse), hoặc rửa tiền sẽ bị hệ thống tra soát bằng <strong>Transaction ID (TxID)</strong> và đóng băng dòng tiền ngay lập tức, đồng thời hồ sơ gian lận sẽ được chuyển giao cho các cổng thanh toán quốc tế và cơ quan pháp luật có thẩm quyền khi có yêu cầu.</p>
+                    <hr>
+                    
+                    <strong>Điều 5: Quyền Lực Tối Cao Của Ban Quản Trị (BQT)</strong>
+                    <p>Khi tham gia và sử dụng bất kỳ dịch vụ nào thuộc hệ sinh thái Lyrad, người dùng mặc định đã đọc, hiểu rõ và chấp thuận vô điều kiện bản khế ước này. BQT Lyrad Market Place bảo lưu quyền phán quyết cuối cùng trong mọi trường hợp tranh chấp. BQT có toàn quyền đơn phương sử dụng lệnh God-Mode trong Admin Panel (LAA) để đình chỉ, thu hồi tài sản kỹ thuật số (Cấp độ Level, Điểm Danh Vọng EXP, Huy hiệu, Ứng dụng đã duyệt) đối với bất kỳ cá nhân <strong>(UID)</strong>/tổ chức nào đe dọa đến tính toàn vẹn và lợi ích chung của nền tảng mà không cần bồi thường hay giải trình thêm.</p>
+                </div>
+            </div>
+        </section>
+
+        <aside class="forum-messenger">
+            <div class="messenger-header">Messenger & Trực tuyến</div>
+            <div class="messenger-list">
+                <div class="empty-state" style="height: 100%; margin: 0; justify-content: center;">
+                    <p style="font-size: 13px;">Chưa có kết nối mạng<br>hoặc không có ai trực tuyến.</p>
+                </div>
+            </div>
+            <div class="messenger-input-area">
+                <input type="text" class="messenger-input-field" placeholder="Nhập tin nhắn..." autocomplete="off">
+                <span class="messenger-send-btn">Gửi</span>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- MODALS -->
+    <div id="renameModal" class="auth-modal">
+        <div class="auth-content">
+            <span class="auth-close" onclick="closeRenameModal()">&times;</span>
+            <div class="auth-title">Đổi Tên Hiển Thị</div>
+            <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 16px; text-align: center;">Tên hiển thị phải từ 3-20 ký tự và không chứa từ ngữ nhạy cảm.</div>
+            <div class="auth-form" style="padding-bottom: 0;">
+                <input type="text" id="new-name-input" class="auth-input" placeholder="Nhập tên mới...">
+                <button type="button" class="auth-submit" onclick="submitNewName()">Lưu Thay Đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authModal" class="auth-modal">
+        <div class="auth-content">
+            <span class="auth-close" onclick="closeAuthModal()">&times;</span>
+            <div class="auth-title">Tài khoản</div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="toggleAuth('login')" id="tab-login">Đăng nhập</div>
+                <div class="auth-tab" onclick="toggleAuth('register')" id="tab-register">Đăng ký</div>
+            </div>
+            <form id="form-login" class="auth-form" action="/api/auth/login" method="POST">
+                <input type="email" name="email" class="auth-input" placeholder="Email" required>
+                <input type="password" name="password" class="auth-input" placeholder="Mật khẩu" required>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: -4px;">
+                    <label style="display: flex; align-items: center; gap: 6px; color: var(--text-sub); cursor: pointer;"><input type="checkbox" name="remember" checked> Lưu đăng nhập</label>
+                    <a href="javascript:void(0)" style="color: var(--primary); font-weight: 600;">Quên mật khẩu?</a>
+                </div>
+                <button type="submit" class="auth-submit">Đăng nhập</button>
+            </form>
+            <form id="form-register" class="auth-form" action="/api/auth/register" method="POST" style="display: none;">
+                <input type="text" name="fullname" class="auth-input" placeholder="Họ và tên" required>
+                <input type="email" name="email" class="auth-input" placeholder="Email" required>
+                <input type="password" name="password" class="auth-input" placeholder="Mật khẩu" required>
+                <button type="submit" class="auth-submit">Tạo tài khoản</button>
+            </form>
+            <div class="auth-divider">hoặc tiếp tục với</div>
+            <a href="/api/auth/google" class="btn-google">Google</a>
+            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-sub); line-height: 1.5;">Bằng việc tiếp tục, bạn đồng ý với <br><a href="javascript:void(0)" onclick="openPolicyModal()" style="color: var(--primary); font-weight: 600;">Chính Sách Bảo Mật và Quyền Riêng Tư</a></div>
+        </div>
+    </div>
+
+    <div id="qaModal" class="auth-modal">
+        <div class="auth-content large-modal">
+            <span class="auth-close" onclick="closeQAModal()">&times;</span>
+            <div class="auth-title" style="margin-bottom: 16px; font-size: 20px;">Đăng Câu Hỏi Mới</div>
+            <form class="auth-form" style="padding-bottom: 0;">
+                <input type="text" class="auth-input" placeholder="Tiêu đề câu hỏi của bạn..." required>
+                <textarea class="auth-input" rows="6" placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..." style="resize: none;" required></textarea>
+                <button type="button" class="auth-submit" onclick="closeQAModal()">Gửi Câu Hỏi</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="policyModal" class="auth-modal">
+        <div class="auth-content large-modal">
+            <span class="auth-close" onclick="closePolicyModal()">&times;</span>
+            <div class="auth-title">Chính Sách Bảo Mật</div>
+            <div class="policy-scrollbox"><p>Cập nhật: 2026. Tuân thủ tuyệt đối Luật An ninh mạng.</p></div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminAuthModal" class="auth-modal">
+        <div class="auth-content admin-theme" style="max-width: 400px;">
+            <span class="auth-close" style="color: #fff;" onclick="closeAdminAuth()">&times;</span>
+            <div class="admin-header" style="font-size: 20px; margin-bottom: 16px;">Xác Thực BQT</div>
+            <div class="auth-form" style="padding-bottom: 0;">
+                <input type="password" id="admin-pwd-input" class="admin-input" placeholder="Nhập mã bí mật..." style="margin-bottom: 16px;">
+                <button class="auth-submit btn-red" style="margin-top: 0;" onclick="verifyAdmin()">Truy Cập Hệ Thống LAA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminPanelModal" class="auth-modal">
+        <div class="auth-content admin-theme large-modal" style="max-width: 900px;">
+            <span class="auth-close" style="color: #fff;" onclick="closeAdminPanel()">&times;</span>
+            <div class="admin-header">⚙️ LYRAD CONTROL PANEL</div>
+            
+            <div class="admin-tab-container">
+                <button class="admin-tab-btn active" onclick="switchAdminTab('tab-laa', this)">Bảng Điều Khiển LAA</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('tab-users', this)">Quản Lý Người Dùng</button>
+            </div>
+
+            <div id="tab-laa" class="admin-grid">
+                <div class="admin-card">
+                    <h4>ĐIỀU 1: BẢN QUYỀN (File Integrity)</h4>
+                    <input type="text" class="admin-input" id="admin-input-1" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn btn-red" onclick="executeLAA('Bị Khóa (Perma-ban)', 'admin-input-1')">Ban Vĩnh Viễn Thiết Bị</button>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h4>ĐIỀU 3: KỶ LUẬT NGÔN TỪ (Creator Forum)</h4>
+                    <input type="text" class="admin-input" id="admin-input-3" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn btn-yellow" onclick="executeLAA('Mute 30 Ngày', 'admin-input-3')">Mute 30 Ngày</button>
+                        <button class="admin-btn btn-yellow" onclick="executeLAA('Hoạt Động', 'admin-input-3')">Gỡ Phạt (Unban)</button>
+                        <button class="admin-btn btn-red" style="min-width: 100%;" onclick="executeLAA('Bị Khóa (Perma-ban)', 'admin-input-3')">Trục Xuất Vĩnh Viễn</button>
+                    </div>
+                </div>
+
+                <div class="admin-card god-mode-card">
+                    <h4 style="color: #ff3b30; border-bottom-color: rgba(255,59,48,0.5);">ĐIỀU 5: QUYỀN LỰC TỐI CAO (Ban Quản Trị)</h4>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Các hành động dưới đây ghi đè mọi quy tắc tự động, không yêu cầu giải trình.</p>
+                    <input type="text" class="admin-input" id="admin-input-5" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn god-mode-btn" onclick="executeLAA('Thu Hồi Tài Sản', 'admin-input-5')">THU HỒI TÀI SẢN SỐ</button>
+                        <button class="admin-btn god-mode-btn" onclick="executeLAA('Bị Khóa (Perma-ban)', 'admin-input-5')">THANH TRỪNG (PURGE)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-users" class="admin-table-wrapper" style="display: none;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User ID (UID)</th>
+                            <th>Tên Hiển Thị</th>
+                            <th>Cấp Độ</th>
+                            <th>Trạng Thái Hệ Thống</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-user-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 Lyrad Market Place. Cổng phân phối ứng dụng di động & máy tính độc quyền từ NPH QH. | <a href="javascript:void(0)" onclick="openAdminAuth()" style="color: var(--text-sub); text-decoration: underline;">Admin Panel - Manager</a></p>
+    </footer>
+
+    <!-- SCRIPT HỆ THỐNG DATABASE LOCAL REALTIME 100% -->
+    <script>
+        const DB_KEY_USERS = 'lyrad_real_users';
+        const DB_KEY_POSTS = 'lyrad_real_posts';
+        const DB_KEY_SESSION = 'lyrad_real_session';
+
+        // 1. Khởi tạo DB nếu chưa có (Trống hoàn toàn)
+        if (!localStorage.getItem(DB_KEY_USERS)) localStorage.setItem(DB_KEY_USERS, JSON.stringify([]));
+        if (!localStorage.getItem(DB_KEY_POSTS)) localStorage.setItem(DB_KEY_POSTS, JSON.stringify([]));
+
+        // 2. Quản lý Session Người Dùng
+        let currentUser = JSON.parse(localStorage.getItem(DB_KEY_SESSION));
+        if (!currentUser) {
+            currentUser = {
+                uid: 'LYR-' + Math.floor(100000 + Math.random() * 900000),
+                name: 'Người Dùng Ẩn Danh',
+                level: 1, currentExp: 0,
+                status: 'Hoạt Động',
+                avatar: 'https://ui-avatars.com/api/?name=User&background=random'
+            };
+            localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
+            
+            let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+            users.push(currentUser);
+            localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
+        }
+
+        const maxGlobalLevel = 1000;
+        
+        function saveSession() {
+            localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
+            let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+            let index = users.findIndex(u => u.uid === currentUser.uid);
+            if(index !== -1) { users[index] = currentUser; } 
+            else { users.push(currentUser); }
+            localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
+        }
+
+        function getExpRequired(level) { return Math.floor(Math.pow(level, 3.2) * 5 + level * 4095); }
+        
+        function updateExpData(amount) {
+            if (currentUser.level >= maxGlobalLevel) return;
+            currentUser.currentExp += amount;
+            let expReq = getExpRequired(currentUser.level);
+            let didLevelUp = false;
+            while (currentUser.currentExp >= expReq && currentUser.level < maxGlobalLevel) {
+                currentUser.currentExp -= expReq;
+                currentUser.level++;
+                expReq = getExpRequired(currentUser.level);
+                didLevelUp = true;
+            }
+            if (currentUser.level >= maxGlobalLevel) { currentUser.level = maxGlobalLevel; currentUser.currentExp = expReq; }
+            if (didLevelUp) {
+                const lvBadge = document.getElementById('user-display-level');
+                lvBadge.classList.add('level-up-anim');
+                setTimeout(() => lvBadge.classList.remove('level-up-anim'), 600);
+            }
+            saveSession();
+            updateExpUI();
+        }
+
+        function updateExpUI() {
+            document.querySelectorAll('.sync-user-avatar').forEach(img => img.src = currentUser.avatar);
+            document.getElementById('user-display-name').innerText = currentUser.name;
+            
+            const expReq = getExpRequired(currentUser.level);
+            ['post','like','cmt','dl','5star','review','top','code'].forEach(id => {
+                let multiplier = {post:15, like:2, cmt:5, dl:35, '5star':50, review:100, top:1500, code:800}[id];
+                if(document.getElementById('reward-'+id)) document.getElementById('reward-'+id).innerText = `+${(multiplier * currentUser.level).toLocaleString('vi-VN')} EXP`;
+            });
+            if(currentUser.level >= maxGlobalLevel) {
+                document.getElementById('user-display-level').innerText = `LV. 1000 (MAX)`;
+                document.getElementById('user-display-exp-text').innerText = `Đã đạt cấp độ tối đa`;
+                document.getElementById('user-display-exp-fill').style.width = `100%`;
+            } else {
+                const percent = (currentUser.currentExp / expReq) * 100;
+                document.getElementById('user-display-level').innerText = `LV. ${currentUser.level}`;
+                document.getElementById('user-display-exp-text').innerText = `${currentUser.currentExp.toLocaleString('vi-VN')} / ${expReq.toLocaleString('vi-VN')} EXP`;
+                document.getElementById('user-display-exp-fill').style.width = `${Math.min(percent, 100)}%`;
+            }
+            if (document.getElementById('user-display-uid')) {
+                document.getElementById('user-display-uid').innerText = `UID: ${currentUser.uid}`;
+            }
+        }
+        
+        // 3. Hệ Thống POST REALTIME
+        function handlePostSubmit(e) {
+            e.preventDefault();
+            if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
+            
+            const input = document.getElementById('post-content-input');
+            const content = input.value.trim();
+            if (!content) return false;
+
+            let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+            const newPost = {
+                id: 'P-' + Math.floor(100000 + Math.random() * 900000),
+                uid: currentUser.uid,
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+                level: currentUser.level,
+                content: content,
+                timestamp: Date.now(),
+                reactions: {}, 
+                comments: [],
+                shares: 0
+            };
+            
+            posts.push(newPost);
+            localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+            
+            input.value = '';
+            document.getElementById('file-preview-box').classList.remove('active');
+            
+            updateExpData(15);
+            renderPosts();
+            return false;
+        }
+
+        function renderPosts() {
+            const posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+            const container = document.getElementById('api-feed-list');
+            
+            if (posts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" id="feed-empty-state" style="height: 30vh;">
+                        <h2>Chưa có bài đăng nào</h2>
+                        <p>Hãy là người đầu tiên chia sẻ kiến thức trên Diễn đàn Creator!</p>
+                        <div class="id-badge-info" style="font-size: 11px;">Hệ thống LAA sẽ cấp <strong>Post ID (VD: #P-xxxxx)</strong> cho mỗi bài đăng để kiểm duyệt.</div>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            posts.sort((a, b) => b.timestamp - a.timestamp).forEach(post => {
+                let totalLikes = Object.keys(post.reactions).length;
+                let myReaction = post.reactions[currentUser.uid];
+                let likeIcon = myReaction ? myReaction.emoji : '👍';
+                let likeText = myReaction ? myReaction.text : 'Thích';
+                let likeColor = myReaction ? myReaction.color : 'var(--text-sub)';
+
+                let commentsHTML = post.comments.map(c => `
+                    <div class="comment-item">
+                        <img src="${c.avatar}" class="comment-item-avatar">
+                        <div class="comment-item-content">
+                            <strong style="color:var(--text-main); display:block; margin-bottom:2px; font-size:13px;">${c.name}</strong>
+                            <div style="color:var(--text-main);">${c.text}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="forum-post" id="post-${post.id}">
+                        <div class="post-header">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <img src="${post.avatar}" class="avatar-box">
+                                <div>
+                                    <div style="font-weight:700; font-size:15px; display:flex; align-items:center;">
+                                        ${post.name} <span class="user-lv">LV. ${post.level}</span>
+                                        <span style="font-size:10px; color:var(--text-sub); margin-left:6px; font-family:monospace;">(UID: ${post.uid})</span>
+                                    </div>
+                                    <div style="font-size:12px; color:var(--text-sub);">Lưu trữ nội bộ</div>
+                                </div>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-sub); font-family:monospace; background:var(--bg-body); padding:4px 8px; border-radius:4px; border:1px solid var(--border);">POST ID: #${post.id}</div>
+                        </div>
+                        
+                        <div class="post-content" style="font-size:15px; line-height:1.5; color:var(--text-main); margin-bottom:12px; white-space:pre-wrap;">${post.content}</div>
+                        
+                        <div class="post-stats">
+                            <span>${totalLikes} lượt thích</span>
+                            <div><span>${post.comments.length} bình luận</span> • <span>${post.shares} chia sẻ</span></div>
+                        </div>
+
+                        <div class="post-actions">
+                            <div class="reaction-wrapper">
+                                <div class="reaction-bar" id="rb-${post.id}">
+                                    <span class="reaction-icon" onclick="applyReaction('${post.id}', '👍', 'Thích', 'var(--primary)')">👍</span>
+                                    <span class="reaction-icon" onclick="applyReaction('${post.id}', '❤️', 'Yêu thích', '#ff2d55')">❤️</span>
+                                    <span class="reaction-icon" onclick="applyReaction('${post.id}', '😂', 'Haha', '#ffcc00')">😂</span>
+                                    <span class="reaction-icon" onclick="applyReaction('${post.id}', '😯', 'Wow', '#ffcc00')">😯</span>
+                                    <span class="reaction-icon" onclick="applyReaction('${post.id}', '😢', 'Buồn', '#ffcc00')">😢</span>
+                                    <span class="reaction-icon" onclick="applyReaction('${post.id}', '😡', 'Phẫn nộ', '#ff3b30')">😡</span>
+                                </div>
+                                <button class="action-btn" style="flex:1; color:${likeColor}; position:relative;" 
+                                    onmousedown="startReactionTimer('${post.id}')" onmouseup="stopReactionTimer('${post.id}')"
+                                    ontouchstart="startReactionTimer('${post.id}')" ontouchend="stopReactionTimer('${post.id}')">
+                                    <span>${likeIcon}</span> &nbsp;<span>${likeText}</span>
+                                </button>
+                            </div>
+                            <button class="action-btn" style="flex: 1;" onclick="document.getElementById('cmt-${post.id}').focus()">💬 Bình luận</button>
+                            <button class="action-btn" style="flex: 1;" onclick="handleShare('${post.id}')">🔗 Chia sẻ</button>
+                        </div>
+
+                        <div id="comments-list-${post.id}" style="margin-bottom:12px;">${commentsHTML}</div>
+
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <img src="${currentUser.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid rgba(0,0,0,0.1);">
+                            <input type="text" id="cmt-${post.id}" class="auth-input" style="padding:8px 16px; border-radius:20px; font-size:14px;" placeholder="Viết bình luận..." onkeypress="if(event.key==='Enter') submitComment('${post.id}')">
+                            <button style="color:var(--primary); font-weight:600; padding:0 8px; outline:none; border:none; background:transparent; cursor:pointer;" onclick="submitComment('${post.id}')">Gửi</button>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+
+        let reactionTimer = null; let isReactionBarOpen = false;
+        function startReactionTimer(postId) {
+            isReactionBarOpen = false;
+            reactionTimer = setTimeout(() => {
+                document.querySelectorAll('.reaction-bar').forEach(b => b.classList.remove('active'));
+                document.getElementById(`rb-${postId}`).classList.add('active');
+                isReactionBarOpen = true;
+            }, 500);
+        }
+        function stopReactionTimer(postId) {
+            if (reactionTimer) clearTimeout(reactionTimer);
+            if (!isReactionBarOpen) {
+                let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+                let p = posts.find(x => x.id === postId);
+                if(p.reactions[currentUser.uid]) delete p.reactions[currentUser.uid]; 
+                else { p.reactions[currentUser.uid] = { emoji: '👍', text: 'Thích', color: 'var(--primary)' }; updateExpData(2); }
+                localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+                renderPosts();
+            }
+        }
+        function applyReaction(postId, emoji, text, color) {
+            let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+            let p = posts.find(x => x.id === postId);
+            if(!p.reactions[currentUser.uid]) updateExpData(2);
+            p.reactions[currentUser.uid] = { emoji, text, color };
+            localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+            renderPosts();
+        }
+
+        document.addEventListener('click', e => { if(!e.target.closest('.reaction-wrapper')) document.querySelectorAll('.reaction-bar').forEach(b => b.classList.remove('active')); });
+        document.addEventListener('keydown', e => {
+            if (e.shiftKey && e.key === 'Insert') { const firstBar = document.querySelector('.reaction-bar'); if (firstBar) firstBar.classList.add('active'); } 
+            else if (e.key === 'Insert') document.querySelectorAll('.reaction-bar').forEach(b => b.classList.remove('active'));
+        });
+
+        function submitComment(postId) {
+            if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
+            const input = document.getElementById(`cmt-${postId}`);
+            const text = input.value.trim();
+            if(!text) return;
+
+            let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+            let p = posts.find(x => x.id === postId);
+            p.comments.push({ name: currentUser.name, avatar: currentUser.avatar, text: text });
+            localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+            
+            updateExpData(5);
+            renderPosts();
+        }
+
+        function handleShare(postId) {
+            let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+            posts.find(x => x.id === postId).shares++;
+            localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+            renderPosts();
+            alert("Đã sao chép liên kết vào khay nhớ tạm!");
+        }
+
+        function previewFile(inputElement) {
+            const previewBox = document.getElementById('file-preview-box');
+            if(inputElement.files && inputElement.files[0]) { previewBox.innerText = "📎 Đã đính kèm: " + inputElement.files[0].name; previewBox.classList.add('active'); } 
+            else { previewBox.innerText = ""; previewBox.classList.remove('active'); }
+        }
+
+        function handleAvatarSync(inputElement) {
+            if (inputElement.files && inputElement.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentUser.avatar = e.target.result;
+                    saveSession();
+                    updateExpUI();
+                    renderPosts(); // Cập nhật hình ở feed
+                }
+                reader.readAsDataURL(inputElement.files[0]);
+            }
+        }
+
+        // Modals & Navigation
+        function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
+        function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+        function toggleAuth(type) {
+            const isLogin = type === 'login';
+            document.getElementById('tab-login').classList.toggle('active', isLogin);
+            document.getElementById('tab-register').classList.toggle('active', !isLogin);
+            document.getElementById('form-login').style.display = isLogin ? 'flex' : 'none';
+            document.getElementById('form-register').style.display = isLogin ? 'none' : 'flex';
+        }
+        function openPolicyModal() { closeAuthModal(); document.getElementById('policyModal').style.display = 'flex'; }
+        function closePolicyModal() { document.getElementById('policyModal').style.display = 'none'; openAuthModal(); }
+        function openQAModal() { document.getElementById('qaModal').style.display = 'flex'; }
+        function closeQAModal() { document.getElementById('qaModal').style.display = 'none'; }
+        
+        function editDisplayName() {
+            document.getElementById('renameModal').style.display = 'flex';
+            document.getElementById('new-name-input').value = currentUser.name;
+        }
+        function closeRenameModal() { document.getElementById('renameModal').style.display = 'none'; }
+        function submitNewName() {
+            let newName = document.getElementById('new-name-input').value.trim();
+            if (newName.length < 3) return alert("Tên quá ngắn.");
+            currentUser.name = newName;
+            saveSession();
+            updateExpUI();
+            renderPosts();
+            closeRenameModal();
+        }
+
+        // 4. ADMIN PANEL THỰC TẾ TRÊN DATABASE
+        function openAdminAuth() { document.getElementById('adminAuthModal').style.display = 'flex'; }
+        function closeAdminAuth() { document.getElementById('adminAuthModal').style.display = 'none'; document.getElementById('admin-pwd-input').value = '';}
+        
+        function verifyAdmin() {
+            if (document.getElementById('admin-pwd-input').value === 'QuangHo1997#a') {
+                closeAdminAuth();
+                document.getElementById('adminPanelModal').style.display = 'flex';
+                renderAdminUserList();
+            } else { alert("MÃ TRUY CẬP TỪ CHỐI!"); document.getElementById('admin-pwd-input').value = ''; }
+        }
+        function closeAdminPanel() { document.getElementById('adminPanelModal').style.display = 'none'; }
+        
+        function switchAdminTab(tabId, el) {
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('tab-laa').style.display = 'none';
+            document.getElementById('tab-users').style.display = 'none';
+            if(tabId === 'tab-laa') document.getElementById('tab-laa').style.display = 'grid';
+            else { document.getElementById('tab-users').style.display = 'block'; renderAdminUserList(); }
+        }
+
+        function renderAdminUserList() {
+            let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+            let tbody = document.getElementById('admin-user-tbody');
+            let html = '';
+            users.forEach(u => {
+                let color = '#34c759';
+                if(u.status.includes('Mute')) color = '#ffcc00';
+                if(u.status.includes('Khóa')) color = '#ff3b30';
+                
+                let isMe = u.uid === currentUser.uid;
+                html += `<tr style="${isMe ? 'background:rgba(0,122,255,0.1)' : ''}">
+                    <td>${u.uid} ${isMe ? '(Bạn)' : ''}</td>
+                    <td>${u.name}</td><td>${u.level}</td>
+                    <td><span style="color:${color}; font-weight:bold;">${u.status}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function executeLAA(actionName, inputId) {
+            let targetUID = document.getElementById(inputId).value.trim();
+            if(!targetUID) return alert("Vui lòng nhập chính xác UID người dùng (VD: LYR-xxxxxx)");
+            
+            let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+            let userIndex = users.findIndex(u => u.uid === targetUID);
+            
+            if(userIndex === -1) return alert("HỆ THỐNG LAA: Không tìm thấy người dùng này trong Database!");
+
+            if(confirm(`[CẢNH BÁO BQT]\nÁp dụng án phạt [ ${actionName} ] cho UID: ${targetUID} ?`)) {
+                if(actionName === 'Thu Hồi Tài Sản') {
+                    users[userIndex].level = 1; users[userIndex].currentExp = 0;
+                } else {
+                    users[userIndex].status = actionName;
+                }
+                
+                localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
+                
+                // Nếu tự ban chính mình, cập nhật lại session
+                if(targetUID === currentUser.uid) {
+                    currentUser = users[userIndex];
+                    localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
+                    updateExpUI();
+                }
+                
+                document.getElementById(inputId).value = '';
+                alert(`✅ Đã thực thi lệnh thành công cho ${targetUID}`);
+                renderAdminUserList();
+            }
+        }
+
+        // Chuyển UI Chính
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('main').forEach(m => m.classList.remove('active-view'));
+            el.classList.add('active'); document.getElementById(tabId).classList.add('active-view');
+        }
+        function switchForumSection(secId, el) {
+            document.querySelectorAll('.forum-menu-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.forum-content-section').forEach(s => s.classList.remove('active-section'));
+            el.classList.add('active'); document.getElementById(secId).classList.add('active-section');
+        }
+
+        window.onclick = function(e) {
+            if (e.target == document.getElementById('authModal')) closeAuthModal();
+            if (e.target == document.getElementById('policyModal')) closePolicyModal();
+            if (e.target == document.getElementById('qaModal')) closeQAModal();
+            if (e.target == document.getElementById('renameModal')) closeRenameModal();
+            if (e.target == document.getElementById('adminAuthModal')) closeAdminAuth();
+            if (e.target == document.getElementById('adminPanelModal')) closeAdminPanel();
+        }
+
+        // Khởi động UI
+        updateExpUI();
+        renderPosts();
+    </script>
+</body>
+</html>
