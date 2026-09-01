@@ -116,6 +116,19 @@
         .empty-state p { font-size: 15px; line-height: 1.5; margin-bottom: 12px;}
         .id-badge-info { font-family: monospace; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; color: var(--text-main); border: 1px solid var(--border); display: inline-block;}
 
+        /* === APP STORE GRID STYLES (MỚI THÊM) === */
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding: 10px 0; }
+        .app-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; box-shadow: var(--shadow-sm); display: flex; gap: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); cursor: pointer; }
+        .app-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: rgba(0, 122, 255, 0.3); }
+        .app-icon { width: 72px; height: 72px; border-radius: 18px; background: linear-gradient(135deg, var(--primary), #34c759); display: flex; align-items: center; justify-content: center; color: white; font-size: 32px; font-weight: 900; flex-shrink: 0; box-shadow: 0 8px 16px rgba(52, 199, 89, 0.25); text-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        .app-info { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+        .app-title { font-size: 17px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;}
+        .app-publisher { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; font-weight: 500;}
+        .app-meta { font-size: 12px; color: var(--text-sub); font-weight: 600; display: flex; gap: 12px; align-items: center; margin-bottom: 12px;}
+        .app-meta span { display: flex; align-items: center; gap: 4px;}
+        .btn-download { background: rgba(0, 122, 255, 0.1); color: var(--primary); border: none; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; align-self: flex-start;}
+        .btn-download:hover { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);}
+
         #view-forum { max-width: 1400px; display: none; }
         #view-forum.active-view { display: grid; grid-template-columns: 240px 1fr 300px; gap: 24px; }
 
@@ -308,11 +321,7 @@
     </header>
 
     <main id="view-explore" class="active-view">
-        <div class="empty-state">
-            <h2>Chưa có ứng dụng</h2>
-            <p>Cửa hàng đang trống. Xin cảm ơn người dùng!!!</p>
-            <div class="id-badge-info">Lưu ý BQT: Mỗi ứng dụng tải lên sẽ được cấp <strong>App ID</strong> (VD: APP-VN-xxxx) và lưu vết <strong>Mã Hash</strong> tự động.</div>
-        </div>
+        <!-- Nội dung sẽ được render bằng JS renderApps() -->
     </main>
 
     <main id="view-games">
@@ -324,11 +333,7 @@
     </main>
 
     <main id="view-apps">
-        <div class="empty-state">
-            <h2>Chưa có Ứng dụng</h2>
-            <p>Kho Ứng dụng đang trống. Các tiện ích sẽ được hiển thị ngay khi nhà phát hành đăng tải.</p>
-            <div class="id-badge-info">Lưu ý BQT: File tải lên sẽ trải qua quét tự động bằng hệ thống LAA phân tích <strong>SHA-256 Hash</strong>.</div>
-        </div>
+        <!-- Nội dung sẽ được render bằng JS renderApps() -->
     </main>
 
     <main id="view-forum">
@@ -391,6 +396,8 @@
                         <div class="profile-name-container">
                             <div class="profile-name" id="user-display-name">Người Dùng Ẩn Danh</div>
                             <button class="btn-edit-name" onclick="editDisplayName()" title="Đổi tên">✏️</button>
+                            <span class="user-uid-badge" id="user-display-role" style="background: rgba(255,204,0,0.2); color: #cda200; border: 1px solid rgba(255,204,0,0.4);">USER</span>
+                            <span class="user-uid-badge" id="user-display-title" style="margin-left: 4px;">Tân Thủ</span>
                             <span class="user-lv" id="user-display-level">LV. 1</span>
                             <span class="user-uid-badge" onclick="navigator.clipboard.writeText(this.innerText.replace('UID: ', '')); alert('Đã sao chép User ID!')" title="ID Định Danh Hệ Thống (Click để copy)" id="user-display-uid">UID: LYR-0000000</span>
                         </div>
@@ -614,8 +621,8 @@
             
             <div class="admin-tab-container">
                 <button class="admin-tab-btn active" onclick="switchAdminTab('tab-laa', this)">Bảng Điều Khiển LAA</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('tab-roles', this)">Phân Quyền & Cấp Bậc</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-users', this)">Quản Lý Người Dùng</button>
-                <!-- THÊM TAB CHUYÊN DỤNG CHO NHÀ PHÁT HÀNH -->
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-publisher', this)">Đăng Tải APK (Publisher)</button>
             </div>
 
@@ -676,6 +683,44 @@
                 </div>
             </div>
 
+            <!-- TAB PHÂN QUYỀN & CẤP BẬC -->
+            <div id="tab-roles" class="admin-grid" style="display: none;">
+                <div class="admin-card">
+                    <h4 style="color: #0a84ff; border-bottom-color: #333;">👑 PHÂN QUYỀN HỆ THỐNG (ROLE)</h4>
+                    <input type="text" class="admin-input" id="role-uid" placeholder="Nhập UID (LYR-xxxx)...">
+                    <select class="admin-input" id="role-select" style="background: #1c1c1e;">
+                        <option value="USER">USER (Người dùng thường)</option>
+                        <option value="MODERATOR">MODERATOR (Kiểm duyệt viên)</option>
+                        <option value="ADMIN">ADMIN (Quản trị viên)</option>
+                    </select>
+                    <div class="admin-btn-group">
+                        <button class="admin-btn" style="background: rgba(10, 132, 255, 0.1); color: #0a84ff; border: 1px solid rgba(10, 132, 255, 0.3);" onclick="adminSetRole()">Cập Nhật Role</button>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h4 style="color: #bf5af2; border-bottom-color: #333;">🏷️ CẤP DANH HIỆU TÙY CHỈNH</h4>
+                    <input type="text" class="admin-input" id="title-uid" placeholder="Nhập UID (LYR-xxxx)...">
+                    <input type="text" class="admin-input" id="title-input" placeholder="Nhập danh hiệu (VD: Nhà Phát Hành, Fan Cứng)...">
+                    <div class="admin-btn-group">
+                        <button class="admin-btn" style="background: rgba(191, 90, 242, 0.1); color: #bf5af2; border: 1px solid rgba(191, 90, 242, 0.3);" onclick="adminSetTitle()">Cấp Danh Hiệu</button>
+                    </div>
+                </div>
+
+                <div class="admin-card god-mode-card" style="background: rgba(255, 159, 10, 0.05); border-color: rgba(255, 159, 10, 0.3);">
+                    <h4 style="color: #ff9f0a; border-bottom-color: rgba(255, 159, 10, 0.3);">⚡ ĐIỀU CHỈNH LEVEL & EXP TRỰC TIẾP</h4>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Ép cấp độ hoặc điểm danh vọng. Nhập UID và thông số muốn đổi.</p>
+                    <input type="text" class="admin-input" id="lvl-uid" placeholder="Nhập UID (LYR-xxxx)...">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" class="admin-input" id="lvl-input" placeholder="Level mới (1-1000)">
+                        <input type="number" class="admin-input" id="exp-input" placeholder="EXP mới">
+                    </div>
+                    <div class="admin-btn-group">
+                        <button class="admin-btn" style="background: rgba(255, 159, 10, 0.1); color: #ff9f0a; border: 1px solid rgba(255, 159, 10, 0.3);" onclick="adminSetLevelExp()">Thực Thi Bơm/Hạ Cấp</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB QUẢN LÝ NGƯỜI DÙNG -->
             <div id="tab-users" class="admin-table-wrapper" style="display: none;">
                 <table class="admin-table">
@@ -683,7 +728,8 @@
                         <tr>
                             <th>User ID (UID)</th>
                             <th>Tên Hiển Thị</th>
-                            <th>Cấp Độ</th>
+                            <th>Role / Danh Hiệu</th>
+                            <th>Level / EXP</th>
                             <th>Trạng Thái Hệ Thống</th>
                         </tr>
                     </thead>
@@ -695,24 +741,24 @@
             <div id="tab-publisher" class="admin-grid" style="display: none; grid-template-columns: 1fr; max-height: 60vh; overflow-y: auto;">
                 <div class="admin-card god-mode-card" style="background: rgba(52, 199, 89, 0.05); border-color: #34c759;">
                     <h4 style="color: #34c759; border-bottom-color: rgba(52, 199, 89, 0.5);">🚀 PUBLISHER UPLOAD CENTER</h4>
-                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động quét LAA, cấp App ID và khởi tạo văn bản Chính sách bảo mật (CSBM) & Quyền riêng tư (QRT).</p>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động cấp App ID và đẩy lên Cửa Hàng ngay lập tức.</p>
                     
                     <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
                     <input type="file" id="pub-apk-file" accept=".apk" class="admin-input" style="background: #1c1c1e; color: #aaa;">
                     
                     <div class="admin-btn-group" style="margin-top: 10px;">
-                        <button class="admin-btn god-mode-btn" id="btn-pub-upload" style="background: #34c759; box-shadow: 0 0 15px rgba(52,199,89,0.5);" onclick="simulateApkUpload()">TẢI LÊN & TẠO CSBM TỰ ĐỘNG</button>
+                        <button class="admin-btn god-mode-btn" id="btn-pub-upload" style="background: #34c759; box-shadow: 0 0 15px rgba(52,199,89,0.5);" onclick="simulateApkUpload()">TẢI LÊN & ĐƯA LÊN CHỢ ỨNG DỤNG</button>
                     </div>
 
                     <div id="pub-result-area" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #444;">
-                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">✅ KẾT QUẢ PHÂN TÍCH LAA</h5>
+                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">✅ KẾT QUẢ TẢI LÊN</h5>
                         <div style="background: #111; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #34c759; margin-bottom: 15px; border: 1px solid #333;">
                             <div>[APP_ID]: <span id="res-appid"></span></div>
                             <div>[SHA-256 HASH]: <span id="res-hash"></span></div>
-                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: An toàn (Passed Sandbox)</div>
+                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: An toàn (Đã phát hành ra Home)</div>
                         </div>
                         
-                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (AUTO-GENERATED)</h5>
+                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ</h5>
                         <textarea class="admin-input" id="res-csbm" rows="12" style="font-family: inherit; font-size: 12px; line-height: 1.5; resize: none; background: #111;" readonly></textarea>
                     </div>
                 </div>
@@ -730,6 +776,7 @@
         const DB_KEY_USERS = 'lyrad_real_users';
         const DB_KEY_POSTS = 'lyrad_real_posts';
         const DB_KEY_SESSION = 'lyrad_real_session';
+        const DB_KEY_APPS = 'lyrad_real_apps'; // <-- KHỞI TẠO BỘ NHỚ LƯU APP
 
         // 1. CẤU HÌNH FIREBASE
         const firebaseConfig = {
@@ -742,52 +789,42 @@
             measurementId: "G-KVTY8LYBPQ"
         };
 
-        // 2. KHỞI TẠO FIREBASE
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
         // 3. XỬ LÝ ĐĂNG NHẬP POPUP FIREBASE GOOGLE
         function signInWithFirebaseGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            // Yêu cầu Firebase Popup Đăng nhập
-            firebase.auth().signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user; // Lấy dữ liệu Google trả về từ Firebase
-                    
-                    let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
-                    let existingUser = users.find(u => u.email === user.email);
-                    
-                    if (existingUser) {
-                        currentUser = existingUser;
-                        currentUser.avatar = user.photoURL; // Cập nhật avatar mới nhất
-                    } else {
-                        // Tạo User mới nếu chưa tồn tại
-                        currentUser = {
-                            uid: 'LYR-' + Math.floor(100000 + Math.random() * 900000),
-                            name: user.displayName, 
-                            email: user.email,
-                            level: 1, currentExp: 0,
-                            status: 'Hoạt Động',
-                            avatar: user.photoURL 
-                        };
-                    }
-                    
-                    saveSession();
-                    updateExpUI();
-                    renderPosts();
-                    closeAuthModal();
-                    alert("Xác thực Firebase thành công! Chào mừng " + currentUser.name);
-                })
-                .catch((error) => {
-                    console.error("Lỗi xác thực Firebase:", error);
-                    alert("Đăng nhập thất bại: " + error.message + "\n\nVui lòng kiểm tra lại Cấu hình Config Firebase của bạn ở phần Script!");
-                });
+            firebase.auth().signInWithPopup(provider).then((result) => {
+                const user = result.user;
+                let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+                let existingUser = users.find(u => u.email === user.email);
+                
+                if (existingUser) {
+                    currentUser = existingUser;
+                    currentUser.avatar = user.photoURL; 
+                } else {
+                    currentUser = {
+                        uid: 'LYR-' + Math.floor(100000 + Math.random() * 900000),
+                        name: user.displayName, 
+                        email: user.email,
+                        level: 1, currentExp: 0,
+                        status: 'Hoạt Động',
+                        avatar: user.photoURL,
+                        role: 'USER',
+                        title: 'Tân Thủ'
+                    };
+                }
+                saveSession(); updateExpUI(); renderPosts(); closeAuthModal();
+                alert("Xác thực Firebase thành công! Chào mừng " + currentUser.name);
+            }).catch((error) => {
+                alert("Đăng nhập thất bại: " + error.message);
+            });
         }
 
-        // --- CÁC HÀM XỬ LÝ DATABASE LOCAL HIỆN CÓ ---
+        // --- KHỞI TẠO CẤU TRÚC LƯU TRỮ ---
         if (!localStorage.getItem(DB_KEY_USERS)) localStorage.setItem(DB_KEY_USERS, JSON.stringify([]));
         if (!localStorage.getItem(DB_KEY_POSTS)) localStorage.setItem(DB_KEY_POSTS, JSON.stringify([]));
+        if (!localStorage.getItem(DB_KEY_APPS)) localStorage.setItem(DB_KEY_APPS, JSON.stringify([])); // DB mảng Apps
 
         let currentUser = JSON.parse(localStorage.getItem(DB_KEY_SESSION));
         if (!currentUser) {
@@ -796,10 +833,11 @@
                 name: 'Người Dùng Ẩn Danh',
                 level: 1, currentExp: 0,
                 status: 'Hoạt Động',
-                avatar: 'https://ui-avatars.com/api/?name=User&background=random'
+                avatar: 'https://ui-avatars.com/api/?name=User&background=random',
+                role: 'USER',
+                title: 'Tân Thủ'
             };
             localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
-            
             let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
             users.push(currentUser);
             localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
@@ -811,8 +849,7 @@
             localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
             let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
             let index = users.findIndex(u => u.uid === currentUser.uid);
-            if(index !== -1) { users[index] = currentUser; } 
-            else { users.push(currentUser); }
+            if(index !== -1) users[index] = currentUser; else users.push(currentUser);
             localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
         }
 
@@ -835,19 +872,19 @@
                 lvBadge.classList.add('level-up-anim');
                 setTimeout(() => lvBadge.classList.remove('level-up-anim'), 600);
             }
-            saveSession();
-            updateExpUI();
+            saveSession(); updateExpUI();
         }
 
         function updateExpUI() {
             document.querySelectorAll('.sync-user-avatar').forEach(img => img.src = currentUser.avatar);
             document.getElementById('user-display-name').innerText = currentUser.name;
             
-            // XỬ LÝ ẨN/HIỆN NÚT ĐĂNG NHẬP VÀ AVATAR HEADER KHI ĐÃ ĐĂNG NHẬP
+            if(document.getElementById('user-display-role')) document.getElementById('user-display-role').innerText = currentUser.role || 'USER';
+            if(document.getElementById('user-display-title')) document.getElementById('user-display-title').innerText = currentUser.title || 'Tân Thủ';
+
             const loginBtn = document.getElementById('header-login-btn');
             const profileAvt = document.getElementById('header-user-profile');
             
-            // User ẩn danh tạo ban đầu không có email, user login qua Firebase/Form sẽ có email
             if (currentUser && currentUser.email) {
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (profileAvt) profileAvt.style.display = 'flex';
@@ -861,6 +898,7 @@
                 let multiplier = {post:15, like:2, cmt:5, dl:35, '5star':50, review:100, top:1500, code:800}[id];
                 if(document.getElementById('reward-'+id)) document.getElementById('reward-'+id).innerText = `+${(multiplier * currentUser.level).toLocaleString('vi-VN')} EXP`;
             });
+            
             if(currentUser.level >= maxGlobalLevel) {
                 document.getElementById('user-display-level').innerText = `LV. 1000 (MAX)`;
                 document.getElementById('user-display-exp-text').innerText = `Đã đạt cấp độ tối đa`;
@@ -868,14 +906,153 @@
             } else {
                 const percent = (currentUser.currentExp / expReq) * 100;
                 document.getElementById('user-display-level').innerText = `LV. ${currentUser.level}`;
-                document.getElementById('user-display-exp-text').innerText = `${currentUser.currentExp.toLocaleString('vi-VN')} / ${expReq.toLocaleString('vi-VN')} EXP`;
+                document.getElementById('user-display-exp-text').innerText = `${(currentUser.currentExp || 0).toLocaleString('vi-VN')} / ${expReq.toLocaleString('vi-VN')} EXP`;
                 document.getElementById('user-display-exp-fill').style.width = `${Math.min(percent, 100)}%`;
             }
-            if (document.getElementById('user-display-uid')) {
-                document.getElementById('user-display-uid').innerText = `UID: ${currentUser.uid}`;
-            }
+            if (document.getElementById('user-display-uid')) document.getElementById('user-display-uid').innerText = `UID: ${currentUser.uid}`;
         }
         
+        // ==========================================
+        // VẼ UI ỨNG DỤNG LÊN TAB KHÁM PHÁ & ỨNG DỤNG
+        // ==========================================
+        function renderApps() {
+            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+            let exploreContainer = document.getElementById('view-explore');
+            let appsContainer = document.getElementById('view-apps');
+            
+            let emptyStateHTML = `
+                <div class="empty-state">
+                    <h2>Chưa có ứng dụng</h2>
+                    <p>Cửa hàng đang trống. Xin cảm ơn người dùng!!!</p>
+                    <div class="id-badge-info">Lưu ý BQT: Mỗi ứng dụng tải lên sẽ được cấp <strong>App ID</strong> (VD: APP-VN-xxxx) và lưu vết <strong>Mã Hash</strong> tự động.</div>
+                </div>`;
+                
+            if (apps.length === 0) {
+                exploreContainer.innerHTML = emptyStateHTML;
+                appsContainer.innerHTML = emptyStateHTML;
+                return;
+            }
+
+            let gridHTML = '<div class="app-grid">';
+            
+            // Xếp app mới nhất lên đầu
+            apps.sort((a,b) => b.timestamp - a.timestamp).forEach(app => {
+                let initial = app.name.charAt(0).toUpperCase();
+                gridHTML += `
+                    <div class="app-card" onclick="alert('Đang chuyển hướng đến trang tải xuống của hệ thống. App ID: ${app.id}')">
+                        <div class="app-icon">${initial}</div>
+                        <div class="app-info">
+                            <div class="app-title" title="${app.name}">${app.name}</div>
+                            <div class="app-publisher">${app.publisher}</div>
+                            <div class="app-meta">
+                                <span>⭐ ${app.rating}</span>
+                                <span>⬇️ ${app.downloads}</span>
+                                <span>📦 ${app.size}</span>
+                            </div>
+                            <button class="btn-download" onclick="event.stopPropagation(); alert('Bắt đầu tải xuống file gốc: ${app.name}\\nMã Hash: ${app.hash}')">Tải về máy</button>
+                        </div>
+                    </div>
+                `;
+            });
+            gridHTML += '</div>';
+
+            exploreContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Khám phá Ứng dụng nổi bật</h2>` + gridHTML;
+            appsContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Kho Ứng dụng & Tiện ích</h2>` + gridHTML;
+        }
+
+        // ==========================================
+        // XỬ LÝ UPLOAD APP THÀNH CÔNG VÀ LƯU DATA
+        // ==========================================
+        function simulateApkUpload() {
+            const appName = document.getElementById('pub-app-name').value.trim();
+            const fileInput = document.getElementById('pub-apk-file');
+            
+            if (!appName) return alert("Vui lòng nhập tên ứng dụng / trò chơi của bạn!");
+            if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng chọn file định dạng .apk!");
+            
+            const file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.apk')) return alert("Hệ thống chỉ chấp nhận định dạng gói cài đặt Android (.apk)!");
+            
+            const btn = document.getElementById('btn-pub-upload');
+            const originalText = btn.innerText;
+            btn.innerText = "ĐANG PHÂN TÍCH QUA LAA SANDBOX...";
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                
+                const randomAppId = 'APP-VN-' + Math.floor(1000 + Math.random() * 9000);
+                const randomHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                
+                // 1. LƯU ỨNG DỤNG VÀO LOCAL STORAGE DATABASE
+                let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+                apps.push({
+                    id: randomAppId,
+                    name: appName,
+                    hash: randomHash,
+                    publisher: currentUser.name,
+                    publisherUid: currentUser.uid,
+                    timestamp: Date.now(),
+                    downloads: Math.floor(Math.random() * 500) + 10,
+                    rating: (Math.random() * (5.0 - 4.2) + 4.2).toFixed(1),
+                    size: (file.size / (1024*1024)).toFixed(1) + ' MB'
+                });
+                localStorage.setItem(DB_KEY_APPS, JSON.stringify(apps));
+
+                // 2. TỰ ĐỘNG POST BÀI QUẢNG CÁO APP RA BẢNG TIN
+                let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+                posts.push({
+                    id: 'P-' + Math.floor(100000 + Math.random() * 900000),
+                    uid: currentUser.uid,
+                    name: currentUser.name,
+                    avatar: currentUser.avatar,
+                    level: currentUser.level,
+                    role: currentUser.role || 'USER',
+                    title: currentUser.title || 'Tân Thủ',
+                    content: `🚀 Vừa phát hành ứng dụng mới: **${appName}**\n\nMã phê duyệt (App ID): ${randomAppId}\nNhà phát hành đã cập nhật bản cài đặt mới nhất, các bạn tải ngay trên tab Khám Phá nhé!`,
+                    timestamp: Date.now(),
+                    reactions: {}, 
+                    comments: [],
+                    shares: 0
+                });
+                localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+
+                // 3. RENDER LẠI UI VÀ THƯỞNG EXP
+                renderApps();
+                renderPosts();
+                updateExpData(500); // Thưởng cứng 500 EXP khi upload app
+
+                document.getElementById('res-appid').innerText = randomAppId;
+                document.getElementById('res-hash').innerText = randomHash;
+                
+                const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ
+Tên sản phẩm: ${appName.toUpperCase()}
+Mã định danh hệ thống: ${randomAppId}
+Ngày phê duyệt: ${new Date().toLocaleString('vi-VN')}
+
+1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)
+Ứng dụng "${appName}" hoạt động trên nguyên tắc tối giản quyền. Mọi quyền truy cập hệ thống chỉ được sử dụng đúng với mục đích hiển thị nội dung.
+
+2. BẢO MẬT MÃ NGUỒN
+Bản phân phối ứng dụng này đã được máy quét của Lyrad phân tích. Mã băm: ${randomHash}.`;
+                
+                document.getElementById('res-csbm').value = csbmText;
+                document.getElementById('pub-result-area').style.display = 'block';
+                
+                // Clear input
+                document.getElementById('pub-app-name').value = '';
+                document.getElementById('pub-apk-file').value = '';
+
+                alert("Đăng tải APK thành công!\nỨng dụng đã được hiển thị công khai trên Market Place.");
+            }, 1800);
+        }
+
+        // ==========================================
+        // CÁC HÀM XỬ LÝ POST VÀ CỘNG ĐỒNG NHƯ CŨ
+        // ==========================================
         function handlePostSubmit(e) {
             e.preventDefault();
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
@@ -885,28 +1062,25 @@
             if (!content) return false;
 
             let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
-            const newPost = {
+            posts.push({
                 id: 'P-' + Math.floor(100000 + Math.random() * 900000),
                 uid: currentUser.uid,
                 name: currentUser.name,
                 avatar: currentUser.avatar,
                 level: currentUser.level,
+                role: currentUser.role || 'USER',
+                title: currentUser.title || 'Tân Thủ',
                 content: content,
                 timestamp: Date.now(),
                 reactions: {}, 
                 comments: [],
                 shares: 0
-            };
-            
-            posts.push(newPost);
+            });
             localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
             
             input.value = '';
             document.getElementById('file-preview-box').classList.remove('active');
-            
-            updateExpData(15);
-            renderPosts();
-            return false;
+            updateExpData(15); renderPosts(); return false;
         }
 
         function renderPosts() {
@@ -948,10 +1122,12 @@
                                 <img src="${post.avatar}" class="avatar-box">
                                 <div>
                                     <div style="font-weight:700; font-size:15px; display:flex; align-items:center;">
-                                        ${post.name} <span class="user-lv">LV. ${post.level}</span>
+                                        ${post.name} 
+                                        <span class="user-uid-badge" style="background: rgba(255,204,0,0.1); color: #cda200; border-color: #cda200; font-size: 10px; margin-left: 6px;">${post.role || 'USER'}</span>
+                                        <span class="user-lv">LV. ${post.level}</span>
                                         <span style="font-size:10px; color:var(--text-sub); margin-left:6px; font-family:monospace;">(UID: ${post.uid})</span>
                                     </div>
-                                    <div style="font-size:12px; color:var(--text-sub);">Lưu trữ nội bộ</div>
+                                    <div style="font-size:12px; color:var(--text-sub);">Lưu trữ nội bộ • ${post.title || 'Tân Thủ'}</div>
                                 </div>
                             </div>
                             <div style="font-size:11px; color:var(--text-sub); font-family:monospace; background:var(--bg-body); padding:4px 8px; border-radius:4px; border:1px solid var(--border);">POST ID: #${post.id}</div>
@@ -1036,22 +1212,18 @@
             const input = document.getElementById(`cmt-${postId}`);
             const text = input.value.trim();
             if(!text) return;
-
             let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
             let p = posts.find(x => x.id === postId);
             p.comments.push({ name: currentUser.name, avatar: currentUser.avatar, text: text });
             localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
-            
-            updateExpData(5);
-            renderPosts();
+            updateExpData(5); renderPosts();
         }
 
         function handleShare(postId) {
             let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
             posts.find(x => x.id === postId).shares++;
             localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
-            renderPosts();
-            alert("Đã sao chép liên kết vào khay nhớ tạm!");
+            renderPosts(); alert("Đã sao chép liên kết vào khay nhớ tạm!");
         }
 
         function previewFile(inputElement) {
@@ -1063,12 +1235,7 @@
         function handleAvatarSync(inputElement) {
             if (inputElement.files && inputElement.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    currentUser.avatar = e.target.result;
-                    saveSession();
-                    updateExpUI();
-                    renderPosts();
-                }
+                reader.onload = function(e) { currentUser.avatar = e.target.result; saveSession(); updateExpUI(); renderPosts(); }
                 reader.readAsDataURL(inputElement.files[0]);
             }
         }
@@ -1086,20 +1253,13 @@
         function closePolicyModal() { document.getElementById('policyModal').style.display = 'none'; openAuthModal(); }
         function openQAModal() { document.getElementById('qaModal').style.display = 'flex'; }
         function closeQAModal() { document.getElementById('qaModal').style.display = 'none'; }
-        
-        function editDisplayName() {
-            document.getElementById('renameModal').style.display = 'flex';
-            document.getElementById('new-name-input').value = currentUser.name;
-        }
+        function editDisplayName() { document.getElementById('renameModal').style.display = 'flex'; document.getElementById('new-name-input').value = currentUser.name; }
         function closeRenameModal() { document.getElementById('renameModal').style.display = 'none'; }
+        
         function submitNewName() {
             let newName = document.getElementById('new-name-input').value.trim();
             if (newName.length < 3) return alert("Tên quá ngắn.");
-            currentUser.name = newName;
-            saveSession();
-            updateExpUI();
-            renderPosts();
-            closeRenameModal();
+            currentUser.name = newName; saveSession(); updateExpUI(); renderPosts(); closeRenameModal();
         }
 
         function openAdminAuth() { document.getElementById('adminAuthModal').style.display = 'flex'; }
@@ -1107,9 +1267,7 @@
         
         function verifyAdmin() {
             if (document.getElementById('admin-pwd-input').value === 'QuangHo1997#a') {
-                closeAdminAuth();
-                document.getElementById('adminPanelModal').style.display = 'flex';
-                renderAdminUserList();
+                closeAdminAuth(); document.getElementById('adminPanelModal').style.display = 'flex'; renderAdminUserList();
             } else { alert("MÃ TRUY CẬP TỪ CHỐI!"); document.getElementById('admin-pwd-input').value = ''; }
         }
         function closeAdminPanel() { document.getElementById('adminPanelModal').style.display = 'none'; }
@@ -1117,19 +1275,15 @@
         function switchAdminTab(tabId, el) {
             document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
             el.classList.add('active');
-            
             document.getElementById('tab-laa').style.display = 'none';
             document.getElementById('tab-users').style.display = 'none';
             document.getElementById('tab-publisher').style.display = 'none';
+            document.getElementById('tab-roles').style.display = 'none'; // Ẩn tab mới
             
-            if(tabId === 'tab-laa') {
-                document.getElementById('tab-laa').style.display = 'grid';
-            } else if (tabId === 'tab-users') {
-                document.getElementById('tab-users').style.display = 'block'; 
-                renderAdminUserList();
-            } else if (tabId === 'tab-publisher') {
-                document.getElementById('tab-publisher').style.display = 'grid';
-            }
+            if(tabId === 'tab-laa') { document.getElementById('tab-laa').style.display = 'grid'; } 
+            else if (tabId === 'tab-users') { document.getElementById('tab-users').style.display = 'block'; renderAdminUserList(); } 
+            else if (tabId === 'tab-publisher') { document.getElementById('tab-publisher').style.display = 'grid'; }
+            else if (tabId === 'tab-roles') { document.getElementById('tab-roles').style.display = 'grid'; } // Hiện tab mới
         }
 
         function renderAdminUserList() {
@@ -1137,14 +1291,13 @@
             let tbody = document.getElementById('admin-user-tbody');
             let html = '';
             users.forEach(u => {
-                let color = '#34c759';
-                if(u.status.includes('Mute')) color = '#ffcc00';
-                if(u.status.includes('Khóa')) color = '#ff3b30';
-                
+                let color = '#34c759'; if(u.status.includes('Mute')) color = '#ffcc00'; if(u.status.includes('Khóa')) color = '#ff3b30';
                 let isMe = u.uid === currentUser.uid;
                 html += `<tr style="${isMe ? 'background:rgba(0,122,255,0.1)' : ''}">
                     <td>${u.uid} ${isMe ? '(Bạn)' : ''}</td>
-                    <td>${u.name}</td><td>${u.level}</td>
+                    <td>${u.name}</td>
+                    <td><span style="color:#0a84ff; font-weight:bold;">${u.role || 'USER'}</span><br><span style="font-size:11px; color:#aaa;">${u.title || 'Tân Thủ'}</span></td>
+                    <td>LV.${u.level}<br><span style="font-size:11px; color:#aaa;">${(u.currentExp || 0).toLocaleString()} EXP</span></td>
                     <td><span style="color:${color}; font-weight:bold;">${u.status}</span></td>
                 </tr>`;
             });
@@ -1154,100 +1307,86 @@
         function executeLAA(actionName, inputId) {
             let targetUID = document.getElementById(inputId).value.trim();
             if(!targetUID) return alert("Vui lòng nhập chính xác UID người dùng (VD: LYR-xxxxxx)");
-            
             let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
             let userIndex = users.findIndex(u => u.uid === targetUID);
             
             if(userIndex === -1) return alert("HỆ THỐNG LAA: Không tìm thấy người dùng này trong Database!");
 
             if(confirm(`[CẢNH BÁO BQT]\nÁp dụng án phạt [ ${actionName} ] cho UID: ${targetUID} ?`)) {
-                
-                // THÊM LOGIC XÓA TÀI KHOẢN KHỎI DATABASE
-                if (actionName === 'Xóa Tài Khoản') {
-                    users.splice(userIndex, 1);
-                } 
-                else if(actionName === 'Thu Hồi Tài Sản') {
-                    users[userIndex].level = 1; users[userIndex].currentExp = 0;
-                } else {
-                    users[userIndex].status = actionName;
-                }
-                
+                if (actionName === 'Xóa Tài Khoản') { users.splice(userIndex, 1); } 
+                else if(actionName === 'Thu Hồi Tài Sản') { users[userIndex].level = 1; users[userIndex].currentExp = 0; } 
+                else { users[userIndex].status = actionName; }
                 localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
                 
                 if(targetUID === currentUser.uid) {
-                    // Nếu chính admin lỡ xóa bản thân
-                    if (actionName === 'Xóa Tài Khoản') {
-                        localStorage.removeItem(DB_KEY_SESSION);
-                        alert("Tài khoản của bạn đã bị xóa khỏi hệ thống. Trang sẽ tự tải lại!");
-                        location.reload();
-                        return;
-                    } else {
-                        currentUser = users[userIndex];
-                        localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
-                        updateExpUI();
-                    }
+                    if (actionName === 'Xóa Tài Khoản') { localStorage.removeItem(DB_KEY_SESSION); alert("Tài khoản của bạn đã bị xóa khỏi hệ thống. Trang sẽ tự tải lại!"); location.reload(); return; } 
+                    else { currentUser = users[userIndex]; localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser)); updateExpUI(); }
                 }
-                
-                document.getElementById(inputId).value = '';
-                alert(`✅ Đã thực thi lệnh thành công cho ${targetUID}`);
-                renderAdminUserList();
+                document.getElementById(inputId).value = ''; alert(`✅ Đã thực thi lệnh thành công cho ${targetUID}`); renderAdminUserList();
             }
         }
-        
-        // --- HÀM MỚI: GIẢ LẬP NHÀ PHÁT HÀNH TẢI LÊN APK ---
-        function simulateApkUpload() {
-            const appName = document.getElementById('pub-app-name').value.trim();
-            const fileInput = document.getElementById('pub-apk-file');
-            
-            if (!appName) return alert("Vui lòng nhập tên ứng dụng / trò chơi của bạn!");
-            if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng chọn file định dạng .apk!");
-            
-            const file = fileInput.files[0];
-            if (!file.name.toLowerCase().endsWith('.apk')) return alert("Hệ thống chỉ chấp nhận định dạng gói cài đặt Android (.apk)!");
-            
-            // Effect loading nút bấm
-            const btn = document.getElementById('btn-pub-upload');
-            const originalText = btn.innerText;
-            btn.innerText = "ĐANG PHÂN TÍCH QUA LAA SANDBOX...";
-            btn.disabled = true;
-            btn.style.opacity = '0.7';
-            
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                
-                // Khởi tạo các mã bảo mật
-                const randomAppId = 'APP-VN-' + Math.floor(1000 + Math.random() * 9000);
-                const randomHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                
-                document.getElementById('res-appid').innerText = randomAppId;
-                document.getElementById('res-hash').innerText = randomHash;
-                
-                // Văn bản CSBM & QRT Auto-generated
-                const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (AUTO-GENERATED)
-Tên sản phẩm: ${appName.toUpperCase()}
-Mã định danh hệ thống: ${randomAppId}
-Ngày phê duyệt: ${new Date().toLocaleString('vi-VN')}
 
-1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)
-Ứng dụng "${appName}" hoạt động trên nguyên tắc tối giản quyền. Mọi quyền truy cập hệ thống (như bộ nhớ, mạng) chỉ được sử dụng đúng với mục đích hiển thị nội dung và tải dữ liệu trong ứng dụng. NPH cam kết không truy cập danh bạ, tin nhắn hoặc vị trí địa lý của bạn khi không được phép.
-
-2. BẢO MẬT MÃ NGUỒN & HỆ THỐNG SANDBOX LAA
-Bản phân phối ứng dụng này đã được máy quét bảo mật của Lyrad phân tích. Mã băm vô danh (SHA-256): ${randomHash}. Cam kết 100% không chứa mã độc (Malware), Trojan, hay phần mềm gián điệp (Spyware).
-
-3. ĐIỀU KHOẢN MIỄN TRỪ & KỶ LUẬT NGƯỜI DÙNG
-Nghiêm cấm mọi hành vi sử dụng công cụ bên thứ ba để can thiệp bộ nhớ (Cheat/Hack) hoặc dịch ngược gói cài đặt (Decompile APK). Nếu hệ thống phát hiện hành vi gian lận làm thay đổi tính toàn vẹn của ứng dụng, thiết bị của bạn sẽ bị BAN vĩnh viễn khỏi toàn bộ hệ sinh thái của Lyrad Market Place mà không cần báo trước.
-
-4. BẢN QUYỀN NHÀ PHÁT HÀNH
-Ứng dụng và toàn bộ nội dung số đi kèm là tài sản trí tuệ độc quyền của Nhà phát hành. Việc phân phối lại file APK bên ngoài chợ ứng dụng Lyrad khi chưa có sự đồng ý bằng văn bản là vi phạm điều khoản EULA.`;
-                
-                document.getElementById('res-csbm').value = csbmText;
-                document.getElementById('pub-result-area').style.display = 'block';
-                
-                alert("Đăng tải APK thành công!\nHệ thống LAA đã cấp mã Hash và tạo văn bản Chính sách bảo mật thành công.");
-            }, 1800);
+        // --- CÁC HÀM XỬ LÝ PHÂN QUYỀN VÀ CẤP BẬC MỚI ---
+        function updateUserField(uid, field, value, msg) {
+            let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+            let userIndex = users.findIndex(u => u.uid === uid);
+            if(userIndex === -1) return alert("HỆ THỐNG LAA: Không tìm thấy người dùng này!");
+            
+            users[userIndex][field] = value;
+            localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
+            
+            if(uid === currentUser.uid) {
+                currentUser = users[userIndex];
+                localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
+                updateExpUI();
+            }
+            alert("✅ " + msg);
+            renderAdminUserList();
+            document.querySelectorAll('.admin-input').forEach(i => { if(i.id.includes('uid') || i.id.includes('input')) i.value = ''; });
         }
+
+        function adminSetRole() {
+            let uid = document.getElementById('role-uid').value.trim();
+            let role = document.getElementById('role-select').value;
+            if(!uid) return alert("Vui lòng nhập UID!");
+            updateUserField(uid, 'role', role, `Đã thay đổi Role của ${uid} thành ${role}`);
+        }
+
+        function adminSetTitle() {
+            let uid = document.getElementById('title-uid').value.trim();
+            let title = document.getElementById('title-input').value.trim();
+            if(!uid || !title) return alert("Vui lòng nhập UID và Danh hiệu!");
+            updateUserField(uid, 'title', title, `Đã cấp danh hiệu: [${title}] cho ${uid}`);
+        }
+
+        function adminSetLevelExp() {
+            let uid = document.getElementById('lvl-uid').value.trim();
+            let lvl = parseInt(document.getElementById('lvl-input').value);
+            let exp = parseInt(document.getElementById('exp-input').value);
+            
+            if(!uid) return alert("Vui lòng nhập UID!");
+            let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
+            let userIndex = users.findIndex(u => u.uid === uid);
+            if(userIndex === -1) return alert("HỆ THỐNG LAA: Không tìm thấy người dùng này!");
+            
+            if(!isNaN(lvl)) users[userIndex].level = Math.max(1, Math.min(lvl, maxGlobalLevel));
+            if(!isNaN(exp)) users[userIndex].currentExp = Math.max(0, exp);
+            
+            localStorage.setItem(DB_KEY_USERS, JSON.stringify(users));
+            
+            if(uid === currentUser.uid) {
+                currentUser = users[userIndex];
+                localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
+                updateExpUI();
+            }
+            
+            alert(`✅ Đã điều chỉnh Level/EXP thành công cho ${uid}`);
+            renderAdminUserList();
+            document.getElementById('lvl-uid').value = '';
+            document.getElementById('lvl-input').value = '';
+            document.getElementById('exp-input').value = '';
+        }
+        // ------------------------------------------------
 
         function switchTab(tabId, el) {
             document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
@@ -1260,15 +1399,9 @@ Nghiêm cấm mọi hành vi sử dụng công cụ bên thứ ba để can thi�
             el.classList.add('active'); document.getElementById(secId).classList.add('active-section');
         }
         
-        // HÀM MỚI: XỬ LÝ MỞ HỒ SƠ TỪ AVATAR TRÊN HEADER
         function openProfileFromHeader() {
-            // Chuyển sang tab Diễn Đàn Creator
-            const tabForumBtn = document.getElementById('nav-tab-forum');
-            if (tabForumBtn) switchTab('view-forum', tabForumBtn);
-            
-            // Chuyển sang Section Hồ Sơ & Bài viết
-            const secProfileBtn = document.getElementById('menu-sec-profile');
-            if (secProfileBtn) switchForumSection('section-profile', secProfileBtn);
+            const tabForumBtn = document.getElementById('nav-tab-forum'); if (tabForumBtn) switchTab('view-forum', tabForumBtn);
+            const secProfileBtn = document.getElementById('menu-sec-profile'); if (secProfileBtn) switchForumSection('section-profile', secProfileBtn);
         }
 
         window.onclick = function(e) {
@@ -1280,7 +1413,9 @@ Nghiêm cấm mọi hành vi sử dụng công cụ bên thứ ba để can thi�
             if (e.target == document.getElementById('adminPanelModal')) closeAdminPanel();
         }
 
+        // INIT KHI LOAD TRANG
         updateExpUI();
+        renderApps(); // <-- Gọi hàm render UI Ứng Dụng
         renderPosts();
     </script>
 </body>
