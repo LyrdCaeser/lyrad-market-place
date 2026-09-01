@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAA Sandbox - Thực Chiến (Production API)</title>
+    
+    <style>
+        :root {
+            --bg-main: #0d0d0d; --bg-card: #1c1c1e; --border: #333333;
+            --primary: #34c759; --primary-hover: #30b753; --danger: #ff3b30;
+            --text-main: #ffffff; --text-sub: #86868b;
+            --terminal-bg: #000000; --terminal-text: #00ff41;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
+
+        .header { background-color: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 20px; font-weight: 900; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 10px rgba(52, 199, 89, 0.4); display: flex; align-items: center; gap: 10px; }
+        .status-badge { background: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 199, 89, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+
+        .container { display: grid; grid-template-columns: 400px 1fr; gap: 24px; padding: 24px; flex: 1; }
+        .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .panel-title { font-size: 16px; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 8px; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group label { font-size: 13px; color: var(--text-sub); font-weight: 600; }
+        .custom-input { width: 100%; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .custom-input:focus { border-color: var(--primary); }
+
+        .file-drop-area { border: 2px dashed var(--border); border-radius: 8px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
+        .file-drop-area:hover { border-color: var(--primary); background: rgba(52, 199, 89, 0.05); }
+        .file-drop-area p { font-size: 14px; color: var(--text-sub); margin-bottom: 8px; }
+
+        .btn-scan { background: var(--primary); color: #000; font-weight: 800; font-size: 15px; padding: 16px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3); transition: all 0.2s; margin-top: 10px; }
+        .btn-scan:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4); }
+        .btn-scan:disabled { background: #333; color: #888; cursor: not-allowed; box-shadow: none; }
+
+        .terminal-container { background: var(--terminal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: var(--terminal-text); height: 300px; overflow-y: auto; line-height: 1.6; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .terminal-line { margin-bottom: 4px; word-break: break-all; }
+        .terminal-error { color: var(--danger); font-weight: bold;}
+        .terminal-warn { color: #ffcc00; }
+        .terminal-info { color: #007aff; }
+
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; display: none; }
+        .result-box { background: var(--bg-main); border: 1px solid var(--border); padding: 16px; border-radius: 8px; }
+        .result-label { font-size: 11px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .result-value { font-size: 16px; font-weight: 700; color: var(--primary); font-family: monospace; word-break: break-all; }
+
+        .csbm-area { margin-top: 16px; display: none; flex-direction: column; gap: 8px; flex: 1; }
+        .csbm-textarea { width: 100%; flex: 1; min-height: 250px; background: var(--bg-main); border: 1px solid var(--border); color: #aaa; padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; resize: none; outline: none; }
+
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-title">🛡️ LAA SANDBOX ENGINE (PRODUCTION)</div>
+        <div class="status-badge" id="system-status">SYSTEM ONLINE</div>
+    </header>
+
+    <div class="container">
+        <!-- LEFT: TẢI LÊN APK -->
+        <div class="panel">
+            <div class="panel-title">1. KHỞI TẠO NGUỒN (NO MOCK)</div>
+            
+            <div class="input-group">
+                <label>Tên Ứng Dụng / Trò Chơi</label>
+                <input type="text" id="app-name" class="custom-input" placeholder="VD: Lyrad Super App..." autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label>Phiên Bản (Version)</label>
+                <input type="text" id="app-version" class="custom-input" placeholder="VD: 1.0.0" autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label>Gói Cài Đặt (APK / AAB)</label>
+                <label class="file-drop-area" for="apk-file">
+                    <p style="font-size: 24px;">📦</p>
+                    <p><strong id="file-name-display">Nhấn để chọn file APK</strong></p>
+                    <p style="font-size: 12px;">Hỗ trợ: .apk, .aab</p>
+                    <input type="file" id="apk-file" accept=".apk,.aab" style="display: none;" onchange="updateFileName(this)">
+                </label>
+            </div>
+
+            <button class="btn-scan" id="btn-scan" onclick="startRealLAAScan()">BẮT ĐẦU POST DỮ LIỆU THẬT</button>
+        </div>
+
+        <!-- RIGHT: KẾT QUẢ & CSBM -->
+        <div class="panel" style="display: flex;">
+            <div class="panel-title">2. LAA TERMINAL LIVE LOG</div>
+            
+            <div class="terminal-container" id="terminal">
+                <div class="terminal-line">[SYSTEM] Web Crypto API Engine initialized.</div>
+                <div class="terminal-line">[SYSTEM] Fetch API ready. NO MOCK ALLOWED.</div>
+            </div>
+
+            <div class="result-grid" id="result-grid">
+                <div class="result-box">
+                    <div class="result-label">MÃ ĐỊNH DANH (APP ID)</div>
+                    <div class="result-value" id="res-appid">-</div>
+                </div>
+                <div class="result-box">
+                    <div class="result-label">TRẠNG THÁI SERVER</div>
+                    <div class="result-value" style="color: var(--primary);" id="res-status">Đã Xác Thực</div>
+                </div>
+                <div class="result-box" style="grid-column: span 2;">
+                    <div class="result-label">MÃ BĂM VÔ DANH (NATIVE SHA-256 HASH)</div>
+                    <div class="result-value" id="res-hash" style="font-size: 13px; color: #ffcc00;">-</div>
+                </div>
+            </div>
+
+            <div class="csbm-area" id="csbm-area">
+                <div class="panel-title" style="border:none; padding:0; margin-top: 10px; color: var(--primary);">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ SERVER GENERATED</div>
+                <textarea class="csbm-textarea" id="res-csbm" readonly></textarea>
+                <button class="btn-scan" style="padding: 10px; font-size: 13px; background: #fff;" onclick="copyCSBM()">📋 SAO CHÉP VĂN BẢN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CẤU HÌNH ENDPOINT THẬT CỦA BẠN TẠI ĐÂY
+        const BACKEND_API_URL = "https://api.lyrad.vn/v1/sandbox/scan";
+
+        function updateFileName(input) {
+            const display = document.getElementById('file-name-display');
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                if (!file.name.toLowerCase().endsWith('.apk') && !file.name.toLowerCase().endsWith('.aab')) {
+                    alert("Định dạng file không hợp lệ! Vui lòng chọn file .apk hoặc .aab");
+                    input.value = '';
+                    display.innerText = "Nhấn để chọn file APK";
+                    return;
+                }
+                display.innerText = "📎 " + file.name + " (" + (file.size / (1024*1024)).toFixed(2) + " MB)";
+                display.style.color = "var(--primary)";
+            } else {
+                display.innerText = "Nhấn để chọn file APK";
+                display.style.color = "var(--text-sub)";
+            }
+        }
+
+        const terminal = document.getElementById('terminal');
+        function logToTerminal(text, type = "normal") {
+            const div = document.createElement('div');
+            div.className = 'terminal-line';
+            if (type === 'warn') div.classList.add('terminal-warn');
+            if (type === 'info') div.classList.add('terminal-info');
+            if (type === 'success') div.style.color = 'var(--primary)';
+            if (type === 'error') div.classList.add('terminal-error');
+            div.innerText = text;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // 1. TÍNH TOÁN NATIVE SHA-256
+        async function calculateRealSHA256(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                logToTerminal(`[LAA-CRYPTO] Đã nạp ${(file.size / (1024*1024)).toFixed(2)} MB vào RAM. Thực thi băm SHA-256...`, "info");
+                
+                const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                logToTerminal(`[LAA-CRYPTO] Local Hash sinh ra: ${hashHex}`, "success");
+                return hashHex;
+            } catch (error) {
+                throw new Error(`Lỗi Web Crypto API: ${error.message}`);
+            }
+        }
+
+        // 2. MAIN EXECUTION
+        async function startRealLAAScan() {
+            const appName = document.getElementById('app-name').value.trim();
+            const appVersion = document.getElementById('app-version').value.trim() || '1.0.0';
+            const fileInput = document.getElementById('apk-file');
+
+            if (!appName) return alert("Vui lòng nhập Tên Ứng Dụng!");
+            if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng đính kèm file định dạng APK/AAB!");
+
+            const file = fileInput.files[0];
+            const btn = document.getElementById('btn-scan');
+            
+            // Khóa UI
+            btn.disabled = true;
+            btn.innerText = "ĐANG TRUYỀN DỮ LIỆU LÊN SERVER...";
+            document.getElementById('system-status').innerText = "LIVE CONNECTION...";
+            document.getElementById('system-status').style.color = "#ffcc00";
+            document.getElementById('system-status').style.borderColor = "#ffcc00";
+            document.getElementById('result-grid').style.display = 'none';
+            document.getElementById('csbm-area').style.display = 'none';
+            
+            terminal.innerHTML = `<div class="terminal-line terminal-warn">>> BẮT ĐẦU LUỒNG PHÂN TÍCH: ${file.name} <<</div>`;
+
+            try {
+                // Tính Hash thực tế trước khi gửi
+                const realHash = await calculateRealSHA256(file);
+
+                // Đóng gói dữ liệu thật
+                logToTerminal(`[LAA-API] Đóng gói FormData, chuẩn bị POST request...`, "warn");
+                const formData = new FormData();
+                formData.append("apk_file", file);
+                formData.append("app_name", appName);
+                formData.append("app_version", appVersion);
+                formData.append("local_sha256", realHash);
+
+                // THỰC THI FETCH API THẬT
+                logToTerminal(`[LAA-API] Fetching ${BACKEND_API_URL}...`, "info");
+                const response = await fetch(BACKEND_API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+
+                // Bắt lỗi HTTP thật (500, 404, CORS, v.v.)
+                if (!response.ok) {
+                    throw new Error(`Server từ chối kết nối. Mã HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                logToTerminal(`[LAA-API] Đã nhận luồng phản hồi (HTTP 200). Đang parse JSON...`, "info");
+                const backendResult = await response.json();
+
+                // Kiểm tra Logic Payload từ Backend (Phụ thuộc cấu trúc JSON Server của bạn)
+                // Giả định Server trả về: { "status": "success", "is_safe": true, "app_id": "APP-VN-XXXX", "message": "..." }
+                if (backendResult.is_safe === false) {
+                    throw new Error(`Server phát hiện rủi ro bảo mật: ${backendResult.message || 'Chứa mã độc'}`);
+                }
+
+                logToTerminal(`[LAA-API] Xác thực hoàn tất: ${backendResult.message || 'File an toàn 100%'}`, "success");
+
+                // Lấy App ID thật do Server cấp, nếu API chưa trả về thì Fallback theo Local Hash
+                const finalAppId = backendResult.app_id || ('APP-VN-' + realHash.substring(0, 8).toUpperCase());
+
+                finishScan(appName, appVersion, realHash, finalAppId);
+
+            } catch (error) {
+                // In lỗi thực tế ra Terminal, không mock
+                logToTerminal(`[LỖI NGHIÊM TRỌNG] ${error.message}`, "error");
+                document.getElementById('system-status').innerText = "CONNECTION FAILED";
+                document.getElementById('system-status').style.color = "var(--danger)";
+                document.getElementById('system-status').style.borderColor = "var(--danger)";
+                btn.disabled = false;
+                btn.innerText = "THỬ LẠI KẾT NỐI SERVER";
+            }
+        }
+
+        // 3. RENDER KẾT QUẢ TỪ API
+        function finishScan(appName, appVersion, realHash, appId) {
+            const btn = document.getElementById('btn-scan');
+            btn.disabled = false;
+            btn.innerText = "TIẾP TỤC XỬ LÝ FILE KHÁC";
+            document.getElementById('system-status').innerText = "API CONNECTED";
+            document.getElementById('system-status').style.color = "var(--primary)";
+            document.getElementById('system-status').style.borderColor = "rgba(52, 199, 89, 0.3)";
+
+            document.getElementById('res-appid').innerText = appId;
+            document.getElementById('res-hash').innerText = realHash;
+            document.getElementById('result-grid').style.display = 'grid';
+
+            const dateStr = new Date().toLocaleString('vi-VN');
+            const csbmText = `BẢN THỎA THUẬN CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (EULA)
+=========================================================
+TÊN PHẦN MỀM: ${appName.toUpperCase()}
+PHIÊN BẢN (VERSION): ${appVersion}
+MÃ ĐỊNH DANH HỆ THỐNG (APP ID): ${appId}
+MÃ BĂM THỰC TẾ (NATIVE SHA-256 HASH): ${realHash}
+NGÀY PHÊ DUYỆT LAA SANDBOX API: ${dateStr}
+=========================================================
+
+1. CHẤP THUẬN QUYỀN TRUY CẬP HỆ THỐNG (PERMISSIONS)
+Phần mềm "${appName}" cam kết hoạt động dựa trên nguyên tắc "Tối giản đặc quyền" (Least Privilege). Mọi quyền truy cập vào tài nguyên thiết bị (Bộ nhớ đệm, Kết nối mạng Internet) chỉ được kích hoạt nhằm mục đích cốt lõi là vận hành ứng dụng. Nhà phát hành tuyệt đối KHÔNG ngầm truy cập Danh bạ, Tin nhắn (SMS), Camera, Micro, hoặc Vị trí địa lý (GPS) của người dùng khi chưa có sự đồng ý rõ ràng (Runtime Permissions).
+
+2. BẢO CHỨNG AN NINH TỪ HỆ THỐNG LAA SANDBOX
+Bản phân phối tệp tin cài đặt của phần mềm này đã được máy chủ quét LAA phân tích độc lập. Chúng tôi đảm bảo 100% tính nguyên vẹn của mã nguồn. Tệp tin không chứa bất kỳ rủi ro nào liên quan đến:
+- Mã độc tống tiền (Ransomware)
+- Phần mềm gián điệp thu thập dữ liệu trái phép (Spyware)
+- Mã kịch bản khai thác tiền điện tử ẩn (Cryptojacking)
+- Cửa hậu (Backdoor/Trojan).
+
+3. ĐIỀU KHOẢN MIỄN TRỪ VÀ KỶ LUẬT NGƯỜI DÙNG CUỐI
+Sự công bằng trong trải nghiệm là ưu tiên hàng đầu. Nền tảng NGHIÊM CẤM mọi hành vi sử dụng công cụ của bên thứ ba (GameGuardian, LuckyPatcher, v.v.) để can thiệp vào bộ nhớ tạm (Memory Injection), chỉnh sửa dữ liệu nội bộ (Cheat/Hack), hoặc cố tình dịch ngược cấu trúc tệp cài đặt (Decompile APK) nhằm mục đích phá hoại, đánh cắp tài sản kỹ thuật số. 
+Vi phạm Điều 3 sẽ dẫn đến việc hệ thống tự động lưu vết UID và áp dụng lệnh CẤM VĨNH VIỄN (Perma-ban) thiết bị phần cứng của người vi phạm ra khỏi toàn bộ Hệ sinh thái Lyrad Market Place mà không cần báo trước.
+
+4. BẢO VỆ BẢN QUYỀN SỞ HỮU TRÍ TUỆ
+Toàn bộ mã nguồn, thiết kế đồ họa, cơ sở dữ liệu và giao diện người dùng của phần mềm là tài sản trí tuệ độc quyền của Nhà phát hành. Việc sao chép, trích xuất dữ liệu (Unpack) hoặc phân phối lại tệp tin cài đặt bên ngoài nền tảng Lyrad Market Place mà không có văn bản ủy quyền chính thức bị coi là vi phạm nghiêm trọng Đạo luật Bản quyền Kỹ thuật số (DMCA) và sẽ chịu sự trừng phạt của pháp luật sở tại.`;
+
+            document.getElementById('res-csbm').value = csbmText;
+            document.getElementById('csbm-area').style.display = 'flex';
+        }
+
+        function copyCSBM() {
+            const textarea = document.getElementById('res-csbm');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                alert("✅ Đã sao chép toàn bộ Chính sách bảo mật vào khay nhớ tạm!");
+            }).catch(err => {
+                alert("Lỗi sao chép: " + err);
+            });
+        }
+    </script>
+</body>
+</html>

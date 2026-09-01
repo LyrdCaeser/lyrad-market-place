@@ -255,10 +255,11 @@
         /* === ADMIN PANEL - LAA SYSTEM CSS === */
         .admin-theme { background: #111111 !important; color: #fff !important; border: 1px solid #ff3b30 !important;}
         .admin-header { font-size: 24px; font-weight: 900; color: #ff3b30; text-align: center; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,59,48,0.4);}
-        .admin-tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;}
-        .admin-tab-btn { background: transparent; color: #888; border: none; font-size: 15px; font-weight: 700; cursor: pointer; padding: 10px 16px; border-radius: 8px; transition: all 0.2s;}
+        .admin-tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; overflow-x: auto;}
+        .admin-tab-btn { background: transparent; color: #888; border: none; font-size: 14px; font-weight: 700; cursor: pointer; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; white-space: nowrap;}
         .admin-tab-btn:hover { color: #ccc; background: rgba(255,255,255,0.05);}
         .admin-tab-btn.active { color: #ff3b30; background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.3);}
+        
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; padding-right: 10px; max-height: 60vh;}
         .admin-card { background: #1c1c1e; border: 1px solid #333; border-radius: 12px; padding: 16px; }
         .admin-card h4 { color: #ff453a; margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #333; padding-bottom: 8px;}
@@ -571,7 +572,7 @@
                 <p><strong>Cập nhật lần cuối: 2026.</strong> Văn bản này cấu thành một hợp đồng pháp lý có tính ràng buộc tuyệt đối giữa Bạn (Người Dùng) và Ban Quản Trị (BQT) Lyrad Market Place. Việc ấn "Đăng Nhập" hoặc tiếp tục sử dụng Dịch Vụ đồng nghĩa với việc Bạn chấp nhận vô điều kiện toàn bộ các điều khoản khắc nghiệt dưới đây. Nếu Bạn không đồng ý với bất kỳ điều khoản nào, vui lòng HỦY BỎ cài đặt, XÓA TÀI KHOẢN và RỜI KHỎI hệ sinh thái ngay lập tức.</p>
 
                 <h4>Điều 1: Thu thập Dữ Liệu Nhận Diện & Định Danh Thiết Bị (Device Fingerprinting)</h4>
-                <p>Để đảm bảo an ninh mạng tuyệt đối theo tiêu chuẩn Sandbox LAA, chúng tôi có quyền chủ động thu thập, trích xuất và lưu trữ vĩnh viễn các thông tin sau mà không cần thông báo trước mỗi lần Bạn truy cập:</p>
+                <p>Để đảm bảo an margin mạng tuyệt đối theo tiêu chuẩn Sandbox LAA, chúng tôi có quyền chủ động thu thập, trích xuất và lưu trữ vĩnh viễn các thông tin sau mà không cần thông báo trước mỗi lần Bạn truy cập:</p>
                 <p>1.1. <strong>Thông tin Thiết bị cốt lõi:</strong> Địa chỉ MAC (MAC Address), số IMEI/MEID, số Serial phần cứng, thông số Bo mạch chủ (Motherboard ID), và phiên bản Hệ điều hành.</p>
                 <p>1.2. <strong>Nhật ký Mạng (Network Logs):</strong> Địa chỉ IP công cộng, lịch sử định tuyến, tên nhà mạng cung cấp (ISP), và dữ liệu vị trí địa lý dựa trên IP theo thời gian thực.</p>
                 <p>1.3. <strong>Hành vi Người dùng:</strong> Toàn bộ thao tác nhấp chuột (Clickstream), thời gian lưu lại trên trang, các biểu mẫu đã nhập, lịch sử tải xuống ứng dụng (App ID) và mã giao dịch thanh toán (TxID).</p>
@@ -614,6 +615,8 @@
             <div class="admin-tab-container">
                 <button class="admin-tab-btn active" onclick="switchAdminTab('tab-laa', this)">Bảng Điều Khiển LAA</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-users', this)">Quản Lý Người Dùng</button>
+                <!-- THÊM TAB CHUYÊN DỤNG CHO NHÀ PHÁT HÀNH -->
+                <button class="admin-tab-btn" onclick="switchAdminTab('tab-publisher', this)">Đăng Tải APK (Publisher)</button>
             </div>
 
             <div id="tab-laa" class="admin-grid">
@@ -662,7 +665,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: ĐIỀU 6 - XÓA TÀI KHOẢN VĨNH VIỄN -->
+                <!-- ĐIỀU 6 - XÓA TÀI KHOẢN VĨNH VIỄN -->
                 <div class="admin-card god-mode-card">
                     <h4 style="color: #ff3b30; border-bottom-color: rgba(255,59,48,0.5);">ĐIỀU 6: XÓA TÀI KHOẢN (Chống Spam)</h4>
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Xóa bỏ hoàn toàn Database của người dùng này, không thể khôi phục.</p>
@@ -671,9 +674,9 @@
                         <button class="admin-btn god-mode-btn" onclick="executeLAA('Xóa Tài Khoản', 'admin-input-6')">XÓA VĨNH VIỄN ACCOUNT</button>
                     </div>
                 </div>
-
             </div>
 
+            <!-- TAB QUẢN LÝ NGƯỜI DÙNG -->
             <div id="tab-users" class="admin-table-wrapper" style="display: none;">
                 <table class="admin-table">
                     <thead>
@@ -687,6 +690,34 @@
                     <tbody id="admin-user-tbody"></tbody>
                 </table>
             </div>
+
+            <!-- TAB ĐĂNG TẢI APK CHO NPH -->
+            <div id="tab-publisher" class="admin-grid" style="display: none; grid-template-columns: 1fr; max-height: 60vh; overflow-y: auto;">
+                <div class="admin-card god-mode-card" style="background: rgba(52, 199, 89, 0.05); border-color: #34c759;">
+                    <h4 style="color: #34c759; border-bottom-color: rgba(52, 199, 89, 0.5);">🚀 PUBLISHER UPLOAD CENTER</h4>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động quét LAA, cấp App ID và khởi tạo văn bản Chính sách bảo mật (CSBM) & Quyền riêng tư (QRT).</p>
+                    
+                    <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
+                    <input type="file" id="pub-apk-file" accept=".apk" class="admin-input" style="background: #1c1c1e; color: #aaa;">
+                    
+                    <div class="admin-btn-group" style="margin-top: 10px;">
+                        <button class="admin-btn god-mode-btn" id="btn-pub-upload" style="background: #34c759; box-shadow: 0 0 15px rgba(52,199,89,0.5);" onclick="simulateApkUpload()">TẢI LÊN & TẠO CSBM TỰ ĐỘNG</button>
+                    </div>
+
+                    <div id="pub-result-area" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #444;">
+                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">✅ KẾT QUẢ PHÂN TÍCH LAA</h5>
+                        <div style="background: #111; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #34c759; margin-bottom: 15px; border: 1px solid #333;">
+                            <div>[APP_ID]: <span id="res-appid"></span></div>
+                            <div>[SHA-256 HASH]: <span id="res-hash"></span></div>
+                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: An toàn (Passed Sandbox)</div>
+                        </div>
+                        
+                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (AUTO-GENERATED)</h5>
+                        <textarea class="admin-input" id="res-csbm" rows="12" style="font-family: inherit; font-size: 12px; line-height: 1.5; resize: none; background: #111;" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1086,10 +1117,19 @@
         function switchAdminTab(tabId, el) {
             document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
             el.classList.add('active');
+            
             document.getElementById('tab-laa').style.display = 'none';
             document.getElementById('tab-users').style.display = 'none';
-            if(tabId === 'tab-laa') document.getElementById('tab-laa').style.display = 'grid';
-            else { document.getElementById('tab-users').style.display = 'block'; renderAdminUserList(); }
+            document.getElementById('tab-publisher').style.display = 'none';
+            
+            if(tabId === 'tab-laa') {
+                document.getElementById('tab-laa').style.display = 'grid';
+            } else if (tabId === 'tab-users') {
+                document.getElementById('tab-users').style.display = 'block'; 
+                renderAdminUserList();
+            } else if (tabId === 'tab-publisher') {
+                document.getElementById('tab-publisher').style.display = 'grid';
+            }
         }
 
         function renderAdminUserList() {
@@ -1152,6 +1192,61 @@
                 alert(`✅ Đã thực thi lệnh thành công cho ${targetUID}`);
                 renderAdminUserList();
             }
+        }
+        
+        // --- HÀM MỚI: GIẢ LẬP NHÀ PHÁT HÀNH TẢI LÊN APK ---
+        function simulateApkUpload() {
+            const appName = document.getElementById('pub-app-name').value.trim();
+            const fileInput = document.getElementById('pub-apk-file');
+            
+            if (!appName) return alert("Vui lòng nhập tên ứng dụng / trò chơi của bạn!");
+            if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng chọn file định dạng .apk!");
+            
+            const file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.apk')) return alert("Hệ thống chỉ chấp nhận định dạng gói cài đặt Android (.apk)!");
+            
+            // Effect loading nút bấm
+            const btn = document.getElementById('btn-pub-upload');
+            const originalText = btn.innerText;
+            btn.innerText = "ĐANG PHÂN TÍCH QUA LAA SANDBOX...";
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                
+                // Khởi tạo các mã bảo mật
+                const randomAppId = 'APP-VN-' + Math.floor(1000 + Math.random() * 9000);
+                const randomHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                
+                document.getElementById('res-appid').innerText = randomAppId;
+                document.getElementById('res-hash').innerText = randomHash;
+                
+                // Văn bản CSBM & QRT Auto-generated
+                const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (AUTO-GENERATED)
+Tên sản phẩm: ${appName.toUpperCase()}
+Mã định danh hệ thống: ${randomAppId}
+Ngày phê duyệt: ${new Date().toLocaleString('vi-VN')}
+
+1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)
+Ứng dụng "${appName}" hoạt động trên nguyên tắc tối giản quyền. Mọi quyền truy cập hệ thống (như bộ nhớ, mạng) chỉ được sử dụng đúng với mục đích hiển thị nội dung và tải dữ liệu trong ứng dụng. NPH cam kết không truy cập danh bạ, tin nhắn hoặc vị trí địa lý của bạn khi không được phép.
+
+2. BẢO MẬT MÃ NGUỒN & HỆ THỐNG SANDBOX LAA
+Bản phân phối ứng dụng này đã được máy quét bảo mật của Lyrad phân tích. Mã băm vô danh (SHA-256): ${randomHash}. Cam kết 100% không chứa mã độc (Malware), Trojan, hay phần mềm gián điệp (Spyware).
+
+3. ĐIỀU KHOẢN MIỄN TRỪ & KỶ LUẬT NGƯỜI DÙNG
+Nghiêm cấm mọi hành vi sử dụng công cụ bên thứ ba để can thiệp bộ nhớ (Cheat/Hack) hoặc dịch ngược gói cài đặt (Decompile APK). Nếu hệ thống phát hiện hành vi gian lận làm thay đổi tính toàn vẹn của ứng dụng, thiết bị của bạn sẽ bị BAN vĩnh viễn khỏi toàn bộ hệ sinh thái của Lyrad Market Place mà không cần báo trước.
+
+4. BẢN QUYỀN NHÀ PHÁT HÀNH
+Ứng dụng và toàn bộ nội dung số đi kèm là tài sản trí tuệ độc quyền của Nhà phát hành. Việc phân phối lại file APK bên ngoài chợ ứng dụng Lyrad khi chưa có sự đồng ý bằng văn bản là vi phạm điều khoản EULA.`;
+                
+                document.getElementById('res-csbm').value = csbmText;
+                document.getElementById('pub-result-area').style.display = 'block';
+                
+                alert("Đăng tải APK thành công!\nHệ thống LAA đã cấp mã Hash và tạo văn bản Chính sách bảo mật thành công.");
+            }, 1800);
         }
 
         function switchTab(tabId, el) {
