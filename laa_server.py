@@ -4,7 +4,7 @@ import shutil
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from androguard.core.bytecodes.apk import APK
+from androguard.core.apk import APK  # Cập nhật đường dẫn import cho Androguard 4.x
 
 # Khởi tạo API Server
 app = FastAPI(title="LAA Sandbox API Engine")
