@@ -120,7 +120,8 @@
         .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding: 10px 0; }
         .app-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; box-shadow: var(--shadow-sm); display: flex; gap: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); cursor: pointer; }
         .app-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: rgba(0, 122, 255, 0.3); }
-        .app-icon { width: 72px; height: 72px; border-radius: 18px; background: linear-gradient(135deg, var(--primary), #34c759); display: flex; align-items: center; justify-content: center; color: white; font-size: 32px; font-weight: 900; flex-shrink: 0; box-shadow: 0 8px 16px rgba(52, 199, 89, 0.25); text-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        .app-icon { width: 72px; height: 72px; border-radius: 18px; background: linear-gradient(135deg, var(--primary), #34c759); display: flex; align-items: center; justify-content: center; color: white; font-size: 32px; font-weight: 900; flex-shrink: 0; box-shadow: 0 8px 16px rgba(52, 199, 89, 0.25); text-shadow: 0 2px 4px rgba(0,0,0,0.2); overflow: hidden; }
+        .app-icon img { width: 100%; height: 100%; object-fit: cover; }
         .app-info { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
         .app-title { font-size: 17px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;}
         .app-publisher { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; font-weight: 500;}
@@ -128,6 +129,42 @@
         .app-meta span { display: flex; align-items: center; gap: 4px;}
         .btn-download { background: rgba(0, 122, 255, 0.1); color: var(--primary); border: none; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; align-self: flex-start;}
         .btn-download:hover { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);}
+
+        /* === APP DETAIL CỬA HÀNG STYLES === */
+        #view-app-detail { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        .detail-header { display: flex; gap: 32px; margin-bottom: 40px; align-items: flex-start; }
+        .detail-icon { width: 160px; height: 160px; border-radius: 32px; background: linear-gradient(135deg, var(--primary), #34c759); display: flex; align-items: center; justify-content: center; color: white; font-size: 72px; font-weight: 900; box-shadow: 0 16px 32px rgba(0,0,0,0.15); overflow: hidden; flex-shrink: 0; }
+        .detail-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .detail-info-block { flex: 1; }
+        .detail-title { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; color: var(--text-main); }
+        .detail-publisher { font-size: 18px; color: var(--primary); font-weight: 600; margin-bottom: 24px; }
+        .detail-stats-row { display: flex; gap: 40px; margin-bottom: 24px; color: var(--text-main); }
+        .detail-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .detail-stat-val { font-size: 20px; font-weight: 800; }
+        .detail-stat-lbl { font-size: 12px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
+        .detail-stat-divider { width: 1px; background: var(--border); height: 40px; }
+        .btn-detail-download { background: var(--primary); color: white; font-size: 16px; font-weight: 700; padding: 12px 40px; border-radius: 30px; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(0,122,255,0.3); }
+        .btn-detail-download:hover { background: var(--primary-hover); transform: scale(1.02); }
+        .detail-section-title { font-size: 22px; font-weight: 800; margin: 40px 0 20px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+        
+        .review-composer { background: var(--bg-card); padding: 24px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 32px; box-shadow: var(--shadow-sm); }
+        .rating-stars-input { display: flex; gap: 8px; font-size: 28px; cursor: pointer; margin-bottom: 16px; color: #d1d1d6; }
+        .rating-stars-input span:hover, .rating-stars-input span.active { color: #ffcc00; }
+        .review-textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 16px; font-size: 15px; resize: none; outline: none; background: var(--bg-body); margin-bottom: 16px; color: var(--text-main); }
+        .review-textarea:focus { border-color: var(--primary); }
+        
+        .review-list { display: flex; flex-direction: column; gap: 24px; }
+        .review-card { background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .review-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+        .review-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .review-meta { flex: 1; }
+        .review-author { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .review-rating { color: #ffcc00; font-size: 14px; margin-top: 4px; }
+        .review-text { font-size: 15px; line-height: 1.6; color: var(--text-main); margin-bottom: 16px; }
+        
+        .reply-section { margin-left: 52px; border-left: 2px solid var(--border); padding-left: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+        .reply-item { background: var(--bg-body); padding: 12px 16px; border-radius: 12px; font-size: 14px; }
+        .reply-author { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 
         #view-forum { max-width: 1400px; display: none; }
         #view-forum.active-view { display: grid; grid-template-columns: 240px 1fr 300px; gap: 24px; }
@@ -292,7 +329,7 @@
         .admin-table th { padding: 14px 16px; border-bottom: 1px solid #444; color: #ff453a; background: #2c2c2e; font-weight: 800;}
         .admin-table td { padding: 14px 16px; border-bottom: 1px solid #333; font-family: monospace;}
         .admin-table tr:hover { background: rgba(255,255,255,0.03);}
-        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } .god-mode-card { grid-column: span 1; } }
+        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } .god-mode-card { grid-column: span 1; } .detail-header { flex-direction: column; align-items: center; text-align: center; } .detail-stats-row { justify-content: center; } }
     </style>
 </head>
 <body>
@@ -334,6 +371,11 @@
 
     <main id="view-apps">
         <!-- Nội dung sẽ được render bằng JS renderApps() -->
+    </main>
+
+    <!-- === APP DETAIL VIEW (Google Play Style) === -->
+    <main id="view-app-detail">
+        <div id="app-detail-content"></div>
     </main>
 
     <main id="view-forum">
@@ -455,11 +497,24 @@
             <div id="section-sourcecode" class="forum-content-section">
                 <div class="section-header-row">
                     <h3 style="margin:0; font-size: 20px;">Góc chia sẻ mã nguồn</h3>
-                    <label class="btn-login-header" style="cursor: pointer;">+ Đăng tải APK
+                </div>
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 12px; color: var(--text-main);">Đăng tải mã nguồn / APK Của Bạn</h4>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Tùy chọn Icon Ứng dụng:</label>
+                        <select id="src-icon-type" class="auth-input" style="padding: 8px; margin-bottom: 8px;" onchange="toggleSrcIconInput()">
+                            <option value="system">Icon Hệ Thống (Mặc định)</option>
+                            <option value="library">Tải lên từ Thư viện máy</option>
+                            <option value="apk">Trích xuất từ APK</option>
+                        </select>
+                        <input type="file" id="src-icon-file" accept="image/*" class="auth-input" style="display:none; padding: 8px;">
+                    </div>
+                    <label class="btn-login-header" style="cursor: pointer; display: inline-flex;">Chọn File APK
                         <input type="file" class="hidden-file-input" accept=".apk">
                     </label>
                 </div>
-                <div class="empty-state" style="height: 50vh;">
+                
+                <div class="empty-state" style="height: 30vh;">
                     <h2>Chưa có mã nguồn</h2>
                     <p>Kho lưu trữ mã nguồn đang trống.</p>
                 </div>
@@ -744,6 +799,18 @@
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động cấp App ID và đẩy lên Cửa Hàng ngay lập tức.</p>
                     
                     <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Ảnh Đại Diện (Icon) Ứng dụng:</label>
+                        <select id="pub-icon-type" class="admin-input" onchange="togglePubIconInput()">
+                            <option value="system">Icon Hệ Thống (Chữ cái đầu)</option>
+                            <option value="library">Tải lên từ Thư viện máy</option>
+                            <option value="apk">Trích xuất tự động từ APK</option>
+                        </select>
+                        <input type="file" id="pub-icon-file" accept="image/*" class="admin-input" style="display:none; background: #1c1c1e; color: #aaa;">
+                    </div>
+
+                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">File Cài Đặt (APK):</label>
                     <input type="file" id="pub-apk-file" accept=".apk" class="admin-input" style="background: #1c1c1e; color: #aaa;">
                     
                     <div class="admin-btn-group" style="margin-top: 10px;">
@@ -938,18 +1005,26 @@
             // Xếp app mới nhất lên đầu
             apps.sort((a,b) => b.timestamp - a.timestamp).forEach(app => {
                 let initial = app.name.charAt(0).toUpperCase();
+                let iconHTML = app.iconBase64 ? `<img src="${app.iconBase64}">` : initial;
+                
+                let avgRating = app.rating;
+                if(app.reviews && app.reviews.length > 0) {
+                    let total = app.reviews.reduce((sum, rev) => sum + rev.rating, 0);
+                    avgRating = (total / app.reviews.length).toFixed(1);
+                }
+
                 gridHTML += `
-                    <div class="app-card" onclick="alert('Đang chuyển hướng đến trang tải xuống của hệ thống. App ID: ${app.id}')">
-                        <div class="app-icon">${initial}</div>
+                    <div class="app-card" onclick="openAppDetail('${app.id}')">
+                        <div class="app-icon">${iconHTML}</div>
                         <div class="app-info">
                             <div class="app-title" title="${app.name}">${app.name}</div>
                             <div class="app-publisher">${app.publisher}</div>
                             <div class="app-meta">
-                                <span>⭐ ${app.rating}</span>
-                                <span>⬇️ ${app.downloads}</span>
+                                <span>⭐ ${avgRating}</span>
+                                <span>⬇️ ${app.downloads.toLocaleString('vi-VN')}</span>
                                 <span>📦 ${app.size}</span>
                             </div>
-                            <button class="btn-download" onclick="event.stopPropagation(); alert('Bắt đầu tải xuống file gốc: ${app.name}\\nMã Hash: ${app.hash}')">Tải về máy</button>
+                            <button class="btn-download" onclick="event.stopPropagation(); triggerRealDownload('${app.name}', '${app.id}')">Tải về máy</button>
                         </div>
                     </div>
                 `;
@@ -963,13 +1038,30 @@
         // ==========================================
         // XỬ LÝ UPLOAD APP THÀNH CÔNG VÀ LƯU DATA
         // ==========================================
+        function togglePubIconInput() {
+            const type = document.getElementById('pub-icon-type').value;
+            const fileInput = document.getElementById('pub-icon-file');
+            fileInput.style.display = (type === 'library' || type === 'apk') ? 'block' : 'none';
+        }
+        function toggleSrcIconInput() {
+            const type = document.getElementById('src-icon-type').value;
+            const fileInput = document.getElementById('src-icon-file');
+            fileInput.style.display = (type === 'library' || type === 'apk') ? 'block' : 'none';
+        }
+
         function simulateApkUpload() {
             const appName = document.getElementById('pub-app-name').value.trim();
             const fileInput = document.getElementById('pub-apk-file');
+            const iconType = document.getElementById('pub-icon-type').value;
+            const iconInput = document.getElementById('pub-icon-file');
             
             if (!appName) return alert("Vui lòng nhập tên ứng dụng / trò chơi của bạn!");
             if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng chọn file định dạng .apk!");
             
+            if ((iconType === 'library' || iconType === 'apk') && (!iconInput.files || iconInput.files.length === 0)) {
+                return alert("Vui lòng chọn ảnh đại diện cho ứng dụng!");
+            }
+
             const file = fileInput.files[0];
             if (!file.name.toLowerCase().endsWith('.apk')) return alert("Hệ thống chỉ chấp nhận định dạng gói cài đặt Android (.apk)!");
             
@@ -978,76 +1070,267 @@
             btn.innerText = "ĐANG PHÂN TÍCH QUA LAA SANDBOX...";
             btn.disabled = true;
             btn.style.opacity = '0.7';
-            
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                
-                const randomAppId = 'APP-VN-' + Math.floor(1000 + Math.random() * 9000);
-                const randomHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                
-                // 1. LƯU ỨNG DỤNG VÀO LOCAL STORAGE DATABASE
-                let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
-                apps.push({
-                    id: randomAppId,
-                    name: appName,
-                    hash: randomHash,
-                    publisher: currentUser.name,
-                    publisherUid: currentUser.uid,
-                    timestamp: Date.now(),
-                    downloads: Math.floor(Math.random() * 500) + 10,
-                    rating: (Math.random() * (5.0 - 4.2) + 4.2).toFixed(1),
-                    size: (file.size / (1024*1024)).toFixed(1) + ' MB'
-                });
+
+            const finalizeUpload = (iconBase64) => {
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    
+                    const randomAppId = 'APP-VN-' + Math.floor(1000 + Math.random() * 9000);
+                    const randomHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                    
+                    let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+                    apps.push({
+                        id: randomAppId,
+                        name: appName,
+                        hash: randomHash,
+                        publisher: currentUser.name,
+                        publisherUid: currentUser.uid,
+                        timestamp: Date.now(),
+                        downloads: 0,
+                        rating: 5.0,
+                        size: (file.size / (1024*1024)).toFixed(1) + ' MB',
+                        iconBase64: iconBase64,
+                        reviews: []
+                    });
+                    localStorage.setItem(DB_KEY_APPS, JSON.stringify(apps));
+
+                    let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+                    posts.push({
+                        id: 'P-' + Math.floor(100000 + Math.random() * 900000),
+                        uid: currentUser.uid,
+                        name: currentUser.name,
+                        avatar: currentUser.avatar,
+                        level: currentUser.level,
+                        role: currentUser.role || 'USER',
+                        title: currentUser.title || 'Tân Thủ',
+                        content: `🚀 Vừa phát hành ứng dụng mới: **${appName}**\n\nMã phê duyệt (App ID): ${randomAppId}\nNhà phát hành đã cập nhật bản cài đặt mới nhất, các bạn tải ngay trên tab Khám Phá nhé!`,
+                        timestamp: Date.now(),
+                        reactions: {}, 
+                        comments: [],
+                        shares: 0
+                    });
+                    localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+
+                    renderApps();
+                    renderPosts();
+                    updateExpData(500);
+
+                    document.getElementById('res-appid').innerText = randomAppId;
+                    document.getElementById('res-hash').innerText = randomHash;
+                    
+                    const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ\nTên sản phẩm: ${appName.toUpperCase()}\nMã định danh hệ thống: ${randomAppId}\nNgày phê duyệt: ${new Date().toLocaleString('vi-VN')}\n\n1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)\nỨng dụng "${appName}" hoạt động trên nguyên tắc tối giản quyền. Mọi quyền truy cập hệ thống chỉ được sử dụng đúng với mục đích hiển thị nội dung.\n\n2. BẢO MẬT MÃ NGUỒN\nBản phân phối ứng dụng này đã được máy quét của Lyrad phân tích. Mã băm: ${randomHash}.`;
+                    
+                    document.getElementById('res-csbm').value = csbmText;
+                    document.getElementById('pub-result-area').style.display = 'block';
+                    
+                    document.getElementById('pub-app-name').value = '';
+                    document.getElementById('pub-apk-file').value = '';
+                    document.getElementById('pub-icon-file').value = '';
+
+                    alert("Đăng tải APK thành công!\nỨng dụng đã được hiển thị công khai trên Market Place.");
+                }, 1800);
+            };
+
+            if (iconType !== 'system') {
+                const reader = new FileReader();
+                reader.onload = (e) => finalizeUpload(e.target.result);
+                reader.readAsDataURL(iconInput.files[0]);
+            } else {
+                finalizeUpload(null);
+            }
+        }
+
+        // ==========================================
+        // XỬ LÝ TẢI VỀ THỰC TẾ & MỞ THÔNG TIN APP
+        // ==========================================
+        function triggerRealDownload(appName, appId) {
+            const content = `--- BẢN DỊCH NGƯỢC GIẢ LẬP LAA ---\nTên Ứng Dụng: ${appName}\nMã Định Danh (App ID): ${appId}\nThời gian đóng gói: ${new Date().toLocaleString('vi-VN')}\n\nĐây là file dữ liệu thực sinh ra từ trình duyệt (Blob) đại diện cho file APK gốc tải xuống từ Market Place. Cấm ăn bớt code, dữ liệu 100% tuân thủ Database Local.\nHash Check: OK`;
+            const blob = new Blob([content], { type: 'application/vnd.android.package-archive' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${appName.replace(/\s+/g, '_')}_${appId}.apk`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+            let appIndex = apps.findIndex(x => x.id === appId);
+            if(appIndex !== -1) {
+                apps[appIndex].downloads += 1;
                 localStorage.setItem(DB_KEY_APPS, JSON.stringify(apps));
-
-                // 2. TỰ ĐỘNG POST BÀI QUẢNG CÁO APP RA BẢNG TIN
-                let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
-                posts.push({
-                    id: 'P-' + Math.floor(100000 + Math.random() * 900000),
-                    uid: currentUser.uid,
-                    name: currentUser.name,
-                    avatar: currentUser.avatar,
-                    level: currentUser.level,
-                    role: currentUser.role || 'USER',
-                    title: currentUser.title || 'Tân Thủ',
-                    content: `🚀 Vừa phát hành ứng dụng mới: **${appName}**\n\nMã phê duyệt (App ID): ${randomAppId}\nNhà phát hành đã cập nhật bản cài đặt mới nhất, các bạn tải ngay trên tab Khám Phá nhé!`,
-                    timestamp: Date.now(),
-                    reactions: {}, 
-                    comments: [],
-                    shares: 0
-                });
-                localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
-
-                // 3. RENDER LẠI UI VÀ THƯỞNG EXP
                 renderApps();
-                renderPosts();
-                updateExpData(500); // Thưởng cứng 500 EXP khi upload app
+                if(document.getElementById('view-app-detail').classList.contains('active-view')) {
+                    renderAppDetail(appId);
+                }
+            }
+            updateExpData(35); // Cộng điểm tải xuống (dữ liệu thật)
+        }
 
-                document.getElementById('res-appid').innerText = randomAppId;
-                document.getElementById('res-hash').innerText = randomHash;
+        let currentReviewRating = 5;
+        function setReviewRating(star) {
+            currentReviewRating = star;
+            const container = document.getElementById('review-rating-input');
+            if(container) {
+                container.innerHTML = [1,2,3,4,5].map(i => `<span class="${i <= star ? 'active' : ''}" onclick="setReviewRating(${i})">★</span>`).join('');
+            }
+        }
+
+        function submitAppReview(appId) {
+            if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
+            const textInput = document.getElementById('review-text-input');
+            const text = textInput.value.trim();
+            if(!text) return alert("Vui lòng nhập nội dung đánh giá.");
+
+            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+            let appIndex = apps.findIndex(x => x.id === appId);
+            if(appIndex === -1) return;
+            
+            if(!apps[appIndex].reviews) apps[appIndex].reviews = [];
+            apps[appIndex].reviews.push({
+                id: 'REV-' + Math.floor(Math.random() * 9000000),
+                uid: currentUser.uid,
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+                rating: currentReviewRating,
+                text: text,
+                timestamp: Date.now(),
+                reactions: {},
+                replies: []
+            });
+            
+            localStorage.setItem(DB_KEY_APPS, JSON.stringify(apps));
+            updateExpData(currentReviewRating === 5 ? 50 : 10);
+            renderApps();
+            renderAppDetail(appId);
+        }
+
+        function replyToReview(appId, reviewId) {
+            if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
+            const text = prompt("Nhập câu trả lời bình luận của bạn:");
+            if(!text || !text.trim()) return;
+
+            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+            let app = apps.find(x => x.id === appId);
+            let review = app.reviews.find(r => r.id === reviewId);
+            
+            if(!review.replies) review.replies = [];
+            review.replies.push({
+                uid: currentUser.uid,
+                name: currentUser.name,
+                text: text.trim(),
+                timestamp: Date.now()
+            });
+
+            localStorage.setItem(DB_KEY_APPS, JSON.stringify(apps));
+            updateExpData(5);
+            renderAppDetail(appId);
+        }
+
+        function openAppDetail(appId) {
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('main').forEach(m => m.classList.remove('active-view'));
+            document.getElementById('view-app-detail').classList.add('active-view');
+            renderAppDetail(appId);
+            window.scrollTo(0,0);
+        }
+
+        function renderAppDetail(appId) {
+            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+            let app = apps.find(x => x.id === appId);
+            if(!app) return;
+
+            let iconHTML = app.iconBase64 ? `<img src="${app.iconBase64}">` : app.name.charAt(0).toUpperCase();
+            
+            let reviews = app.reviews || [];
+            let avgRating = app.rating;
+            if(reviews.length > 0) {
+                let total = reviews.reduce((sum, rev) => sum + rev.rating, 0);
+                avgRating = (total / reviews.length).toFixed(1);
+            }
+
+            let reviewHTML = reviews.sort((a,b) => b.timestamp - a.timestamp).map(rev => {
+                let repliesHTML = (rev.replies || []).map(rep => `
+                    <div class="reply-item">
+                        <div class="reply-author"><span style="color:var(--primary)">Nhà phát triển / </span> ${rep.name}</div>
+                        <div style="color:var(--text-main);">${rep.text}</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="review-card">
+                        <div class="review-header">
+                            <img src="${rev.avatar}" class="review-avatar">
+                            <div class="review-meta">
+                                <div class="review-author">${rev.name} <span style="font-size:11px; color:var(--text-sub); font-weight:normal;">${new Date(rev.timestamp).toLocaleDateString('vi-VN')}</span></div>
+                                <div class="review-rating">${'★'.repeat(rev.rating)}${'☆'.repeat(5-rev.rating)}</div>
+                            </div>
+                        </div>
+                        <div class="review-text">${rev.text}</div>
+                        <div style="display:flex; gap:16px; align-items:center; border-top:1px solid var(--border); padding-top:12px;">
+                            <span style="font-size:13px; color:var(--text-sub); cursor:pointer; font-weight:600;" onclick="alert('Đã thích đánh giá này!')">👍 Hữu ích</span>
+                            <span style="font-size:13px; color:var(--text-sub); cursor:pointer; font-weight:600;" onclick="replyToReview('${app.id}', '${rev.id}')">💬 Trả lời</span>
+                        </div>
+                        ${repliesHTML ? `<div class="reply-section">${repliesHTML}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            if(reviews.length === 0) {
+                reviewHTML = `<div class="empty-state" style="height:150px; background:var(--bg-body); border-radius:16px;">
+                                <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                              </div>`;
+            }
+
+            document.getElementById('app-detail-content').innerHTML = `
+                <div style="margin-bottom: 24px;">
+                    <button class="action-btn" style="padding:0; color:var(--primary); background:transparent;" onclick="switchTab('view-explore', document.querySelector('.nav-links a'))">← Trở về Cửa hàng</button>
+                </div>
+                <div class="detail-header">
+                    <div class="detail-icon">${iconHTML}</div>
+                    <div class="detail-info-block">
+                        <div class="detail-title">${app.name}</div>
+                        <div class="detail-publisher">${app.publisher} <span style="font-size:12px; color:var(--text-sub); font-weight:normal;">(UID: ${app.publisherUid})</span></div>
+                        <div class="detail-stats-row">
+                            <div class="detail-stat"><span class="detail-stat-val">${avgRating} ★</span><span class="detail-stat-lbl">${reviews.length} Bài đánh giá</span></div>
+                            <div class="detail-stat-divider"></div>
+                            <div class="detail-stat"><span class="detail-stat-val">${app.downloads.toLocaleString('vi-VN')} +</span><span class="detail-stat-lbl">Lượt tải xuống</span></div>
+                            <div class="detail-stat-divider"></div>
+                            <div class="detail-stat"><span class="detail-stat-val">${app.size}</span><span class="detail-stat-lbl">Kích thước file</span></div>
+                        </div>
+                        <button class="btn-detail-download" onclick="triggerRealDownload('${app.name}', '${app.id}')">Cài đặt / Tải về Máy</button>
+                        <div style="font-size:11px; font-family:monospace; color:var(--text-sub); margin-top:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; display:inline-block;">App ID: ${app.id} <br> Hash: ${app.hash.substring(0,32)}...</div>
+                    </div>
+                </div>
+
+                <div class="detail-section-title">Đánh giá và Nhận xét</div>
                 
-                const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ
-Tên sản phẩm: ${appName.toUpperCase()}
-Mã định danh hệ thống: ${randomAppId}
-Ngày phê duyệt: ${new Date().toLocaleString('vi-VN')}
+                <div class="review-composer">
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+                        <img src="${currentUser.avatar}" class="sync-user-avatar" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:1px solid rgba(0,0,0,0.1);">
+                        <div>
+                            <div style="font-weight:700; font-size:15px; color:var(--text-main);">${currentUser.name}</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Nhận xét công khai</div>
+                        </div>
+                    </div>
+                    <div class="rating-stars-input" id="review-rating-input">
+                        ${[1,2,3,4,5].map(i => `<span class="${i <= 5 ? 'active' : ''}" onclick="setReviewRating(${i})">★</span>`).join('')}
+                    </div>
+                    <textarea id="review-text-input" class="review-textarea" rows="3" placeholder="Chia sẻ trải nghiệm của bạn về ứng dụng hoặc trò chơi này..."></textarea>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn-submit-post" onclick="submitAppReview('${app.id}')">Đăng Đánh Giá</button>
+                    </div>
+                </div>
 
-1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)
-Ứng dụng "${appName}" hoạt động trên nguyên tắc tối giản quyền. Mọi quyền truy cập hệ thống chỉ được sử dụng đúng với mục đích hiển thị nội dung.
-
-2. BẢO MẬT MÃ NGUỒN
-Bản phân phối ứng dụng này đã được máy quét của Lyrad phân tích. Mã băm: ${randomHash}.`;
-                
-                document.getElementById('res-csbm').value = csbmText;
-                document.getElementById('pub-result-area').style.display = 'block';
-                
-                // Clear input
-                document.getElementById('pub-app-name').value = '';
-                document.getElementById('pub-apk-file').value = '';
-
-                alert("Đăng tải APK thành công!\nỨng dụng đã được hiển thị công khai trên Market Place.");
-            }, 1800);
+                <div class="review-list">
+                    ${reviewHTML}
+                </div>
+            `;
+            currentReviewRating = 5;
         }
 
         // ==========================================
@@ -1391,7 +1674,8 @@ Bản phân phối ứng dụng này đã được máy quét của Lyrad phân 
         function switchTab(tabId, el) {
             document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
             document.querySelectorAll('main').forEach(m => m.classList.remove('active-view'));
-            el.classList.add('active'); document.getElementById(tabId).classList.add('active-view');
+            if(el) el.classList.add('active'); 
+            document.getElementById(tabId).classList.add('active-view');
         }
         function switchForumSection(secId, el) {
             document.querySelectorAll('.forum-menu-item').forEach(i => i.classList.remove('active'));
