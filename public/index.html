@@ -447,7 +447,7 @@
                             <span class="user-uid-badge" id="user-display-role" style="background: rgba(255,204,0,0.2); color: #cda200; border: 1px solid rgba(255,204,0,0.4);">USER</span>
                             <span class="user-uid-badge" id="user-display-title" style="margin-left: 4px;">Tân Thủ</span>
                             <span class="user-lv" id="user-display-level">LV. 1</span>
-                            <span class="user-uid-badge" onclick="navigator.clipboard.writeText(this.innerText.replace('UID: ', '')); alert('Đã sao chép User ID!')" title="ID Định Danh Hệ Thống (Click để copy)" id="user-display-uid">UID: LYR-0000000</span>
+                            <span class="user-uid-badge" onclick="navigator.clipboard.writeText(this.innerText.replace('UID: ', '')); alert('Đã sao chép User ID!')" title="ID Định Danh Hệ thống (Click để copy)" id="user-display-uid">UID: LYR-0000000</span>
                         </div>
                         <div style="font-size: 12px; color: var(--text-sub); margin-top: 4px; margin-bottom: 8px;">
                             Danh vọng: <strong style="color: var(--text-main);" id="user-display-exp-text">0 / 4.100 EXP</strong>
@@ -901,17 +901,28 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
         // --- CÁC HÀM ĐỒNG BỘ NEON DATABASE ---
+        let isDatabaseReady = false; // Cờ bảo vệ chống ghi đè khi server đang sập/ngủ đông
+
         async function fetchNeonDB() {
             try {
                 const res = await fetch('/api/data');
+                if (!res.ok) throw new Error("Máy chủ không phản hồi thành công");
                 const data = await res.json();
-                data.forEach(row => { globalDB[row.db_key] = row.db_data; });
+                data.forEach(row => { 
+                    // Postgres có thể trả về string hoặc object, parse an toàn
+                    globalDB[row.db_key] = typeof row.db_data === 'string' ? JSON.parse(row.db_data) : row.db_data; 
+                });
+                isDatabaseReady = true; // Kích hoạt cờ an toàn
             } catch (e) {
                 console.error("Lỗi đồng bộ Neon Database:", e);
             }
         }
 
         async function saveNeonDB(key, data) {
+            if (!isDatabaseReady) {
+                console.error("⛔ Chặn lệnh lưu: Database chưa tải xong, tránh ghi đè làm mất dữ liệu!");
+                return;
+            }
             globalDB[key] = data;
             try {
                 await fetch('/api/data', {
@@ -2056,6 +2067,16 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         // KHỞI TẠO ĐỒNG BỘ NEON DATABASE KHI TẢI TRANG
         // ==========================================
         fetchNeonDB().then(() => {
+            if (!isDatabaseReady) {
+                // Nếu server sập hoặc đang ngủ (Render spin down), chặn ngay việc load trang để không sinh ra user mới ghi đè DB
+                document.body.innerHTML = `
+                    <div style="display:flex; height:100vh; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:20px;">
+                        <h2 style="color:#ff3b30; margin-bottom:12px;">⚠️ Máy chủ Backend đang khởi động...</h2>
+                        <p style="color:var(--text-sub);">Hệ thống Render đang gọi server dậy từ trạng thái ngủ đông.<br>Vui lòng đợi khoảng <strong>30-60 giây</strong> rồi <strong>nhấn F5 (Tải lại trang)</strong> để truy cập.<br><i>(Biện pháp này giúp bảo vệ chống ghi đè mất sạch dữ liệu)</i></p>
+                    </div>`;
+                return;
+            }
+
             // Đảm bảo không lỗi mảng trống
             ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories'].forEach(key => {
                 if (!globalDB[key]) globalDB[key] = [];
