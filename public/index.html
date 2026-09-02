@@ -511,7 +511,7 @@
                     </div>
                     <div class="lb-list">
                         <div class="empty-state" style="height: 250px; justify-content: center; text-align: center;">
-                            <p style="font-size: 14px; color: var(--text-sub);">Hệ thống đang chờ dữ liệu người dùng thực.<br>Hãy là người đầu tiên lọt vào bảng xếp hạng!</p>
+                            <p style="font-size: 14px; color: var(--text-sub);">Hệ thống đang chờ dữ liệu từ người dùng.<br>Hãy là người đầu tiên lọt vào bảng xếp hạng!</p>
                         </div>
                     </div>
                 </div>
@@ -537,7 +537,7 @@
                     <div style="margin-bottom: 12px;">
                         <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Tùy chọn Icon Ứng dụng:</label>
                         <select id="src-icon-type" class="auth-input" style="padding: 8px; margin-bottom: 8px;" onchange="toggleSrcIconInput()">
-                            <option value="system">Icon Hệ Thống (Mặc định)</option>
+                            <option value="system">Ảnh Hệ Thống (Mặc định)</option>
                             <option value="library">Tải lên từ Thư viện máy</option>
                             <option value="apk">Trích xuất từ APK</option>
                         </select>
@@ -556,7 +556,7 @@
 
             <div id="section-rules" class="forum-content-section">
                 <div class="rules-container">
-                    <h3>Quy Chế & Khế Ước Tham Gia Hệ Sinh Thái Lyrad</h3>
+                    <h3>Quy Tắc & Khế Ước Tham Gia Cửa Hàng Lyrad Place</h3>
                     
                     <strong>Điều 1: Tôn Trọng Tuyệt Đối Bản Quyền & Tính Nguyên Vẹn Của Phần Mềm</strong>
                     <p>Lyrad Market Place hoạt động dựa trên nguyên tắc tối thượng: BẢO VỆ NHÀ PHÁT TRIỂN. Tuyệt đối nghiêm cấm mọi hành vi can thiệp, chỉnh sửa, dịch ngược (Reverse Engineering), trích xuất trái phép (Unpack/Repack), hoặc cố tình tiêm nhiễm mã ngầm vào tệp tin (APK/AAB) gốc. Bất kỳ vi phạm nào liên quan đến hành vi xâm phạm bản quyền hoặc giả mạo chữ ký số (Signature) sẽ dẫn đến việc khóa vĩnh viễn tài khoản (Perma-ban) theo <strong>UID</strong> và cấm toàn bộ địa chỉ MAC/IP thiết bị của người dùng trên toàn hệ sinh thái mà không cần cảnh báo trước.</p>
@@ -582,16 +582,16 @@
 
         <!-- KHUNG MESSENGER UI ĐÃ CHỈNH SỬA TOÀN BỘ -->
         <aside class="forum-messenger" id="messenger-container">
-            <div class="messenger-header">Messenger & Trực tuyến <span>Dữ liệu thật 100%</span></div>
+            <div class="messenger-header">Messenger & Cộng Đồng<span>Online</span></div>
             <div class="messenger-list" id="messenger-list-area">
                 <div class="empty-state" style="height: 100%; margin: 0; justify-content: center;">
-                    <p style="font-size: 13px;">Hệ thống đang tải dữ liệu thật 100%...<br>No Mock, No giả lập.</p>
+                    <p style="font-size: 13px;">...<br>...</p>
                 </div>
             </div>
             
             <!-- CÁC TÍNH NĂNG MỞ KHÓA THEO LEVEL -->
             <div class="messenger-tools" id="messenger-tools">
-                <button id="btn-msg-fb-emoji" class="msg-tool-btn locked" title="Emoji FB (Mở khóa ở LV. 5)" onclick="msgTool.emoji()">😀</button>
+                <button id="btn-msg-fb-emoji" class="msg-tool-btn locked" title="Emoji FB (Mở khóa ở LV. 5)" onclick="msgTool.emoji()">😌</button>
                 <button id="btn-msg-sp-emoji" class="msg-tool-btn locked" title="Ký tự đặc biệt (Mở khóa ở LV. 30)" onclick="msgTool.special()">✧</button>
                 <button id="btn-msg-font" class="msg-tool-btn locked" title="Kiểu chữ (Mở khóa ở LV. 50)" onclick="msgTool.format()">𝐀</button>
                 <label id="lbl-msg-img" class="msg-tool-btn locked" title="Tải ảnh lên (Mở khóa ở LV. 111)" style="margin: 0;">
@@ -2227,7 +2227,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
                 
                 // Khởi động bộ đếm thời gian 1p30s
                 anonTimeout = setTimeout(() => {
-                    alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (1p30s). Vui lòng đăng nhập để tiếp tục truy cập trang web và lưu trữ dữ liệu thật 100%.");
+                    alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (1p30s). Vui lòng đăng nhập để tiếp tục truy cập trang web.");
                     openAuthModal();
                     document.getElementById('auth-close-btn').style.display = 'none'; // Bắt buộc đăng nhập
                 }, 90000);
