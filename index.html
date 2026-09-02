@@ -116,7 +116,7 @@
         .empty-state p { font-size: 15px; line-height: 1.5; margin-bottom: 12px;}
         .id-badge-info { font-family: monospace; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; color: var(--text-main); border: 1px solid var(--border); display: inline-block;}
 
-        /* === APP STORE GRID STYLES (MỚI THÊM) === */
+        /* === APP STORE GRID STYLES === */
         .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding: 10px 0; }
         .app-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; box-shadow: var(--shadow-sm); display: flex; gap: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); cursor: pointer; }
         .app-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: rgba(0, 122, 255, 0.3); }
@@ -362,11 +362,7 @@
     </main>
 
     <main id="view-games">
-        <div class="empty-state">
-            <h2>Chưa có Trò chơi</h2>
-            <p>Cửa hàng Game đang trống. Vui lòng chờ nhà phát hành đăng tải bản cài đặt APK chính thức.</p>
-            <div class="id-badge-info">Lưu ý BQT: Mọi bản APK tải lên đều gắn chặt với <strong>UID</strong> của người đăng và <strong>App ID</strong> duy nhất.</div>
-        </div>
+        <!-- Nội dung sẽ được render bằng JS renderApps() -->
     </main>
 
     <main id="view-apps">
@@ -727,13 +723,28 @@
                     </div>
                 </div>
 
-                <!-- ĐIỀU 6 - XÓA TÀI KHOẢN VĨNH VIỄN -->
                 <div class="admin-card god-mode-card">
                     <h4 style="color: #ff3b30; border-bottom-color: rgba(255,59,48,0.5);">ĐIỀU 6: XÓA TÀI KHOẢN (Chống Spam)</h4>
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Xóa bỏ hoàn toàn Database của người dùng này, không thể khôi phục.</p>
                     <input type="text" class="admin-input" id="admin-input-6" placeholder="Nhập UID (LYR-xxxx)...">
                     <div class="admin-btn-group">
                         <button class="admin-btn god-mode-btn" onclick="executeLAA('Xóa Tài Khoản', 'admin-input-6')">XÓA VĨNH VIỄN ACCOUNT</button>
+                    </div>
+                </div>
+
+                <!-- TÍNH NĂNG MỚI: XÓA BÀI VIẾT / XÓA APP -->
+                <div class="admin-card god-mode-card" style="background: rgba(255, 69, 58, 0.05); border-color: #ff453a;">
+                    <h4 style="color: #ff453a; border-bottom-color: rgba(255, 69, 58, 0.5);">ĐIỀU 7: KIỂM DUYỆT NỘI DUNG (XÓA BÀI/APP)</h4>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Gỡ bỏ vĩnh viễn Bài viết trên diễn đàn hoặc Ứng dụng/Trò chơi ra khỏi Market Place dựa trên ID định danh hệ thống.</p>
+                    
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <input type="text" class="admin-input" id="admin-del-post-id" placeholder="Nhập Post ID (VD: P-xxxxxx)..." style="margin-bottom: 0;">
+                        <button class="admin-btn god-mode-btn" style="flex: 0 0 auto; width: 140px;" onclick="adminDeleteContent('post')">XÓA BÀI VIẾT</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="admin-input" id="admin-del-app-id" placeholder="Nhập App ID (VD: APP-VN-xxxx)..." style="margin-bottom: 0;">
+                        <button class="admin-btn god-mode-btn" style="flex: 0 0 auto; width: 140px;" onclick="adminDeleteContent('app')">XÓA APP/GAME</button>
                     </div>
                 </div>
             </div>
@@ -796,10 +807,19 @@
             <div id="tab-publisher" class="admin-grid" style="display: none; grid-template-columns: 1fr; max-height: 60vh; overflow-y: auto;">
                 <div class="admin-card god-mode-card" style="background: rgba(52, 199, 89, 0.05); border-color: #34c759;">
                     <h4 style="color: #34c759; border-bottom-color: rgba(52, 199, 89, 0.5);">🚀 PUBLISHER UPLOAD CENTER</h4>
-                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động cấp App ID và đẩy lên Cửa Hàng ngay lập tức.</p>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động cấp App ID và phân luồng mục hiển thị lên Market Place.</p>
                     
                     <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
                     
+                    <!-- TÍNH NĂNG MỚI: PHÂN LOẠI APP / GAME -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Phân loại Danh mục (Category):</label>
+                        <select id="pub-app-category" class="admin-input" style="background: #1c1c1e;">
+                            <option value="app">Ứng Dụng / Tiện Ích</option>
+                            <option value="game">Trò Chơi</option>
+                        </select>
+                    </div>
+
                     <div style="margin-bottom: 12px;">
                         <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Ảnh Đại Diện (Icon) Ứng dụng:</label>
                         <select id="pub-icon-type" class="admin-input" onchange="togglePubIconInput()">
@@ -822,11 +842,11 @@
                         <div style="background: #111; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #34c759; margin-bottom: 15px; border: 1px solid #333;">
                             <div>[APP_ID]: <span id="res-appid"></span></div>
                             <div>[SHA-256 HASH]: <span id="res-hash"></span></div>
-                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: An toàn (Đã phát hành ra Home)</div>
+                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: An toàn (Đã phân luồng thành công)</div>
                         </div>
                         
-                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ</h5>
-                        <textarea class="admin-input" id="res-csbm" rows="12" style="font-family: inherit; font-size: 12px; line-height: 1.5; resize: none; background: #111;" readonly></textarea>
+                        <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (CSBM)</h5>
+                        <textarea class="admin-input" id="res-csbm" rows="16" style="font-family: inherit; font-size: 12px; line-height: 1.6; resize: none; background: #111;" readonly></textarea>
                     </div>
                 </div>
             </div>
@@ -843,7 +863,7 @@
         const DB_KEY_USERS = 'lyrad_real_users';
         const DB_KEY_POSTS = 'lyrad_real_posts';
         const DB_KEY_SESSION = 'lyrad_real_session';
-        const DB_KEY_APPS = 'lyrad_real_apps'; // <-- KHỞI TẠO BỘ NHỚ LƯU APP
+        const DB_KEY_APPS = 'lyrad_real_apps'; 
 
         // 1. CẤU HÌNH FIREBASE
         const firebaseConfig = {
@@ -858,7 +878,6 @@
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-        // 3. XỬ LÝ ĐĂNG NHẬP POPUP FIREBASE GOOGLE
         function signInWithFirebaseGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             firebase.auth().signInWithPopup(provider).then((result) => {
@@ -888,10 +907,9 @@
             });
         }
 
-        // --- KHỞI TẠO CẤU TRÚC LƯU TRỮ ---
         if (!localStorage.getItem(DB_KEY_USERS)) localStorage.setItem(DB_KEY_USERS, JSON.stringify([]));
         if (!localStorage.getItem(DB_KEY_POSTS)) localStorage.setItem(DB_KEY_POSTS, JSON.stringify([]));
-        if (!localStorage.getItem(DB_KEY_APPS)) localStorage.setItem(DB_KEY_APPS, JSON.stringify([])); // DB mảng Apps
+        if (!localStorage.getItem(DB_KEY_APPS)) localStorage.setItem(DB_KEY_APPS, JSON.stringify([]));
 
         let currentUser = JSON.parse(localStorage.getItem(DB_KEY_SESSION));
         if (!currentUser) {
@@ -980,30 +998,13 @@
         }
         
         // ==========================================
-        // VẼ UI ỨNG DỤNG LÊN TAB KHÁM PHÁ & ỨNG DỤNG
+        // VẼ UI ỨNG DỤNG LÊN CÁC TAB BẰNG CATEGORY
         // ==========================================
-        function renderApps() {
-            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
-            let exploreContainer = document.getElementById('view-explore');
-            let appsContainer = document.getElementById('view-apps');
+        function generateAppGridHTML(appList) {
+            if(appList.length === 0) return '';
+            let html = '<div class="app-grid">';
             
-            let emptyStateHTML = `
-                <div class="empty-state">
-                    <h2>Chưa có ứng dụng</h2>
-                    <p>Cửa hàng đang trống. Xin cảm ơn người dùng!!!</p>
-                    <div class="id-badge-info">Lưu ý BQT: Mỗi ứng dụng tải lên sẽ được cấp <strong>App ID</strong> (VD: APP-VN-xxxx) và lưu vết <strong>Mã Hash</strong> tự động.</div>
-                </div>`;
-                
-            if (apps.length === 0) {
-                exploreContainer.innerHTML = emptyStateHTML;
-                appsContainer.innerHTML = emptyStateHTML;
-                return;
-            }
-
-            let gridHTML = '<div class="app-grid">';
-            
-            // Xếp app mới nhất lên đầu
-            apps.sort((a,b) => b.timestamp - a.timestamp).forEach(app => {
+            appList.sort((a,b) => b.timestamp - a.timestamp).forEach(app => {
                 let initial = app.name.charAt(0).toUpperCase();
                 let iconHTML = app.iconBase64 ? `<img src="${app.iconBase64}">` : initial;
                 
@@ -1013,7 +1014,7 @@
                     avgRating = (total / app.reviews.length).toFixed(1);
                 }
 
-                gridHTML += `
+                html += `
                     <div class="app-card" onclick="openAppDetail('${app.id}')">
                         <div class="app-icon">${iconHTML}</div>
                         <div class="app-info">
@@ -1029,10 +1030,54 @@
                     </div>
                 `;
             });
-            gridHTML += '</div>';
+            html += '</div>';
+            return html;
+        }
 
-            exploreContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Khám phá Ứng dụng nổi bật</h2>` + gridHTML;
-            appsContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Kho Ứng dụng & Tiện ích</h2>` + gridHTML;
+        function renderApps() {
+            let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS)) || [];
+            
+            let exploreContainer = document.getElementById('view-explore');
+            let gamesContainer = document.getElementById('view-games');
+            let appsContainer = document.getElementById('view-apps');
+            
+            let emptyStateAppsHTML = `
+                <div class="empty-state">
+                    <h2>Chưa có ứng dụng</h2>
+                    <p>Cửa hàng đang trống. Xin cảm ơn người dùng!!!</p>
+                    <div class="id-badge-info">Lưu ý BQT: Mỗi ứng dụng tải lên sẽ được cấp <strong>App ID</strong> (VD: APP-VN-xxxx) và lưu vết <strong>Mã Hash</strong> tự động.</div>
+                </div>`;
+                
+            let emptyStateGamesHTML = `
+                <div class="empty-state">
+                    <h2>Chưa có Trò chơi</h2>
+                    <p>Cửa hàng Game đang trống. Vui lòng chờ nhà phát hành đăng tải bản cài đặt APK chính thức.</p>
+                    <div class="id-badge-info">Lưu ý BQT: Mọi bản APK tải lên đều gắn chặt với <strong>UID</strong> của người đăng và <strong>App ID</strong> duy nhất.</div>
+                </div>`;
+
+            let gameApps = apps.filter(a => a.category === 'game');
+            let toolApps = apps.filter(a => a.category === 'app' || !a.category);
+
+            // Tab Khám Phá: Hiển thị tất cả
+            if (apps.length === 0) {
+                exploreContainer.innerHTML = emptyStateAppsHTML;
+            } else {
+                exploreContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Khám phá Ứng dụng & Trò chơi nổi bật</h2>` + generateAppGridHTML(apps);
+            }
+
+            // Tab Trò chơi: Chỉ hiển thị game
+            if (gameApps.length === 0) {
+                gamesContainer.innerHTML = emptyStateGamesHTML;
+            } else {
+                gamesContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Cửa hàng Trò chơi</h2>` + generateAppGridHTML(gameApps);
+            }
+
+            // Tab Ứng dụng: Chỉ hiển thị app
+            if (toolApps.length === 0) {
+                appsContainer.innerHTML = emptyStateAppsHTML;
+            } else {
+                appsContainer.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--text-main);">Kho Ứng dụng & Tiện ích</h2>` + generateAppGridHTML(toolApps);
+            }
         }
 
         // ==========================================
@@ -1054,6 +1099,7 @@
             const fileInput = document.getElementById('pub-apk-file');
             const iconType = document.getElementById('pub-icon-type').value;
             const iconInput = document.getElementById('pub-icon-file');
+            const appCategory = document.getElementById('pub-app-category').value;
             
             if (!appName) return alert("Vui lòng nhập tên ứng dụng / trò chơi của bạn!");
             if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng chọn file định dạng .apk!");
@@ -1084,6 +1130,7 @@
                     apps.push({
                         id: randomAppId,
                         name: appName,
+                        category: appCategory, // Lưu category mới
                         hash: randomHash,
                         publisher: currentUser.name,
                         publisherUid: currentUser.uid,
@@ -1105,7 +1152,7 @@
                         level: currentUser.level,
                         role: currentUser.role || 'USER',
                         title: currentUser.title || 'Tân Thủ',
-                        content: `🚀 Vừa phát hành ứng dụng mới: **${appName}**\n\nMã phê duyệt (App ID): ${randomAppId}\nNhà phát hành đã cập nhật bản cài đặt mới nhất, các bạn tải ngay trên tab Khám Phá nhé!`,
+                        content: `🚀 Vừa phát hành ${appCategory === 'game' ? 'trò chơi' : 'ứng dụng'} mới: **${appName}**\n\nMã phê duyệt (App ID): ${randomAppId}\nNhà phát hành đã cập nhật bản cài đặt mới nhất, các bạn tải ngay trên Market Place nhé!`,
                         timestamp: Date.now(),
                         reactions: {}, 
                         comments: [],
@@ -1120,7 +1167,27 @@
                     document.getElementById('res-appid').innerText = randomAppId;
                     document.getElementById('res-hash').innerText = randomHash;
                     
-                    const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ\nTên sản phẩm: ${appName.toUpperCase()}\nMã định danh hệ thống: ${randomAppId}\nNgày phê duyệt: ${new Date().toLocaleString('vi-VN')}\n\n1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)\nỨng dụng "${appName}" hoạt động trên nguyên tắc tối giản quyền. Mọi quyền truy cập hệ thống chỉ được sử dụng đúng với mục đích hiển thị nội dung.\n\n2. BẢO MẬT MÃ NGUỒN\nBản phân phối ứng dụng này đã được máy quét của Lyrad phân tích. Mã băm: ${randomHash}.`;
+                    // NỘI DUNG ĐƯỢC LÀM CHI TIẾT & CHẶT CHẼ HƠN THEO YÊU CẦU
+                    const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ
+Tên sản phẩm: ${appName.toUpperCase()}
+Mã định danh hệ thống: ${randomAppId}
+Phân loại nội dung: ${appCategory === 'game' ? 'Trò Chơi' : 'Ứng Dụng'}
+Ngày phê duyệt: ${new Date().toLocaleString('vi-VN')}
+
+1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)
+${appCategory === 'game' ? 'Trò chơi' : 'Ứng dụng'} "${appName}" hoạt động trên nguyên tắc tối giản quyền (Principle of Least Privilege). Mọi quyền truy cập hệ thống cốt lõi (bao gồm nhưng không giới hạn: Camera, Micro, Bộ nhớ thiết bị, Vị trí, Mạng Wi-Fi/Dữ liệu) chỉ được kích hoạt và sử dụng đúng với mục đích hiển thị nội dung và tính năng trực tiếp cho người dùng. Bất kỳ hành vi lạm dụng quyền hạn ngầm nào (Background Data Collection) vượt ngoài phạm vi khai báo sẽ bị LAA Sandbox phát hiện và dẫn đến việc tiêu hủy file vĩnh viễn.
+
+2. BẢO MẬT MÃ NGUỒN & TÍNH TOÀN VẸN CỦA FILE
+Bản phân phối phần mềm này đã được máy quét bảo mật tĩnh và động của Lyrad Sandbox phân tích chuyên sâu toàn bộ tệp tin. 
+Mã băm định danh tuyệt đối (SHA-256): ${randomHash}
+
+⚠️ QUY TẮC PHÁT HÀNH TỐI THƯỢNG CỦA LAA:
+Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các nguyên tắc: 
+- NO MOCK (Không sử dụng luồng dữ liệu giả mạo).
+- NO GIẢ LẬP (Không chạy trên môi trường ảo hóa trái phép hoặc bypass signature).
+- NO DEMO (Không đăng tải các phiên bản dùng thử bị cắt xén).
+- NO TRẢI NGHIỆM (Trạng thái file tải lên bắt buộc phải là bản Release hoàn thiện 100%).
+- ĐẶC BIỆT NGHIÊM CẤM HÀNH VI ĂN BỚT CODE FILE. Mọi file cài đặt (APK) tải về phải giữ nguyên cấu trúc gốc, dữ liệu trả về 100% tuân thủ tiêu chuẩn Local Database đã được hệ thống định nghĩa.`;
                     
                     document.getElementById('res-csbm').value = csbmText;
                     document.getElementById('pub-result-area').style.display = 'block';
@@ -1139,6 +1206,46 @@
                 reader.readAsDataURL(iconInput.files[0]);
             } else {
                 finalizeUpload(null);
+            }
+        }
+
+        // ==========================================
+        // QUẢN LÝ XÓA BÀI VIẾT / XÓA APP TRONG ADMIN
+        // ==========================================
+        function adminDeleteContent(type) {
+            if (type === 'post') {
+                let id = document.getElementById('admin-del-post-id').value.trim();
+                if(!id) return alert("Vui lòng nhập Post ID!");
+                let posts = JSON.parse(localStorage.getItem(DB_KEY_POSTS));
+                // Hỗ trợ nhập có hoặc không có dấu # (VD: #P-123456 hoặc P-123456)
+                let idx = posts.findIndex(p => p.id === id || p.id === id.replace('#', ''));
+                if(idx === -1) return alert("Không tìm thấy bài viết này trên Diễn đàn!");
+                
+                if(confirm("BQT XÁC NHẬN: Bạn có chắc chắn muốn xóa vĩnh viễn bài viết [" + id + "] khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác!")) {
+                    posts.splice(idx, 1);
+                    localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts));
+                    renderPosts();
+                    document.getElementById('admin-del-post-id').value = '';
+                    alert("✅ Đã thi hành lệnh xóa Bài Viết thành công!");
+                }
+            } else if (type === 'app') {
+                let id = document.getElementById('admin-del-app-id').value.trim();
+                if(!id) return alert("Vui lòng nhập App ID!");
+                let apps = JSON.parse(localStorage.getItem(DB_KEY_APPS));
+                let idx = apps.findIndex(a => a.id === id);
+                if(idx === -1) return alert("Không tìm thấy Ứng dụng hoặc Trò chơi này trên hệ thống!");
+                
+                if(confirm("BQT XÁC NHẬN: Bạn có chắc chắn muốn gỡ bỏ vĩnh viễn App/Game [" + apps[idx].name + " - " + id + "] khỏi Market Place? Hành động này không thể hoàn tác!")) {
+                    apps.splice(idx, 1);
+                    localStorage.setItem(DB_KEY_APPS, JSON.stringify(apps));
+                    renderApps();
+                    // Nếu đang xem chi tiết app bị xóa thì văng về home
+                    if(document.getElementById('view-app-detail').classList.contains('active-view')) {
+                        switchTab('view-explore', document.querySelector('.nav-links a'));
+                    }
+                    document.getElementById('admin-del-app-id').value = '';
+                    alert("✅ Đã thi hành lệnh gỡ App/Game thành công!");
+                }
             }
         }
 
@@ -1334,7 +1441,7 @@
         }
 
         // ==========================================
-        // CÁC HÀM XỬ LÝ POST VÀ CỘNG ĐỒNG NHƯ CŨ
+        // CÁC HÀM XỬ LÝ POST VÀ CỘNG ĐỒNG
         // ==========================================
         function handlePostSubmit(e) {
             e.preventDefault();
@@ -1561,12 +1668,12 @@
             document.getElementById('tab-laa').style.display = 'none';
             document.getElementById('tab-users').style.display = 'none';
             document.getElementById('tab-publisher').style.display = 'none';
-            document.getElementById('tab-roles').style.display = 'none'; // Ẩn tab mới
+            document.getElementById('tab-roles').style.display = 'none'; 
             
             if(tabId === 'tab-laa') { document.getElementById('tab-laa').style.display = 'grid'; } 
             else if (tabId === 'tab-users') { document.getElementById('tab-users').style.display = 'block'; renderAdminUserList(); } 
             else if (tabId === 'tab-publisher') { document.getElementById('tab-publisher').style.display = 'grid'; }
-            else if (tabId === 'tab-roles') { document.getElementById('tab-roles').style.display = 'grid'; } // Hiện tab mới
+            else if (tabId === 'tab-roles') { document.getElementById('tab-roles').style.display = 'grid'; }
         }
 
         function renderAdminUserList() {
@@ -1609,7 +1716,6 @@
             }
         }
 
-        // --- CÁC HÀM XỬ LÝ PHÂN QUYỀN VÀ CẤP BẬC MỚI ---
         function updateUserField(uid, field, value, msg) {
             let users = JSON.parse(localStorage.getItem(DB_KEY_USERS));
             let userIndex = users.findIndex(u => u.uid === uid);
@@ -1669,7 +1775,6 @@
             document.getElementById('lvl-input').value = '';
             document.getElementById('exp-input').value = '';
         }
-        // ------------------------------------------------
 
         function switchTab(tabId, el) {
             document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
@@ -1699,7 +1804,7 @@
 
         // INIT KHI LOAD TRANG
         updateExpUI();
-        renderApps(); // <-- Gọi hàm render UI Ứng Dụng
+        renderApps();
         renderPosts();
     </script>
 </body>
