@@ -1,0 +1,167 @@
+/**
+ * LYRAD MARKET PLACE - MESSENGER MODULE
+ * Chuyên trách quản lý Messenger & Trực Tuyến.
+ * Sử dụng ImgBB API để lưu trữ ảnh chat.
+ */
+
+// Đã tích hợp sẵn API Key ImgBB của bạn
+const IMGBB_API_KEY = "4c433d58d2d8fe0bf07e0a88b4f7cf54"; 
+
+const msgTool = {
+    chatBox: null,
+    
+    init: function() {
+        this.chatBox = document.getElementById('messenger-list-area');
+        
+        // Liên tục cập nhật tin nhắn realtime (Polling nhẹ mỗi 3 giây)
+        setInterval(() => this.renderChat(), 3000);
+        setTimeout(() => this.renderChat(), 1000);
+
+        // Bắt sự kiện phím Enter cho ô chat
+        const inputField = document.getElementById('messenger-input-field');
+        if(inputField) {
+            inputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.send();
+            });
+        }
+    },
+
+    // Kiểm tra và Cảnh báo Level
+    checkLevel: function(reqLevel, featureName) {
+        if(isAnonymous) { alert("Tài khoản Ẩn Danh cấm sử dụng tính năng Chat."); return false; }
+        if(currentUser.level < reqLevel) {
+            alert(`🔒 Tính năng ${featureName} yêu cầu Level ${reqLevel}.\nLevel hiện tại của bạn: ${currentUser.level}. Hãy tích cực tham gia Diễn đàn để tăng Cấp!`);
+            return false;
+        }
+        return true;
+    },
+
+    // Lv 5: Facebook Emoji
+    emoji: function() {
+        if(!this.checkLevel(5, "Emoji Cơ Bản")) return;
+        const input = document.getElementById('messenger-input-field');
+        input.value += " 😀"; input.focus();
+    },
+
+    // Lv 30: Special Emoji
+    special: function() {
+        if(!this.checkLevel(30, "Ký Tự Đặc Biệt")) return;
+        const input = document.getElementById('messenger-input-field');
+        input.value += " ( ͡° ͜ʖ ͡°)"; input.focus();
+    },
+
+    // Lv 50: Text Format
+    format: function() {
+        if(!this.checkLevel(50, "Định Dạng Chữ")) return;
+        alert("Gõ cú pháp sau để đổi kiểu chữ:\n**chữ in đậm**\n*chữ in nghiêng*\n#Chữ lớn");
+    },
+
+    // Lv 111: Tải ảnh lên ImgBB Server
+    uploadImage: function(inputElement) {
+        if(!this.checkLevel(111, "Gửi Ảnh Trực Tuyến")) { inputElement.value = ''; return; }
+        
+        const file = inputElement.files[0];
+        if(!file) return;
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        alert("Đang tải ảnh lên máy chủ ImgBB...");
+
+        // Yêu cầu POST theo đúng tài liệu ImgBB
+        fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.success) {
+                const imageUrl = data.data.url;
+                this.pushMessageToDB(null, imageUrl); // Render link ảnh ra khung chat
+                inputElement.value = ''; // Reset ô chọn file
+            } else {
+                alert("Lỗi tải ảnh lên ImgBB: " + (data.error ? data.error.message : "Thất bại"));
+            }
+        })
+        .catch(err => {
+            alert("Lỗi kết nối máy chủ ảnh: " + err.message);
+        });
+    },
+
+    // Gửi tin nhắn Text
+    send: function() {
+        if(isAnonymous) return alert("Tài khoản Ẩn Danh cấm nhắn tin!");
+        if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị cấm chat!");
+        
+        const input = document.getElementById('messenger-input-field');
+        let text = input.value.trim();
+        if(!text) return;
+        
+        // Basic parser cho Level 50+
+        if(currentUser.level >= 50) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
+            text = text.replace(/^#(.*)/g, '<span style="color:var(--primary); font-weight:bold; font-size:16px;">$1</span>');
+        }
+
+        this.pushMessageToDB(text, null);
+        input.value = '';
+    },
+
+    // Đẩy Dữ liệu Thật (Real data 100%) vào Neon Database
+    pushMessageToDB: function(text, imgUrl) {
+        let chatDB = globalDB[DB_KEY_CHAT] || [];
+        chatDB.push({
+            id: 'MSG-' + Date.now(),
+            uid: currentUser.uid,
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+            text: text,
+            imgUrl: imgUrl,
+            timestamp: Date.now()
+        });
+        
+        // Chỉ giữ 50 tin nhắn mới nhất để tránh lag Web Mobile
+        if(chatDB.length > 50) chatDB = chatDB.slice(-50);
+        
+        saveNeonDB(DB_KEY_CHAT, chatDB);
+        updateExpData(1); 
+        this.renderChat();
+    },
+
+    // Vẽ giao diện Chat
+    renderChat: function() {
+        if(!globalDB[DB_KEY_CHAT] || globalDB[DB_KEY_CHAT].length === 0) return;
+        
+        let html = '';
+        const chats = globalDB[DB_KEY_CHAT];
+        
+        chats.forEach(msg => {
+            let isMe = msg.uid === currentUser.uid;
+            
+            let content = '';
+            if(msg.text) content += `<span>${msg.text}</span>`;
+            if(msg.imgUrl) content += `<img src="${msg.imgUrl}" class="chat-msg-img">`;
+
+            html += `
+                <div class="chat-msg-item ${isMe ? 'me' : ''}">
+                    <img src="${msg.avatar}" class="chat-msg-avt">
+                    <div style="max-width: 75%;">
+                        <div class="chat-msg-author">${msg.name}</div>
+                        <div class="chat-msg-bubble">${content}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        let isScrolledToBottom = this.chatBox.scrollHeight - this.chatBox.clientHeight <= this.chatBox.scrollTop + 10;
+        this.chatBox.innerHTML = html;
+        if(isScrolledToBottom) {
+            this.chatBox.scrollTop = this.chatBox.scrollHeight;
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    msgTool.init();
+});

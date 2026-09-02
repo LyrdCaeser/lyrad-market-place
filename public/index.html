@@ -15,9 +15,10 @@
         }
     </script>
 
-    <!-- FIREBASE SDK CORE & AUTH (VERSION 10.8.1 COMPAT) -->
+    <!-- FIREBASE SDK CORE, AUTH & STORAGE (VERSION 10.8.1 COMPAT) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-storage-compat.js"></script>
 
     <style>
         :root {
@@ -173,6 +174,7 @@
         .forum-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 15px; color: var(--text-main); cursor: pointer; transition: background 0.2s; }
         .forum-menu-item:hover { background: rgba(0, 0, 0, 0.04); }
         .forum-menu-item.active { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
+        .forum-menu-item.special-btn { color: #34c759; background: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); }
 
         .forum-feed { display: flex; flex-direction: column; gap: 20px; }
         .forum-content-section { display: none; animation: fadeIn 0.3s ease; }
@@ -244,12 +246,35 @@
         .comment-item-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(0,0,0,0.1);}
         .comment-item-content { background: var(--bg-body); padding: 8px 12px; border-radius: 12px; flex: 1; display: flex; flex-direction: column;}
         
-        .forum-messenger { position: sticky; top: 80px; height: calc(100vh - 100px); background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
-        .messenger-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; }
-        .messenger-list { flex: 1; overflow-y: auto; padding: 8px; }
-        .messenger-input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; background: var(--bg-card); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+        /* === MESSENGER UI ĐƯỢC TỐI ƯU === */
+        .forum-messenger { position: sticky; top: 80px; height: calc(100vh - 100px); background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden; }
+        .messenger-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center;}
+        .messenger-header span { font-size: 11px; font-weight: 500; background: #34c759; color: white; padding: 2px 6px; border-radius: 10px; }
+        .messenger-list { flex: 1; overflow-y: auto; padding: 8px; font-size: 13px; transition: font-size 0.2s;}
+        
+        .messenger-tools { padding: 8px 12px; border-top: 1px solid var(--border); background: var(--bg-body); display: flex; gap: 12px; align-items: center; }
+        .msg-tool-btn { font-size: 18px; cursor: pointer; border: none; background: transparent; opacity: 0.3; transition: opacity 0.2s, transform 0.2s; padding: 0; outline: none;}
+        .msg-tool-btn.unlocked { opacity: 1; transform: scale(1.1); }
+        .msg-tool-btn.locked { cursor: not-allowed; }
+        .msg-tool-btn:hover.unlocked { opacity: 0.8; }
+        
+        .messenger-input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; background: var(--bg-card); }
         .messenger-input-field { flex: 1; border: none; background: var(--bg-body); border-radius: 20px; padding: 8px 14px; font-size: 13px; outline: none; color: var(--text-main); }
         .messenger-send-btn { color: var(--primary); font-weight: 700; font-size: 14px; cursor: pointer; padding: 0 4px; }
+
+        /* CSS cho Bong bóng Chat Messenger */
+        .chat-msg-item { display: flex; gap: 8px; margin-bottom: 12px; font-size: 14px; animation: fadeIn 0.3s ease; }
+        .chat-msg-item.me { flex-direction: row-reverse; }
+        .chat-msg-avt { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+        .chat-msg-author { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; font-weight: 600; text-align: left; }
+        .chat-msg-item.me .chat-msg-author { text-align: right; }
+        .chat-msg-bubble { background: var(--bg-card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 12px; border-top-left-radius: 2px; color: var(--text-main); display: inline-block; word-break: break-word; }
+        .chat-msg-item.me .chat-msg-bubble { background: var(--primary); color: white; border-top-left-radius: 12px; border-top-right-radius: 2px; border: none; }
+        .chat-msg-img { max-width: 100%; border-radius: 8px; margin-top: 4px; border: 1px solid rgba(0,0,0,0.1); }
+
+        @media (max-width: 768px) {
+            .forum-messenger { position: relative; top: 0; height: 450px; max-height: 50vh; margin-top: 20px; }
+        }
 
         .rules-container { background: var(--bg-card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
         .rules-container h3 { margin-bottom: 20px; color: var(--primary); font-size: 22px; font-weight: 800; letter-spacing: -0.5px;}
@@ -399,6 +424,9 @@
             <div class="forum-menu-item" onclick="switchForumSection('section-qa', this)">Câu hỏi Q&A</div>
             <div class="forum-menu-item" onclick="switchForumSection('section-sourcecode', this)">Góc chia sẻ mã nguồn</div>
             <div class="forum-menu-item" style="margin-top: 20px; color: var(--text-sub);" onclick="switchForumSection('section-rules', this)">Nguyên tắc Cộng đồng</div>
+            
+            <!-- NÚT PHÓNG TO CHỮ ĐỘC QUYỀN CHO MOBILE (Sẽ được JS phát hiện để hiển thị) -->
+            <div id="btn-resize-text" class="forum-menu-item special-btn" style="display: none; margin-top: 10px;" onclick="resizeMessengerText()">A Tùy chỉnh cỡ chữ Khung Chat</div>
         </aside>
 
         <section class="forum-feed">
@@ -552,16 +580,29 @@
             </div>
         </section>
 
-        <aside class="forum-messenger">
-            <div class="messenger-header">Messenger & Trực tuyến</div>
-            <div class="messenger-list">
+        <!-- KHUNG MESSENGER UI ĐÃ CHỈNH SỬA TOÀN BỘ -->
+        <aside class="forum-messenger" id="messenger-container">
+            <div class="messenger-header">Messenger & Trực tuyến <span>Dữ liệu thật 100%</span></div>
+            <div class="messenger-list" id="messenger-list-area">
                 <div class="empty-state" style="height: 100%; margin: 0; justify-content: center;">
-                    <p style="font-size: 13px;">Chưa có kết nối mạng<br>hoặc không có ai trực tuyến.</p>
+                    <p style="font-size: 13px;">Hệ thống đang tải dữ liệu thật 100%...<br>No Mock, No giả lập.</p>
                 </div>
             </div>
+            
+            <!-- CÁC TÍNH NĂNG MỞ KHÓA THEO LEVEL -->
+            <div class="messenger-tools" id="messenger-tools">
+                <button id="btn-msg-fb-emoji" class="msg-tool-btn locked" title="Emoji FB (Mở khóa ở LV. 5)" onclick="msgTool.emoji()">😀</button>
+                <button id="btn-msg-sp-emoji" class="msg-tool-btn locked" title="Ký tự đặc biệt (Mở khóa ở LV. 30)" onclick="msgTool.special()">✧</button>
+                <button id="btn-msg-font" class="msg-tool-btn locked" title="Kiểu chữ (Mở khóa ở LV. 50)" onclick="msgTool.format()">𝐀</button>
+                <label id="lbl-msg-img" class="msg-tool-btn locked" title="Tải ảnh lên (Mở khóa ở LV. 111)" style="margin: 0;">
+                    🖼️
+                    <input type="file" id="btn-msg-img" class="hidden-file-input" accept="image/*" onchange="msgTool.uploadImage(this)">
+                </label>
+            </div>
+
             <div class="messenger-input-area">
-                <input type="text" class="messenger-input-field" placeholder="Nhập tin nhắn..." autocomplete="off">
-                <span class="messenger-send-btn">Gửi</span>
+                <input type="text" id="messenger-input-field" class="messenger-input-field" placeholder="Nhập tin nhắn..." autocomplete="off">
+                <span class="messenger-send-btn" id="messenger-send-btn" onclick="msgTool.send()">Gửi</span>
             </div>
         </aside>
 
@@ -589,7 +630,7 @@
 
     <div id="authModal" class="auth-modal">
         <div class="auth-content">
-            <span class="auth-close" onclick="closeAuthModal()">&times;</span>
+            <span class="auth-close" id="auth-close-btn" onclick="closeAuthModal()">&times;</span>
             <div class="auth-title">Tài khoản</div>
             <div class="auth-tabs">
                 <div class="auth-tab active" onclick="toggleAuth('login')" id="tab-login">Đăng nhập</div>
@@ -644,7 +685,7 @@
                 <p><strong>Cập nhật lần cuối: 2026.</strong> Văn bản này cấu thành một hợp đồng pháp lý có tính ràng buộc tuyệt đối giữa Bạn (Người Dùng) và Ban Quản Trị (BQT) Lyrad Market Place. Việc ấn "Đăng Nhập" hoặc tiếp tục sử dụng Dịch Vụ đồng nghĩa với việc Bạn chấp nhận vô điều kiện toàn bộ các điều khoản khắc nghiệt dưới đây. Nếu Bạn không đồng ý với bất kỳ điều khoản nào, vui lòng HỦY BỎ cài đặt, XÓA TÀI KHOẢN và RỜI KHỎI hệ sinh thái ngay lập tức.</p>
 
                 <h4>Điều 1: Thu thập Dữ Liệu Nhận Diện & Định Danh Thiết Bị (Device Fingerprinting)</h4>
-                <p>Để đảm bảo an margin mạng tuyệt đối theo tiêu chuẩn Sandbox LAA, chúng tôi có quyền chủ động thu thập, trích xuất và lưu trữ vĩnh viễn các thông tin sau mà không cần thông báo trước mỗi lần Bạn truy cập:</p>
+                <p>Để đảm bảo an ninh mạng tuyệt đối theo tiêu chuẩn Sandbox LAA, chúng tôi có quyền chủ động thu thập, trích xuất và lưu trữ vĩnh viễn các thông tin sau mà không cần thông báo trước mỗi lần Bạn truy cập:</p>
                 <p>1.1. <strong>Thông tin Thiết bị cốt lõi:</strong> Địa chỉ MAC (MAC Address), số IMEI/MEID, số Serial phần cứng, thông số Bo mạch chủ (Motherboard ID), và phiên bản Hệ điều hành.</p>
                 <p>1.2. <strong>Nhật ký Mạng (Network Logs):</strong> Địa chỉ IP công cộng, lịch sử định tuyến, tên nhà mạng cung cấp (ISP), và dữ liệu vị trí địa lý dựa trên IP theo thời gian thực.</p>
                 <p>1.3. <strong>Hành vi Người dùng:</strong> Toàn bộ thao tác nhấp chuột (Clickstream), thời gian lưu lại trên trang, các biểu mẫu đã nhập, lịch sử tải xuống ứng dụng (App ID) và mã giao dịch thanh toán (TxID).</p>
@@ -877,16 +918,31 @@
         const DB_KEY_SESSION = 'lyrad_real_session'; // Vẫn giữ duy nhất Token Đăng Nhập tại Local để duy trì Session người dùng
         const DB_KEY_APPS = 'lyrad_real_apps'; 
         const DB_KEY_STORIES = 'lyrad_real_stories'; 
+        const DB_KEY_CHAT = 'lyrad_real_chat';
 
         // BIẾN BỘ NHỚ TOÀN CỤC CHỨA DỮ LIỆU ĐỒNG BỘ TỪ NEON DB
         let globalDB = {
             [DB_KEY_USERS]: [],
             [DB_KEY_POSTS]: [],
             [DB_KEY_APPS]: [],
-            [DB_KEY_STORIES]: []
+            [DB_KEY_STORIES]: [],
+            [DB_KEY_CHAT]: []
         };
         let currentUser = null;
+        let isAnonymous = false; // Phân định người dùng ảo tránh phá hoại
+        let anonTimeout = null;
         const maxGlobalLevel = 1000;
+
+        // KIỂM TRA MOBILE ĐỂ HIỆN NÚT CHỈNH FONT MESSENGER
+        const checkMobileOrMac = /iphone|ipad|ipod|android|macintosh|mac os x/i.test(navigator.userAgent.toLowerCase());
+        if (checkMobileOrMac) {
+            document.getElementById('btn-resize-text').style.display = 'flex';
+        }
+        let msgFontSize = 13;
+        function resizeMessengerText() {
+            msgFontSize = msgFontSize >= 18 ? 13 : msgFontSize + 2;
+            document.getElementById('messenger-list-area').style.fontSize = msgFontSize + 'px';
+        }
 
         // CẤU HÌNH FIREBASE
         const firebaseConfig = {
@@ -923,6 +979,9 @@
                 console.error("⛔ Chặn lệnh lưu: Database chưa tải xong, tránh ghi đè làm mất dữ liệu!");
                 return;
             }
+            if (isAnonymous && key === DB_KEY_USERS) {
+                return; // Tài khoản ẩn danh không được phép đẩy dữ liệu lên DB
+            }
             globalDB[key] = data;
             try {
                 await fetch('/api/data', {
@@ -952,17 +1011,32 @@
                         status: 'Hoạt Động',
                         avatar: user.photoURL,
                         role: 'USER',
-                        title: 'Tân Thủ'
+                        title: getTitleByLevel(1)
                     };
                 }
+                isAnonymous = false;
+                if(anonTimeout) clearTimeout(anonTimeout);
+                document.getElementById('auth-close-btn').style.display = 'block';
+
                 saveSession(); updateExpUI(); renderPosts(); closeAuthModal();
+                updateMessengerToolsUI();
                 alert("Xác thực Firebase thành công! Chào mừng " + currentUser.name);
             }).catch((error) => {
                 alert("Đăng nhập thất bại: " + error.message);
             });
         }
 
+        function getTitleByLevel(lvl) {
+            if (lvl < 10) return 'Tân Thủ';
+            if (lvl < 30) return 'Tân Binh';
+            if (lvl < 50) return 'Thành Viên';
+            if (lvl < 100) return 'Chuyên Gia';
+            if (lvl < 111) return 'Cao Thủ';
+            return 'Huyền Thoại';
+        }
+
         function saveSession() {
+            if (isAnonymous) return; // Đóng sập khả năng lưu local của Ẩn Danh
             localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
             let users = globalDB[DB_KEY_USERS];
             let index = users.findIndex(u => u.uid === currentUser.uid);
@@ -973,7 +1047,7 @@
         function getExpRequired(level) { return Math.floor(Math.pow(level, 3.2) * 5 + level * 4095); }
         
         function updateExpData(amount) {
-            if (currentUser.level >= maxGlobalLevel) return;
+            if (isAnonymous || currentUser.level >= maxGlobalLevel) return;
             currentUser.currentExp += amount;
             let expReq = getExpRequired(currentUser.level);
             let didLevelUp = false;
@@ -984,12 +1058,34 @@
                 didLevelUp = true;
             }
             if (currentUser.level >= maxGlobalLevel) { currentUser.level = maxGlobalLevel; currentUser.currentExp = expReq; }
+            
+            // Tự động phân cấp danh hiệu theo Level
+            currentUser.title = getTitleByLevel(currentUser.level);
+
             if (didLevelUp) {
                 const lvBadge = document.getElementById('user-display-level');
                 lvBadge.classList.add('level-up-anim');
                 setTimeout(() => lvBadge.classList.remove('level-up-anim'), 600);
+                updateMessengerToolsUI();
             }
             saveSession(); updateExpUI();
+        }
+
+        function updateMessengerToolsUI() {
+            if (isAnonymous) return;
+            if(currentUser.level >= 5) document.getElementById('btn-msg-fb-emoji').classList.replace('locked', 'unlocked');
+            if(currentUser.level >= 30) document.getElementById('btn-msg-sp-emoji').classList.replace('locked', 'unlocked');
+            if(currentUser.level >= 50) document.getElementById('btn-msg-font').classList.replace('locked', 'unlocked');
+            if(currentUser.level >= 111) document.getElementById('lbl-msg-img').classList.replace('locked', 'unlocked');
+        }
+
+        function checkAnonymousAction() {
+            if (isAnonymous) {
+                alert("Tài khoản ẩn danh chỉ được phép XEM. Vui lòng Đăng Nhập để mở khóa toàn bộ tính năng!");
+                openAuthModal();
+                return true;
+            }
+            return false;
         }
 
         function updateExpUI() {
@@ -1002,7 +1098,7 @@
             const loginBtn = document.getElementById('header-login-btn');
             const profileAvt = document.getElementById('header-user-profile');
             
-            if (currentUser && currentUser.email) {
+            if (currentUser && !isAnonymous) {
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (profileAvt) profileAvt.style.display = 'flex';
             } else {
@@ -1121,6 +1217,7 @@
         }
 
         function simulateApkUpload() {
+            if (checkAnonymousAction()) return;
             const appName = document.getElementById('pub-app-name').value.trim();
             const fileInput = document.getElementById('pub-apk-file');
             const iconType = document.getElementById('pub-icon-type').value;
@@ -1270,6 +1367,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function triggerRealDownload(appName, appId) {
+            if(checkAnonymousAction()) return;
             const content = `--- BẢN DỊCH NGƯỢC GIẢ LẬP LAA ---\nTên Ứng Dụng: ${appName}\nMã Định Danh (App ID): ${appId}\nThời gian đóng gói: ${new Date().toLocaleString('vi-VN')}\n\nĐây là file dữ liệu thực sinh ra từ trình duyệt (Blob) đại diện cho file APK gốc tải xuống từ Market Place. Cấm ăn bớt code, dữ liệu 100% tuân thủ Database Local.\nHash Check: OK`;
             const blob = new Blob([content], { type: 'application/vnd.android.package-archive' });
             const url = window.URL.createObjectURL(blob);
@@ -1305,6 +1403,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function submitAppReview(appId) {
+            if(checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
             const textInput = document.getElementById('review-text-input');
             const text = textInput.value.trim();
@@ -1334,6 +1433,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function replyToReview(appId, reviewId) {
+            if(checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
             const text = prompt("Nhập câu trả lời bình luận của bạn:");
             if(!text || !text.trim()) return;
@@ -1462,6 +1562,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         // ==========================================
         function handlePostSubmit(e) {
             e.preventDefault();
+            if(checkAnonymousAction()) return false;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
             
             const input = document.getElementById('post-content-input');
@@ -1591,6 +1692,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         function stopReactionTimer(postId) {
             if (reactionTimer) clearTimeout(reactionTimer);
             if (!isReactionBarOpen) {
+                if (checkAnonymousAction()) return;
                 let posts = globalDB[DB_KEY_POSTS];
                 let p = posts.find(x => x.id === postId);
                 if(p.reactions[currentUser.uid]) delete p.reactions[currentUser.uid]; 
@@ -1600,6 +1702,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             }
         }
         function applyReaction(postId, emoji, text, color) {
+            if (checkAnonymousAction()) return;
             let posts = globalDB[DB_KEY_POSTS];
             let p = posts.find(x => x.id === postId);
             if(!p.reactions[currentUser.uid]) updateExpData(2);
@@ -1615,6 +1718,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         });
 
         function submitComment(postId) {
+            if (checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
             const input = document.getElementById(`cmt-${postId}`);
             const text = input.value.trim();
@@ -1638,6 +1742,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         // ==========================================
         function handleStoryUpload(input) {
             if (!input.files || !input.files[0]) return;
+            if (checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản của bạn đang bị giới hạn tính năng.");
             
             const file = input.files[0];
@@ -1706,7 +1811,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             let stories = globalDB[DB_KEY_STORIES];
             let story = stories.find(s => s.id === id);
             
-            if (story.uid !== currentUser.uid && !story.views.includes(currentUser.uid)) {
+            if (!isAnonymous && story.uid !== currentUser.uid && !story.views.includes(currentUser.uid)) {
                 story.views.push(currentUser.uid);
                 saveNeonDB(DB_KEY_STORIES, stories);
             }
@@ -1813,6 +1918,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function reactToStory(emoji) {
+            if (checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
             let stories = globalDB[DB_KEY_STORIES];
             let story = stories.find(s => s.id === currentViewingStoryId);
@@ -1828,6 +1934,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function sendStoryComment() {
+            if (checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
             const input = document.getElementById('story-cmt-input');
             const text = input.value.trim();
@@ -1852,6 +1959,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function replyStoryComment(commentId) {
+            if (checkAnonymousAction()) return;
             if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị giới hạn.");
             const text = prompt("Nhập câu trả lời của bạn:");
             if(!text || !text.trim()) return;
@@ -1884,6 +1992,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function handleAvatarSync(inputElement) {
+            if (checkAnonymousAction()) return;
             if (inputElement.files && inputElement.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) { currentUser.avatar = e.target.result; saveSession(); updateExpUI(); renderPosts(); renderStories(); }
@@ -1892,7 +2001,10 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
-        function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+        function closeAuthModal() { 
+            if (isAnonymous && document.getElementById('auth-close-btn').style.display === 'none') return; // Không cho tắt nếu bị khóa
+            document.getElementById('authModal').style.display = 'none'; 
+        }
         function toggleAuth(type) {
             const isLogin = type === 'login';
             document.getElementById('tab-login').classList.toggle('active', isLogin);
@@ -1900,14 +2012,21 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             document.getElementById('form-login').style.display = isLogin ? 'flex' : 'none';
             document.getElementById('form-register').style.display = isLogin ? 'none' : 'flex';
         }
-        function openPolicyModal() { closeAuthModal(); document.getElementById('policyModal').style.display = 'flex'; }
-        function closePolicyModal() { document.getElementById('policyModal').style.display = 'none'; openAuthModal(); }
+        function openPolicyModal() { 
+            document.getElementById('authModal').style.display = 'none'; 
+            document.getElementById('policyModal').style.display = 'flex'; 
+        }
+        function closePolicyModal() { 
+            document.getElementById('policyModal').style.display = 'none'; 
+            document.getElementById('authModal').style.display = 'flex'; 
+        }
         function openQAModal() { document.getElementById('qaModal').style.display = 'flex'; }
         function closeQAModal() { document.getElementById('qaModal').style.display = 'none'; }
         function editDisplayName() { document.getElementById('renameModal').style.display = 'flex'; document.getElementById('new-name-input').value = currentUser.name; }
         function closeRenameModal() { document.getElementById('renameModal').style.display = 'none'; }
         
         function submitNewName() {
+            if (checkAnonymousAction()) return closeRenameModal();
             let newName = document.getElementById('new-name-input').value.trim();
             if (newName.length < 3) return alert("Tên quá ngắn.");
             currentUser.name = newName; saveSession(); updateExpUI(); renderPosts(); closeRenameModal();
@@ -2019,7 +2138,10 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             let userIndex = users.findIndex(u => u.uid === uid);
             if(userIndex === -1) return alert("HỆ THỐNG LAA: Không tìm thấy người dùng này!");
             
-            if(!isNaN(lvl)) users[userIndex].level = Math.max(1, Math.min(lvl, maxGlobalLevel));
+            if(!isNaN(lvl)) {
+                users[userIndex].level = Math.max(1, Math.min(lvl, maxGlobalLevel));
+                users[userIndex].title = getTitleByLevel(users[userIndex].level);
+            }
             if(!isNaN(exp)) users[userIndex].currentExp = Math.max(0, exp);
             
             saveNeonDB(DB_KEY_USERS, users);
@@ -2028,6 +2150,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
                 currentUser = users[userIndex];
                 localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
                 updateExpUI();
+                updateMessengerToolsUI();
             }
             
             alert(`✅ Đã điều chỉnh Level/EXP thành công cho ${uid}`);
@@ -2078,7 +2201,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             }
 
             // Đảm bảo không lỗi mảng trống
-            ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories'].forEach(key => {
+            ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories', 'lyrad_real_chat'].forEach(key => {
                 if (!globalDB[key]) globalDB[key] = [];
             });
 
@@ -2089,28 +2212,37 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
                 if (dbUser) currentUser = dbUser;
             }
             
-            // Nếu là người dùng mới ẩn danh
+            // Nếu là người dùng mới KHÔNG đăng nhập
             if (!currentUser) {
+                isAnonymous = true;
                 currentUser = {
-                    uid: 'LYR-' + Math.floor(100000 + Math.random() * 900000),
+                    uid: 'ANON-' + Math.floor(100000 + Math.random() * 900000),
                     name: 'Người Dùng Ẩn Danh',
                     level: 1, currentExp: 0,
-                    status: 'Hoạt Động',
-                    avatar: 'https://ui-avatars.com/api/?name=User&background=random',
-                    role: 'USER',
-                    title: 'Tân Thủ'
+                    status: 'Ẩn Danh',
+                    avatar: 'https://ui-avatars.com/api/?name=Anon&background=86868b',
+                    role: 'GUEST',
+                    title: 'Khách Tham Quan'
                 };
-                localStorage.setItem(DB_KEY_SESSION, JSON.stringify(currentUser));
-                globalDB[DB_KEY_USERS].push(currentUser);
-                saveNeonDB(DB_KEY_USERS, globalDB[DB_KEY_USERS]);
+                
+                // Khởi động bộ đếm thời gian 1p30s
+                anonTimeout = setTimeout(() => {
+                    alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (1p30s). Vui lòng đăng nhập để tiếp tục truy cập trang web và lưu trữ dữ liệu thật 100%.");
+                    openAuthModal();
+                    document.getElementById('auth-close-btn').style.display = 'none'; // Bắt buộc đăng nhập
+                }, 90000);
             }
 
             // Render giao diện với Data Cloud Server
             updateExpUI();
+            updateMessengerToolsUI();
             renderApps();
             renderPosts();
             renderStories();
         });
     </script>
+    
+    <!-- FILE MESSENGER.JS RIÊNG ĐỂ KẾT NỐI API THỰC TẾ -->
+    <script src="messenger.js"></script>
 </body>
 </html>
