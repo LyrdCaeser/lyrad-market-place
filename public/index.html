@@ -734,7 +734,7 @@
                 </div>
                 <div class="ai-chat-history" id="ai-chat-history">
                     <div class="ai-msg">
-                        <div class="ai-avt" style="background: #10a37f;">AI</div>
+                        <div class="ai-avt" style="background: #10a37f;">LTQ</div>
                         <div class="ai-bubble">Xin chào! Tôi tên Lưu Tiểu Quân và là CSKH của Lyrad Market Place. Tôi có thể giúp gì cho bạn về các vấn đề kỹ thuật, chính sách hoặc hướng dẫn sử dụng hệ thống LAA?</div>
                     </div>
                 </div>
@@ -1321,17 +1321,22 @@
             },
 
             switchSection: function(secId, el) {
-                if (isAnonymous) return alert("Tài khoản Ẩn Danh không thể sử dụng hệ thống Hỗ Trợ!");
-                
-                document.querySelectorAll('.sp-menu-item').forEach(i => i.classList.remove('active'));
-                document.querySelectorAll('.support-content').forEach(s => s.classList.remove('active-section'));
-                
-                el.classList.add('active');
-                document.getElementById(secId).classList.add('active-section');
-                
-                if (secId === 'sec-mailbox') this.renderMailbox();
-                if (secId === 'sec-admin-tickets') this.renderAdminTickets();
-            },
+    if (isAnonymous) return alert("Tài khoản Ẩn Danh không thể sử dụng hệ thống Hỗ Trợ!");
+    
+    // CHẶN BẢO MẬT: Bắt buộc phải là ADMIN mới được chuyển vào tab Admin Tickets
+    if (secId === 'sec-admin-tickets' && currentUser.role !== 'ADMIN') {
+        return alert("⛔ BẢO MẬT LAA: Bạn không có quyền truy cập khu vực này!");
+    }
+    
+    document.querySelectorAll('.sp-menu-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.support-content').forEach(s => s.classList.remove('active-section'));
+    
+    el.classList.add('active');
+    document.getElementById(secId).classList.add('active-section');
+    
+    if (secId === 'sec-mailbox') this.renderMailbox();
+    if (secId === 'sec-admin-tickets') this.renderAdminTickets();
+},
 
             renderMailbox: function() {
                 const mails = globalDB['lyrad_real_mailbox'].filter(m => m.targetUid === currentUser.uid);
@@ -1477,32 +1482,35 @@
             },
 
             replyTicket: function(ticketId) {
-                const replyContent = document.getElementById('admin-reply-desc').value.trim();
-                if (!replyContent) return alert("Vui lòng nhập phán quyết!");
+    // CHẶN BẢO MẬT: Phải là Admin mới được quyền đưa ra phán quyết
+    if (currentUser.role !== 'ADMIN') return alert("⛔ Chỉ Ban Quản Trị mới có quyền phản hồi Ticket!");
 
-                let tickets = globalDB['lyrad_real_tickets'];
-                let tkIndex = tickets.findIndex(t => t.id === ticketId);
-                if (tkIndex === -1) return;
+    const replyContent = document.getElementById('admin-reply-desc').value.trim();
+    if (!replyContent) return alert("Vui lòng nhập phán quyết!");
 
-                tickets[tkIndex].status = 'RESOLVED';
-                saveNeonDB('lyrad_real_tickets', tickets);
+    let tickets = globalDB['lyrad_real_tickets'];
+    let tkIndex = tickets.findIndex(t => t.id === ticketId);
+    if (tkIndex === -1) return;
 
-                let mailbox = globalDB['lyrad_real_mailbox'];
-                mailbox.push({
-                    id: 'MAIL-' + Date.now(),
-                    targetUid: tickets[tkIndex].reporterUid,
-                    senderName: 'LAA ADMIN (Hệ Thống)',
-                    title: `[KẾT QUẢ TỐ CÁO] Phản hồi Ticket #${ticketId}`,
-                    content: `Chào ${tickets[tkIndex].reporterName},\n\nBan quản trị Lyrad đã xem xét đơn tố cáo của bạn đối với UID [${tickets[tkIndex].targetUid}] về hành vi "${tickets[tkIndex].category}".\n\n📌 PHÁN QUYẾT CỦA BQT:\n${replyContent}\n\nQuyết định này là cuối cùng và được bảo chứng bởi hệ thống giám sát LAA.\n\nTrân trọng,\nBan Quản Trị Lyrad.`,
-                    isRead: false,
-                    timestamp: Date.now()
-                });
-                saveNeonDB('lyrad_real_mailbox', mailbox);
+    tickets[tkIndex].status = 'RESOLVED';
+    saveNeonDB('lyrad_real_tickets', tickets);
 
-                alert("Đã gửi phán quyết thành công!");
-                this.renderAdminTickets();
-                this.openAdminTicket(ticketId);
-            },
+    let mailbox = globalDB['lyrad_real_mailbox'];
+    mailbox.push({
+        id: 'MAIL-' + Date.now(),
+        targetUid: tickets[tkIndex].reporterUid,
+        senderName: 'LAA ADMIN (Hệ Thống)',
+        title: `[KẾT QUẢ TỐ CÁO] Phản hồi Ticket #${ticketId}`,
+        content: `Chào ${tickets[tkIndex].reporterName},\n\nBan quản trị Lyrad đã xem xét đơn tố cáo của bạn đối với UID [${tickets[tkIndex].targetUid}] về hành vi "${tickets[tkIndex].category}".\n\n📌 PHÁN QUYẾT CỦA BQT:\n${replyContent}\n\nQuyết định này là cuối cùng và được bảo chứng bởi hệ thống giám sát LAA.\n\nTrân trọng,\nBan Quản Trị Lyrad.`,
+        isRead: false,
+        timestamp: Date.now()
+    });
+    saveNeonDB('lyrad_real_mailbox', mailbox);
+
+    alert("Đã gửi phán quyết thành công!");
+    this.renderAdminTickets();
+    this.openAdminTicket(ticketId);
+},
 
             askAI: function() {
     const inputField = document.getElementById('ai-input-field');
@@ -1524,8 +1532,8 @@
     const loadingId = 'ai-load-' + Date.now();
     chatBox.insertAdjacentHTML('beforeend', `
         <div class="ai-msg" id="${loadingId}">
-            <div class="ai-avt" style="background:  #10a37f;">AI</div>
-            <div class="ai-bubble" style="font-style: italic; color: var(--tphân tích dữ liệu...</div>
+            <div class="ai-avt" style="background: #10a37f;">AI</div>
+            <div class="ai-bubble" style="font-style: italic; color: var(--text-sub);">Đang phân tích dữ liệu...</div>
         </div>
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
@@ -1547,7 +1555,7 @@
             this.renderAIResponse(`Lỗi API: ${data.error.message}`);
             return;
         }
- eply = data.choices[0].message.content;
+        const aiReply = data.choices[0].message.content;
         this.aiHistory.push({ role: "assistant", content: aiReply });
         this.renderAIResponse(aiReply);
     })
