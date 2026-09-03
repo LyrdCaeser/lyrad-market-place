@@ -90,7 +90,7 @@ async def scan_apk(
         
         if detected_risks:
             is_safe = False
-            message = f"Phát hiện rủi ro bảo mật! Ứng dụng yêu cầu quyền nhạy cảm bị cấm: {', '.join(detected_risks)}."
+            message = f"Phát hiện rủi bảo mật! Ứng dụng yêu cầu quyền nhạy cảm bị cấm: {', '.join(detected_risks)}."
 
         # 5. Cấp phát App ID duy nhất từ 8 ký tự đầu của SHA-256
         app_id = f"APP-VN-{server_sha256[:8].upper()}"
