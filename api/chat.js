@@ -19,7 +19,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
             },
             body: JSON.stringify({
-                model: 'llama3-8b-8192', // Đã cập nhật model ổn định nhất
+                model: 'llama-3.1-8b-instant', // Đã cập nhật model ổn định nhất
                 messages: messages,
                 temperature: 0.7,
                 max_tokens: 2000
