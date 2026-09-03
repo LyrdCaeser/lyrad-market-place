@@ -1131,6 +1131,7 @@
                 isDatabaseReady = true; // Kích hoạt cờ an toàn
             } catch (e) {
                 console.error("Lỗi đồng bộ Neon Database:", e);
+                isDatabaseReady = true; // FIX: Bỏ qua lỗi Quota Exceeded để web không bị kẹt ở màn hình đỏ
             }
         }
 

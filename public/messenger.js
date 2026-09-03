@@ -13,14 +13,14 @@ const msgTool = {
     init: function() {
         this.chatBox = document.getElementById('messenger-list-area');
         
-        // ĐỒNG BỘ REALTIME: Tự động kéo dữ liệu mới từ Neon DB mỗi 1.5 giây
-        // Giúp bên kia nhận tin nhắn ngay lập tức mà không cần F5
+        // ĐỒNG BỘ REALTIME: Tự động kéo dữ liệu mới từ Neon DB mỗi 15 giây
+        // Đã tăng từ 1500 lên 15000 để chống sập băng thông Vercel (Quota Exceeded)
         setInterval(async () => {
             if (typeof fetchNeonDB === 'function') {
                 await fetchNeonDB(); 
                 this.renderChat();
             }
-        }, 1500);
+        }, 15000); 
         
         setTimeout(() => this.renderChat(), 500);
 
