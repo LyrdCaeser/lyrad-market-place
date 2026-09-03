@@ -6,37 +6,41 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Lấy lịch sử tin nhắn từ frontend gửi lên
+        // Lấy lịch sử tin nhắn từ frontend (mảng các object {role, content})
         const { messages } = req.body;
 
         if (!messages || !Array.isArray(messages)) {
             return res.status(400).json({ error: { message: "Dữ liệu messages không hợp lệ." } });
         }
 
-        // Gọi API của OpenAI
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Gọi API của OpenRouter
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // Bắt buộc phải cài biến môi trường OPENAI_API_KEY trên Vercel
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                // Biến môi trường chứa API Key của OpenRouter
+                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                // Các Header khuyên dùng của OpenRouter để không bị chặn
+                'HTTP-Referer': 'https://lyradmarketplace.vercel.app', 
+                'X-Title': 'Lyrad Market Place' 
             },
             body: JSON.stringify({
-                model: 'gpt-3.5-turbo', // Có thể đổi thành 'gpt-4o' hoặc 'gpt-4-turbo'
+                // Sử dụng model miễn phí/giá rẻ trên OpenRouter (có thể đổi thành model khác tuỳ ý)
+                model: 'google/gemini-2.5-flash', 
                 messages: messages,
-                max_tokens: 10000,        // Giới hạn độ dài câu trả lời
-                temperature: 0.7        // Độ sáng tạo của AI
+                max_tokens: 10000,
+                temperature: 0.7
             })
         });
 
         const data = await response.json();
 
-        // Xử lý lỗi nếu OpenAI từ chối (vd: sai key, hết tiền, lỗi server)
+        // Xử lý lỗi nếu OpenRouter từ chối (vd: sai key, lỗi server)
         if (!response.ok) {
-            throw new Error(data.error?.message || 'Lỗi không xác định từ OpenAI');
+            throw new Error(data.error?.message || 'Lỗi không xác định từ OpenRouter');
         }
 
-        // Trả data về đúng định dạng frontend cần: { choices: [ { message: { content: "..." } } ] }
+        // Trả data về đúng định dạng frontend cần
         res.status(200).json(data);
 
     } catch (error) {
