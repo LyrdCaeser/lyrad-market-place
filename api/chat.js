@@ -18,7 +18,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
             },
             body: JSON.stringify({
-                model: 'gemma2-9b-it', // Chuyển sang model Google Gemma 2 mở public trên Groq
+                model: 'mixtral-8x7b-32768', // Model cốt lõi siêu ổn định của Groq
                 messages: messages,
                 temperature: 0.7,
                 max_tokens: 2000
