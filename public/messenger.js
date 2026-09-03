@@ -5,39 +5,39 @@
  */
 
 // Đã tích hợp sẵn API Key ImgBB của bạn
-const IMGBB_API_KEY = "4c433d58d2d8fe0bf07e0a88b4f7cf54";[cite: 7]
+const IMGBB_API_KEY = "4c433d58d2d8fe0bf07e0a88b4f7cf54";
 
 const msgTool = {
     chatBox: null,
     
     init: function() {
-        this.chatBox = document.getElementById('messenger-list-area');[cite: 7]
+        this.chatBox = document.getElementById('messenger-list-area');
         
         // ĐỒNG BỘ REALTIME: Tự động kéo dữ liệu mới từ Neon DB mỗi 1.5 giây
         // Giúp bên kia nhận tin nhắn ngay lập tức mà không cần F5
         setInterval(async () => {
             if (typeof fetchNeonDB === 'function') {
                 await fetchNeonDB(); 
-                this.renderChat();[cite: 7]
+                this.renderChat();
             }
         }, 1500);
         
-        setTimeout(() => this.renderChat(), 500);[cite: 7]
+        setTimeout(() => this.renderChat(), 500);
 
         // Bắt sự kiện phím Enter cho ô chat
-        const inputField = document.getElementById('messenger-input-field');[cite: 7]
+        const inputField = document.getElementById('messenger-input-field');
         if(inputField) {
             inputField.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.send();[cite: 7]
+                if (e.key === 'Enter') this.send();
             });
         }
     },
 
     // Kiểm tra và Cảnh báo Level
     checkLevel: function(reqLevel, featureName) {
-        if(isAnonymous) { alert("Tài khoản Ẩn Danh cấm sử dụng tính năng Chat."); return false; }[cite: 7]
+        if(isAnonymous) { alert("Tài khoản Ẩn Danh cấm sử dụng tính năng Chat."); return false; }
         if(currentUser.level < reqLevel) {
-            alert(`🔒 Tính năng ${featureName} yêu cầu Level ${reqLevel}.\nLevel hiện tại của bạn: ${currentUser.level}. Hãy tích cực tham gia Diễn đàn để tăng Cấp!`);[cite: 7]
+            alert(`🔒 Tính năng ${featureName} yêu cầu Level ${reqLevel}.\nLevel hiện tại của bạn: ${currentUser.level}. Hãy tích cực tham gia Diễn đàn để tăng Cấp!`);
             return false;
         }
         return true;
@@ -45,7 +45,7 @@ const msgTool = {
 
     // UI TÍCH HỢP: Bảng Picker Emoji & Ký Tự Đặc Biệt
     togglePicker: function(type) {
-        if(!this.checkLevel(type === 'basic' ? 5 : 30, type === 'basic' ? "Emoji Cơ Bản" : "Ký Tự Đặc Biệt")) return;[cite: 7]
+        if(!this.checkLevel(type === 'basic' ? 5 : 30, type === 'basic' ? "Emoji Cơ Bản" : "Ký Tự Đặc Biệt")) return;
 
         let picker = document.getElementById('lyrad-emoji-picker');
         if(!picker) {
@@ -78,7 +78,7 @@ const msgTool = {
             span.onmouseover = () => span.style.transform = 'scale(1.3)';
             span.onmouseout = () => span.style.transform = 'scale(1)';
             span.onclick = () => {
-                const input = document.getElementById('messenger-input-field');[cite: 7]
+                const input = document.getElementById('messenger-input-field');
                 input.value += em; 
                 input.focus();
                 picker.style.display = 'none'; // Tự động đóng bảng sau khi chọn
@@ -99,96 +99,96 @@ const msgTool = {
 
     // Lv 50: Text Format
     format: function() {
-        if(!this.checkLevel(50, "Định Dạng Chữ")) return;[cite: 7]
-        alert("Gõ cú pháp sau để đổi kiểu chữ:\n**chữ in đậm**\n*chữ in nghiêng*\n#Chữ lớn");[cite: 7]
+        if(!this.checkLevel(50, "Định Dạng Chữ")) return;
+        alert("Gõ cú pháp sau để đổi kiểu chữ:\n**chữ in đậm**\n*chữ in nghiêng*\n#Chữ lớn");
     },
 
     // Lv 111: Tải ảnh lên ImgBB Server
     uploadImage: function(inputElement) {
-        if(!this.checkLevel(111, "Gửi Ảnh Trực Tuyến")) { inputElement.value = ''; return; }[cite: 7]
+        if(!this.checkLevel(111, "Gửi Ảnh Trực Tuyến")) { inputElement.value = ''; return; }
         
-        const file = inputElement.files[0];[cite: 7]
-        if(!file) return;[cite: 7]
+        const file = inputElement.files[0];
+        if(!file) return;
 
-        const formData = new FormData();[cite: 7]
-        formData.append("image", file);[cite: 7]
+        const formData = new FormData();
+        formData.append("image", file);
 
-        alert("Đang tải ảnh lên máy chủ ImgBB...");[cite: 7]
+        alert("Đang tải ảnh lên máy chủ ImgBB...");
 
         // Yêu cầu POST theo đúng tài liệu ImgBB
-        fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {[cite: 7]
-            method: "POST",[cite: 7]
-            body: formData[cite: 7]
+        fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: "POST",
+            body: formData
         })
-        .then(response => response.json())[cite: 7]
+        .then(response => response.json())
         .then(data => {
-            if (data && data.success) {[cite: 7]
-                const imageUrl = data.data.url;[cite: 7]
-                this.pushMessageToDB(null, imageUrl); // Render link ảnh ra khung chat[cite: 7]
-                inputElement.value = ''; // Reset ô chọn file[cite: 7]
+            if (data && data.success) {
+                const imageUrl = data.data.url;
+                this.pushMessageToDB(null, imageUrl); // Render link ảnh ra khung chat
+                inputElement.value = ''; // Reset ô chọn file
             } else {
-                alert("Lỗi tải ảnh lên ImgBB: " + (data.error ? data.error.message : "Thất bại"));[cite: 7]
+                alert("Lỗi tải ảnh lên ImgBB: " + (data.error ? data.error.message : "Thất bại"));
             }
         })
         .catch(err => {
-            alert("Lỗi kết nối máy chủ ảnh: " + err.message);[cite: 7]
+            alert("Lỗi kết nối máy chủ ảnh: " + err.message);
         });
     },
 
     // Gửi tin nhắn Text
     send: function() {
-        if(isAnonymous) return alert("Tài khoản Ẩn Danh cấm nhắn tin!");[cite: 7]
-        if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị cấm chat!");[cite: 7]
+        if(isAnonymous) return alert("Tài khoản Ẩn Danh cấm nhắn tin!");
+        if(currentUser.status.includes('Mute') || currentUser.status.includes('Khóa')) return alert("Tài khoản bị cấm chat!");
         
-        const input = document.getElementById('messenger-input-field');[cite: 7]
-        let text = input.value.trim();[cite: 7]
-        if(!text) return;[cite: 7]
+        const input = document.getElementById('messenger-input-field');
+        let text = input.value.trim();
+        if(!text) return;
         
         // Basic parser cho Level 50+
-        if(currentUser.level >= 50) {[cite: 7]
-            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');[cite: 7]
-            text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');[cite: 7]
-            text = text.replace(/^#(.*)/g, '<span style="color:var(--primary); font-weight:bold; font-size:16px;">$1</span>');[cite: 7]
+        if(currentUser.level >= 50) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
+            text = text.replace(/^#(.*)/g, '<span style="color:var(--primary); font-weight:bold; font-size:16px;">$1</span>');
         }
 
-        this.pushMessageToDB(text, null);[cite: 7]
-        input.value = '';[cite: 7]
+        this.pushMessageToDB(text, null);
+        input.value = '';
     },
 
     // Đẩy Dữ liệu Thật (Real data 100%) vào Neon Database
     pushMessageToDB: function(text, imgUrl) {
-        let chatDB = globalDB[DB_KEY_CHAT] || [];[cite: 7]
+        let chatDB = globalDB[DB_KEY_CHAT] || [];
         chatDB.push({
-            id: 'MSG-' + Date.now(),[cite: 7]
-            uid: currentUser.uid,[cite: 7]
-            name: currentUser.name,[cite: 7]
-            avatar: currentUser.avatar,[cite: 7]
-            text: text,[cite: 7]
-            imgUrl: imgUrl,[cite: 7]
-            timestamp: Date.now()[cite: 7]
+            id: 'MSG-' + Date.now(),
+            uid: currentUser.uid,
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+            text: text,
+            imgUrl: imgUrl,
+            timestamp: Date.now()
         });
         
         // Chỉ giữ 50 tin nhắn mới nhất để tránh lag Web Mobile
-        if(chatDB.length > 50) chatDB = chatDB.slice(-50);[cite: 7]
+        if(chatDB.length > 50) chatDB = chatDB.slice(-50);
         
-        saveNeonDB(DB_KEY_CHAT, chatDB);[cite: 7]
-        updateExpData(1); [cite: 7]
-        this.renderChat();[cite: 7]
+        saveNeonDB(DB_KEY_CHAT, chatDB);
+        updateExpData(1); 
+        this.renderChat();
     },
 
     // Vẽ giao diện Chat
     renderChat: function() {
-        if(!globalDB[DB_KEY_CHAT] || globalDB[DB_KEY_CHAT].length === 0) return;[cite: 7]
+        if(!globalDB[DB_KEY_CHAT] || globalDB[DB_KEY_CHAT].length === 0) return;
         
-        let html = '';[cite: 7]
-        const chats = globalDB[DB_KEY_CHAT];[cite: 7]
+        let html = '';
+        const chats = globalDB[DB_KEY_CHAT];
         
         chats.forEach(msg => {
-            let isMe = msg.uid === currentUser.uid;[cite: 7]
+            let isMe = msg.uid === currentUser.uid;
             
-            let content = '';[cite: 7]
-            if(msg.text) content += `<span>${msg.text}</span>`;[cite: 7]
-            if(msg.imgUrl) content += `<img src="${msg.imgUrl}" class="chat-msg-img">`;[cite: 7]
+            let content = '';
+            if(msg.text) content += `<span>${msg.text}</span>`;
+            if(msg.imgUrl) content += `<img src="${msg.imgUrl}" class="chat-msg-img">`;
 
             html += `
                 <div class="chat-msg-item ${isMe ? 'me' : ''}">
@@ -198,17 +198,17 @@ const msgTool = {
                         <div class="chat-msg-bubble">${content}</div>
                     </div>
                 </div>
-            `;[cite: 7]
+            `;
         });
         
-        let isScrolledToBottom = this.chatBox.scrollHeight - this.chatBox.clientHeight <= this.chatBox.scrollTop + 10;[cite: 7]
-        this.chatBox.innerHTML = html;[cite: 7]
+        let isScrolledToBottom = this.chatBox.scrollHeight - this.chatBox.clientHeight <= this.chatBox.scrollTop + 10;
+        this.chatBox.innerHTML = html;
         if(isScrolledToBottom) {
-            this.chatBox.scrollTop = this.chatBox.scrollHeight;[cite: 7]
+            this.chatBox.scrollTop = this.chatBox.scrollHeight;
         }
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    msgTool.init();[cite: 7]
+    msgTool.init();
 });
