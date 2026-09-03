@@ -11,7 +11,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: { message: "Dữ liệu messages không hợp lệ." } });
         }
 
-        // Gọi hệ thống máy chủ siêu tốc của Groq
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -19,7 +18,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
             },
             body: JSON.stringify({
-                model: 'llama-3.1-8b-instant', // Đã cập nhật model ổn định nhất
+                model: 'gemma2-9b-it', // Chuyển sang model Google Gemma 2 mở public trên Groq
                 messages: messages,
                 temperature: 0.7,
                 max_tokens: 2000
