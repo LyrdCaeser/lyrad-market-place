@@ -1,47 +1,56 @@
 require('dotenv').config(); // Load biến môi trường từ file .env (Để giấu kín API Key)
-const express = require('express');[cite: 9]
-const { Pool } = require('pg'); // Yêu cầu thư viện pg từ package.json[cite: 9]
-const path = require('path');[cite: 9]
+const express = require('express');
+const { Pool } = require('pg'); // Yêu cầu thư viện pg từ package.json
+const path = require('path');
+const cors = require('cors'); // Bổ sung CORS để cho phép Vercel gọi API từ xa
 
-const app = express();[cite: 9]
+const app = express();
+
+// Cấu hình CORS
+app.use(cors({
+    origin: '*', // Cho phép mọi nguồn (Có thể đổi '*' thành link Vercel của bạn để bảo mật hơn)
+    methods: ['GET', 'POST'],
+    credentials: true
+}));
+
 // Tăng giới hạn payload lên 50MB vì có upload Ảnh/Video Base64
-app.use(express.json({ limit: '50mb' }));[cite: 9]
-app.use(express.static(path.join(__dirname, 'public'))); // Đặt file index.html vào thư mục 'public'[cite: 9]
+app.use(express.json({ limit: '50mb' }));
+app.use(express.static(path.join(__dirname, 'public'))); // Đặt file index.html vào thư mục 'public'
 
 // Kết nối với Neon DB bằng Connection String
-const pool = new Pool({[cite: 9]
-    connectionString: 'postgresql://neondb_owner:npg_b7dlXHyhDZ3o@ep-dawn-sunset-azv8vlwh-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'[cite: 9]
-});[cite: 9]
+const pool = new Pool({
+    connectionString: 'postgresql://neondb_owner:npg_b7dlXHyhDZ3o@ep-dawn-sunset-azv8vlwh-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+});
 
 // ==========================================
 // MODULE NEON DATABASE
 // ==========================================
 
 // API Lấy toàn bộ dữ liệu từ DB
-app.get('/api/data', async (req, res) => {[cite: 9]
-    try {[cite: 9]
-        const result = await pool.query('SELECT db_key, db_data FROM lyrad_db_storage');[cite: 9]
-        res.json(result.rows);[cite: 9]
-    } catch (err) {[cite: 9]
-        res.status(500).json({ error: err.message });[cite: 9]
-    }[cite: 9]
-});[cite: 9]
+app.get('/api/data', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT db_key, db_data FROM lyrad_db_storage');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // API Cập nhật dữ liệu vào DB (Ghi đè mảng JSON hiện tại)
-app.post('/api/data', async (req, res) => {[cite: 9]
-    const { key, value } = req.body;[cite: 9]
-    try {[cite: 9]
-        await pool.query([cite: 9]
+app.post('/api/data', async (req, res) => {
+    const { key, value } = req.body;
+    try {
+        await pool.query(
             `INSERT INTO lyrad_db_storage (db_key, db_data) 
              VALUES ($1, $2) 
-             ON CONFLICT (db_key) DO UPDATE SET db_data = $2, last_updated = CURRENT_TIMESTAMP`,[cite: 9]
-            [key, JSON.stringify(value)][cite: 9]
-        );[cite: 9]
-        res.json({ success: true });[cite: 9]
-    } catch (err) {[cite: 9]
-        res.status(500).json({ error: err.message });[cite: 9]
-    }[cite: 9]
-});[cite: 9]
+             ON CONFLICT (db_key) DO UPDATE SET db_data = $2, last_updated = CURRENT_TIMESTAMP`,
+            [key, JSON.stringify(value)]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // ==========================================
 // MODULE OPENAI CHATBOT (BẢO MẬT API KEY TẠI BACKEND)
@@ -82,5 +91,5 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;[cite: 9]
-app.listen(PORT, () => console.log(`Lyrad Market Backend đang chạy tại Port ${PORT}`));[cite: 9]
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Lyrad Market Backend đang chạy tại Port ${PORT}`));
