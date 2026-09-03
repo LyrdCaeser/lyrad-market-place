@@ -385,6 +385,58 @@
         .admin-table td { padding: 14px 16px; border-bottom: 1px solid #333; font-family: monospace;}
         .admin-table tr:hover { background: rgba(255,255,255,0.03);}
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } .god-mode-card { grid-column: span 1; } .detail-header { flex-direction: column; align-items: center; text-align: center; } .detail-stats-row { justify-content: center; } }
+        
+        /* === SUPPORT & MAILBOX STYLES === */
+        #view-support { max-width: 1400px; display: none; }
+        #view-support.active-view { display: grid; grid-template-columns: 260px 1fr; gap: 24px; height: calc(100vh - 120px); }
+
+        .support-sidebar { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); padding: 16px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .sp-menu-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; font-weight: 600; font-size: 15px; color: var(--text-main); cursor: pointer; transition: all 0.2s; }
+        .sp-menu-item:hover { background: rgba(0, 0, 0, 0.04); }
+        .sp-menu-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
+        .sp-menu-item .badge { background: #ff3b30; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: auto; display: none; }
+        .sp-menu-item.active .badge { background: white; color: var(--primary); }
+
+        .support-content { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; display: none; flex-direction: column; }
+        .support-content.active-section { display: flex; }
+
+        /* Mailbox UI */
+        .mailbox-layout { display: flex; height: 100%; }
+        .mail-list-panel { width: 350px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg-body); }
+        .mail-list-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 18px; background: var(--bg-card); }
+        .mail-list { flex: 1; overflow-y: auto; }
+        .mail-item { padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; background: var(--bg-card); }
+        .mail-item.unread { background: #f0f7ff; border-left: 4px solid var(--primary); }
+        .mail-item:hover { background: rgba(0,0,0,0.02); }
+        .mail-item-sender { font-weight: 700; font-size: 14px; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
+        .mail-item-title { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mail-item-preview { font-size: 13px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .mail-detail-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg-card); }
+        .mail-detail-header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .mail-detail-title { font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+        .mail-detail-meta { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-sub); }
+        .mail-detail-body { padding: 24px; font-size: 15px; line-height: 1.6; color: var(--text-main); flex: 1; overflow-y: auto; white-space: pre-wrap; }
+
+        /* AI Chat UI */
+        .ai-chat-container { display: flex; flex-direction: column; height: 100%; }
+        .ai-header { padding: 16px 24px; background: linear-gradient(135deg, #10a37f, #0b7a5e); color: white; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 12px; }
+        .ai-chat-history { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg-body); }
+        .ai-msg { display: flex; gap: 16px; max-width: 85%; animation: fadeIn 0.3s ease; }
+        .ai-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-avt { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;}
+        .ai-msg.user .ai-avt { border-radius: 50%; }
+        .ai-bubble { background: var(--bg-card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); font-size: 15px; line-height: 1.6; color: var(--text-main); }
+        .ai-msg.user .ai-bubble { background: var(--primary); color: white; border: none; }
+        .ai-input-area { padding: 16px 24px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 12px; }
+        .ai-textarea { flex: 1; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; font-size: 15px; resize: none; outline: none; height: 50px; background: var(--bg-body); transition: border 0.2s; }
+        .ai-textarea:focus { border-color: #10a37f; background: white; }
+        .btn-ai-send { background: #10a37f; color: white; border: none; border-radius: 12px; padding: 0 24px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        .btn-ai-send:hover { background: #0b7a5e; }
+
+        /* Report Form UI */
+        .report-form-container { padding: 32px; max-width: 800px; margin: 0 auto; width: 100%; overflow-y: auto; }
+        .report-form-container h2 { font-size: 24px; font-weight: 800; color: #ff3b30; margin-bottom: 24px; border-bottom: 2px solid rgba(255,59,48,0.2); padding-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -401,6 +453,7 @@
                 <a onclick="switchTab('view-games', this)">Trò chơi</a>
                 <a onclick="switchTab('view-apps', this)">Ứng dụng</a>
                 <a id="nav-tab-forum" onclick="switchTab('view-forum', this)">Diễn đàn Creator</a>
+                <a id="nav-tab-support" onclick="switchTab('view-support', this)">Hỗ Trợ & Hòm Thư</a>
                 
                 <button id="header-login-btn" class="btn-login-header" onclick="openAuthModal()">Đăng nhập</button>
                 
@@ -606,6 +659,109 @@
             </div>
         </aside>
 
+    </main>
+
+    <!-- NEW MODULE HỖ TRỢ & HÒM THƯ (TÍCH HỢP TRỰC TIẾP CHUẨN NO MOCK) -->
+    <main id="view-support">
+        <aside class="support-sidebar">
+            <div class="sp-menu-item active" onclick="spTool.switchSection('sec-mailbox', this)">
+                📥 Hòm Thư Của Tôi <span class="badge" id="mail-unread-badge">0</span>
+            </div>
+            <div class="sp-menu-item" onclick="spTool.switchSection('sec-report', this)">
+                ⚠️ Tạo Ticket Tố Cáo
+            </div>
+            <div class="sp-menu-item" onclick="spTool.switchSection('sec-ai', this)">
+                🤖 AI Trợ Lý Vấn Đề
+            </div>
+            <div class="sp-menu-item" id="admin-ticket-tab" style="display:none; margin-top:20px; background:rgba(255,59,48,0.1); color:#ff3b30; border:1px solid rgba(255,59,48,0.3);" onclick="spTool.switchSection('sec-admin-tickets', this)">
+                🛡️ Quản Trị Tố Cáo (LAA)
+            </div>
+        </aside>
+
+        <!-- HÒM THƯ MAILBOX -->
+        <section id="sec-mailbox" class="support-content active-section">
+            <div class="mailbox-layout">
+                <div class="mail-list-panel">
+                    <div class="mail-list-header">Hộp thư đến</div>
+                    <div class="mail-list" id="mail-list-container"></div>
+                </div>
+                <div class="mail-detail-panel">
+                    <div id="mail-detail-content" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="empty-state" style="height: 100%; margin: 0;">
+                            <span style="font-size: 48px; margin-bottom: 16px;">📭</span>
+                            <h3 style="color: var(--text-main);">Chưa chọn thư nào</h3>
+                            <p>Chọn một thư bên trái để đọc nội dung chi tiết.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TẠO TỐ CÁO -->
+        <section id="sec-report" class="support-content">
+            <div class="report-form-container">
+                <h2>GỬI TICKET TỐ CÁO VI PHẠM</h2>
+                <div style="background: rgba(255,204,0,0.1); border-left: 4px solid #ffcc00; padding: 12px; margin-bottom: 24px; font-size: 13px; color: var(--text-main);">
+                    <strong>Lưu ý:</strong> Mọi hành vi lạm dụng hệ thống tố cáo sai sự thật sẽ bị AI Sandbox quét và phạt khóa tài khoản vĩnh viễn (Perma-ban).
+                </div>
+                
+                <label style="font-weight: 700; font-size: 14px; margin-bottom: 8px; display: block;">UID Người Vi Phạm (Bắt buộc):</label>
+                <input type="text" id="report-target-uid" class="auth-input" placeholder="VD: LYR-123456" style="margin-bottom: 20px;">
+                
+                <label style="font-weight: 700; font-size: 14px; margin-bottom: 8px; display: block;">Lý do / Phân loại vi phạm:</label>
+                <select id="report-category" class="auth-input" style="margin-bottom: 20px;">
+                    <option value="Lừa đảo / Chiếm đoạt">Lừa đảo / Chiếm đoạt tài sản</option>
+                    <option value="Mã độc / Xâm phạm LAA">Đăng tải mã độc / Bypass LAA</option>
+                    <option value="Ngôn từ kích động">Ngôn từ thù địch / Xúc phạm</option>
+                    <option value="Bản quyền">Vi phạm bản quyền / Repack APK</option>
+                </select>
+
+                <label style="font-weight: 700; font-size: 14px; margin-bottom: 8px; display: block;">Bằng chứng (Link ảnh / Video nếu có):</label>
+                <input type="text" id="report-evidence" class="auth-input" placeholder="Dán link ImgBB hoặc liên kết bằng chứng..." style="margin-bottom: 20px;">
+
+                <label style="font-weight: 700; font-size: 14px; margin-bottom: 8px; display: block;">Mô tả chi tiết sự việc:</label>
+                <textarea id="report-desc" class="auth-input" rows="6" placeholder="Mô tả rõ hành vi vi phạm..." style="resize: none; margin-bottom: 24px;"></textarea>
+                
+                <button class="auth-submit btn-red" onclick="spTool.submitTicket()">GỬI TỐ CÁO LÊN BQT</button>
+            </div>
+        </section>
+
+        <!-- AI CHAT HỖ TRỢ -->
+        <section id="sec-ai" class="support-content">
+            <div class="ai-chat-container">
+                <div class="ai-header">
+                    <span style="font-size: 24px;">🤖</span> Trợ Lý AI Lyrad (Powered by OpenAI)
+                </div>
+                <div class="ai-chat-history" id="ai-chat-history">
+                    <div class="ai-msg">
+                        <div class="ai-avt" style="background: #10a37f;">AI</div>
+                        <div class="ai-bubble">Xin chào! Tôi là AI Giám sát và Hỗ trợ của Lyrad Market Place. Tôi có thể giúp gì cho bạn về các vấn đề kỹ thuật, chính sách hoặc hướng dẫn sử dụng hệ thống LAA?</div>
+                    </div>
+                </div>
+                <div class="ai-input-area">
+                    <textarea id="ai-input-field" class="ai-textarea" placeholder="Nhập câu hỏi cho AI..." onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); spTool.askAI(); }"></textarea>
+                    <button class="btn-ai-send" onclick="spTool.askAI()">Gửi Lệnh</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUẢN TRỊ TICKET (Chỉ hiện khi là Admin) -->
+        <section id="sec-admin-tickets" class="support-content">
+            <div class="mailbox-layout">
+                <div class="mail-list-panel">
+                    <div class="mail-list-header" style="background: #111; color: #ff3b30;">🚨 Hòm Thư Tố Cáo</div>
+                    <div class="mail-list" id="admin-ticket-list" style="background: #1c1c1e;"></div>
+                </div>
+                <div class="mail-detail-panel" style="background: #111; color: white;">
+                    <div id="admin-ticket-detail" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="empty-state" style="height: 100%; margin: 0; color: #888;">
+                            <h3 style="color: #ff3b30;">Chưa chọn Ticket</h3>
+                            <p>Chọn ticket để xem bằng chứng và phản hồi phán quyết.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div id="storyViewerModal" class="story-viewer-modal">
@@ -919,6 +1075,8 @@
         const DB_KEY_APPS = 'lyrad_real_apps'; 
         const DB_KEY_STORIES = 'lyrad_real_stories'; 
         const DB_KEY_CHAT = 'lyrad_real_chat';
+        const DB_KEY_TICKETS = 'lyrad_real_tickets';
+        const DB_KEY_MAILBOX = 'lyrad_real_mailbox';
 
         // BIẾN BỘ NHỚ TOÀN CỤC CHỨA DỮ LIỆU ĐỒNG BỘ TỪ NEON DB
         let globalDB = {
@@ -926,7 +1084,9 @@
             [DB_KEY_POSTS]: [],
             [DB_KEY_APPS]: [],
             [DB_KEY_STORIES]: [],
-            [DB_KEY_CHAT]: []
+            [DB_KEY_CHAT]: [],
+            [DB_KEY_TICKETS]: [],
+            [DB_KEY_MAILBOX]: []
         };
         let currentUser = null;
         let isAnonymous = false; // Phân định người dùng ảo tránh phá hoại
@@ -1087,6 +1247,16 @@
             }
             return false;
         }
+        
+        // HÀM BỔ TRỢ QUẢN TRỊ TICKET
+        function updateSupportAdminUI() {
+            const adminTab = document.getElementById('admin-ticket-tab');
+            if (adminTab && currentUser && currentUser.role === 'ADMIN') {
+                adminTab.style.display = 'flex';
+            } else if (adminTab) {
+                adminTab.style.display = 'none';
+            }
+        }
 
         function updateExpUI() {
             document.querySelectorAll('.sync-user-avatar').forEach(img => img.src = currentUser.avatar);
@@ -1123,8 +1293,283 @@
                 document.getElementById('user-display-exp-fill').style.width = `${Math.min(percent, 100)}%`;
             }
             if (document.getElementById('user-display-uid')) document.getElementById('user-display-uid').innerText = `UID: ${currentUser.uid}`;
+            
+            // Kích hoạt Admin Support UI
+            updateSupportAdminUI();
         }
         
+        // ==========================================
+        // KHỐI LOGIC HỖ TRỢ, TỐ CÁO & AI
+        // ==========================================
+        
+        const spTool = {
+            aiHistory: [
+                { role: "system", content: "Bạn là AI Support chuyên nghiệp, nghiêm khắc của Lyrad Market Place. Bạn hiểu rõ luật bảo vệ bản quyền, hệ thống kiểm duyệt LAA Sandbox, cấm mã độc, cấm ăn bớt code, và cấm ngôn từ thù địch. Trả lời ngắn gọn, súc tích, chuyên môn cao." }
+            ],
+
+            init: function() {
+                if (!globalDB['lyrad_real_tickets']) globalDB['lyrad_real_tickets'] = [];
+                if (!globalDB['lyrad_real_mailbox']) globalDB['lyrad_real_mailbox'] = [];
+                
+                // Quét realtime cho Hòm thư (Polling 5s)
+                setInterval(() => {
+                    if (currentUser && !isAnonymous && document.getElementById('view-support').classList.contains('active-view')) {
+                        this.renderMailbox();
+                        if (currentUser.role === 'ADMIN') this.renderAdminTickets();
+                    }
+                }, 5000);
+            },
+
+            switchSection: function(secId, el) {
+                if (isAnonymous) return alert("Tài khoản Ẩn Danh không thể sử dụng hệ thống Hỗ Trợ!");
+                
+                document.querySelectorAll('.sp-menu-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.support-content').forEach(s => s.classList.remove('active-section'));
+                
+                el.classList.add('active');
+                document.getElementById(secId).classList.add('active-section');
+                
+                if (secId === 'sec-mailbox') this.renderMailbox();
+                if (secId === 'sec-admin-tickets') this.renderAdminTickets();
+            },
+
+            renderMailbox: function() {
+                const mails = globalDB['lyrad_real_mailbox'].filter(m => m.targetUid === currentUser.uid);
+                const listContainer = document.getElementById('mail-list-container');
+                
+                const unreadCount = mails.filter(m => !m.isRead).length;
+                document.getElementById('mail-unread-badge').innerText = unreadCount;
+                document.getElementById('mail-unread-badge').style.display = unreadCount > 0 ? 'inline-block' : 'none';
+
+                if (mails.length === 0) {
+                    listContainer.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-sub); font-size: 13px;">Hòm thư của bạn đang trống.</div>`;
+                    return;
+                }
+
+                let html = '';
+                mails.sort((a,b) => b.timestamp - a.timestamp).forEach(mail => {
+                    html += `
+                        <div class="mail-item ${mail.isRead ? '' : 'unread'}" onclick="spTool.openMail('${mail.id}')">
+                            <div class="mail-item-sender">
+                                <span>${mail.senderName}</span>
+                                <span style="font-size: 11px; font-weight: 500; color: var(--text-sub);">${new Date(mail.timestamp).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                            <div class="mail-item-title">${mail.title}</div>
+                            <div class="mail-item-preview">${mail.content.substring(0, 40)}...</div>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+            },
+
+            openMail: function(mailId) {
+                let mailbox = globalDB['lyrad_real_mailbox'];
+                let mailIndex = mailbox.findIndex(m => m.id === mailId);
+                if (mailIndex === -1) return;
+                
+                let mail = mailbox[mailIndex];
+                
+                if (!mail.isRead) {
+                    mailbox[mailIndex].isRead = true;
+                    saveNeonDB('lyrad_real_mailbox', mailbox);
+                    this.renderMailbox();
+                }
+
+                document.getElementById('mail-detail-content').innerHTML = `
+                    <div class="mail-detail-header">
+                        <div class="mail-detail-title">${mail.title}</div>
+                        <div class="mail-detail-meta">
+                            <span style="font-weight: 700; color: var(--text-main);">Từ: ${mail.senderName}</span>
+                            <span>Tới: ${currentUser.name} (${currentUser.uid})</span>
+                            <span style="margin-left: auto;">${new Date(mail.timestamp).toLocaleString('vi-VN')}</span>
+                        </div>
+                    </div>
+                    <div class="mail-detail-body">${mail.content}</div>
+                `;
+            },
+
+            submitTicket: function() {
+                if (isAnonymous) return alert("Tài khoản Ẩn Danh không được gửi tố cáo.");
+                
+                const targetUid = document.getElementById('report-target-uid').value.trim();
+                const category = document.getElementById('report-category').value;
+                const evidence = document.getElementById('report-evidence').value.trim();
+                const desc = document.getElementById('report-desc').value.trim();
+
+                if (!targetUid || !desc) return alert("Vui lòng nhập UID người vi phạm và mô tả chi tiết!");
+
+                let tickets = globalDB['lyrad_real_tickets'];
+                const ticketId = 'TK-' + Math.floor(100000 + Math.random() * 900000);
+                
+                tickets.push({
+                    id: ticketId,
+                    reporterUid: currentUser.uid,
+                    reporterName: currentUser.name,
+                    targetUid: targetUid,
+                    category: category,
+                    evidence: evidence,
+                    desc: desc,
+                    status: 'PENDING',
+                    timestamp: Date.now()
+                });
+
+                saveNeonDB('lyrad_real_tickets', tickets);
+                
+                document.getElementById('report-target-uid').value = '';
+                document.getElementById('report-evidence').value = '';
+                document.getElementById('report-desc').value = '';
+
+                alert(`✅ Đã gửi Ticket tố cáo thành công!\nMã tra cứu: ${ticketId}\nBQT sẽ xem xét và phản hồi kết quả qua Hòm Thư của bạn.`);
+            },
+
+            renderAdminTickets: function() {
+                if (currentUser.role !== 'ADMIN') return;
+                const tickets = globalDB['lyrad_real_tickets'];
+                const listContainer = document.getElementById('admin-ticket-list');
+                
+                if (tickets.length === 0) {
+                    listContainer.innerHTML = `<div style="padding: 20px; text-align: center; color: #888; font-size: 13px;">Không có Ticket tố cáo nào.</div>`;
+                    return;
+                }
+
+                let html = '';
+                tickets.sort((a,b) => b.timestamp - a.timestamp).forEach(tk => {
+                    const statusColor = tk.status === 'PENDING' ? '#ffcc00' : '#34c759';
+                    html += `
+                        <div class="mail-item" style="background: #1c1c1e; border-bottom: 1px solid #333;" onclick="spTool.openAdminTicket('${tk.id}')">
+                            <div class="mail-item-sender" style="color: #fff;">
+                                <span>Người kiện: ${tk.reporterUid}</span>
+                                <span style="color: ${statusColor};">${tk.status}</span>
+                            </div>
+                            <div class="mail-item-title" style="color: #ff3b30;">Bị cáo: ${tk.targetUid}</div>
+                            <div class="mail-item-preview" style="color: #888;">Lỗi: ${tk.category}</div>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+            },
+
+            openAdminTicket: function(ticketId) {
+                let tickets = globalDB['lyrad_real_tickets'];
+                let tk = tickets.find(t => t.id === ticketId);
+                if (!tk) return;
+
+                let evidenceHtml = tk.evidence ? `<a href="${tk.evidence}" target="_blank" style="color: #0a84ff;">[Click Xem Bằng Chứng]</a>` : 'Không có';
+
+                document.getElementById('admin-ticket-detail').innerHTML = `
+                    <div class="mail-detail-header" style="border-bottom: 1px solid #333;">
+                        <div class="mail-detail-title" style="color: #ff3b30;">TICKET #${tk.id} - ${tk.category}</div>
+                        <div style="font-size: 14px; margin-bottom: 8px;"><strong>Người kiện:</strong> ${tk.reporterName} (${tk.reporterUid})</div>
+                        <div style="font-size: 14px; margin-bottom: 8px;"><strong>Bị cáo:</strong> <span style="color: #ffcc00;">${tk.targetUid}</span></div>
+                        <div style="font-size: 14px;"><strong>Bằng chứng:</strong> ${evidenceHtml}</div>
+                    </div>
+                    <div class="mail-detail-body" style="background: #111; color: #ccc;">
+                        <strong>Nội dung tố cáo:</strong><br><br>${tk.desc}
+                    </div>
+                    ${tk.status === 'PENDING' ? `
+                    <div style="padding: 24px; border-top: 1px solid #333; background: #1c1c1e;">
+                        <label style="color: #fff; font-weight: bold; display: block; margin-bottom: 8px;">PHÁN QUYẾT TỪ BQT (Gửi vào Hòm Thư người kiện):</label>
+                        <textarea id="admin-reply-desc" class="auth-input" rows="4" style="background: #2c2c2e; color: #fff; border-color: #444; margin-bottom: 12px; width: 100%;"></textarea>
+                        <button class="auth-submit btn-red" style="width: auto; padding: 10px 24px;" onclick="spTool.replyTicket('${tk.id}')">BAN HÀNH PHÁN QUYẾT</button>
+                    </div>
+                    ` : `<div style="padding: 24px; text-align: center; color: #34c759; font-weight: bold;">✅ TICKET NÀY ĐÃ ĐƯỢC XỬ LÝ</div>`}
+                `;
+            },
+
+            replyTicket: function(ticketId) {
+                const replyContent = document.getElementById('admin-reply-desc').value.trim();
+                if (!replyContent) return alert("Vui lòng nhập phán quyết!");
+
+                let tickets = globalDB['lyrad_real_tickets'];
+                let tkIndex = tickets.findIndex(t => t.id === ticketId);
+                if (tkIndex === -1) return;
+
+                tickets[tkIndex].status = 'RESOLVED';
+                saveNeonDB('lyrad_real_tickets', tickets);
+
+                let mailbox = globalDB['lyrad_real_mailbox'];
+                mailbox.push({
+                    id: 'MAIL-' + Date.now(),
+                    targetUid: tickets[tkIndex].reporterUid,
+                    senderName: 'LAA ADMIN (Hệ Thống)',
+                    title: `[KẾT QUẢ TỐ CÁO] Phản hồi Ticket #${ticketId}`,
+                    content: `Chào ${tickets[tkIndex].reporterName},\n\nBan quản trị Lyrad đã xem xét đơn tố cáo của bạn đối với UID [${tickets[tkIndex].targetUid}] về hành vi "${tickets[tkIndex].category}".\n\n📌 PHÁN QUYẾT CỦA BQT:\n${replyContent}\n\nQuyết định này là cuối cùng và được bảo chứng bởi hệ thống giám sát LAA.\n\nTrân trọng,\nBan Quản Trị Lyrad.`,
+                    isRead: false,
+                    timestamp: Date.now()
+                });
+                saveNeonDB('lyrad_real_mailbox', mailbox);
+
+                alert("Đã gửi phán quyết thành công!");
+                this.renderAdminTickets();
+                this.openAdminTicket(ticketId);
+            },
+
+            askAI: function() {
+    const inputField = document.getElementById('ai-input-field');
+    const text = inputField.value.trim();
+    if (!text) return;
+
+    const chatBox = document.getElementById('ai-chat-history');
+    chatBox.insertAdjacentHTML('beforeend', `
+        <div class="ai-msg user">
+            <img src="${currentUser ? currentUser.avatar : 'https://ui-avatars.com/api/?name=User'}" class="ai-avt">
+            <div class="ai-bubble">${text}</div>
+        </div>
+    `);
+    inputField.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    this.aiHistory.push({ role: "user", content: text });
+
+    const loadingId = 'ai-load-' + Date.now();
+    chatBox.insertAdjacentHTML('beforeend', `
+        <div class="ai-msg" id="${loadingId}">
+            <div class="ai-avt" style="background:  #10a37f;">AI</div>
+            <div class="ai-bubble" style="font-style: italic; color: var(--tphân tích dữ liệu...</div>
+        </div>
+    `);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // GỌI LÊN BACKEND CỦA BẠN (Ẩn hoàn toàn API Key OpenAI)
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            messages: this.aiHistory
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById(loadingId).remove();
+        if (data.error) {
+            this.renderAIResponse(`Lỗi API: ${data.error.message}`);
+            return;
+        }
+ eply = data.choices[0].message.content;
+        this.aiHistory.push({ role: "assistant", content: aiReply });
+        this.renderAIResponse(aiReply);
+    })
+    .catch(err => {
+        document.getElementById(loadingId).remove();
+        this.renderAIResponse(`Lỗi kết nối Server: ${err.message}`);
+    });
+},
+
+            renderAIResponse: function(text) {
+                let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                const chatBox = document.getElementById('ai-chat-history');
+                chatBox.insertAdjacentHTML('beforeend', `
+                    <div class="ai-msg">
+                        <div class="ai-avt" style="background: #10a37f;">AI</div>
+                        <div class="ai-bubble">${formattedText}</div>
+                    </div>
+                `);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        };
+
         // ==========================================
         // VẼ UI ỨNG DỤNG LÊN CÁC TAB BẰNG CATEGORY
         // ==========================================
@@ -2201,9 +2646,12 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             }
 
             // Đảm bảo không lỗi mảng trống
-            ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories', 'lyrad_real_chat'].forEach(key => {
+            ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories', 'lyrad_real_chat', 'lyrad_real_tickets', 'lyrad_real_mailbox'].forEach(key => {
                 if (!globalDB[key]) globalDB[key] = [];
             });
+
+            // Khởi tạo Support & Hòm thư
+            spTool.init();
 
             // Khôi phục Session User từ Local Memory (Nếu user đã đăng nhập)
             let storedSession = JSON.parse(localStorage.getItem(DB_KEY_SESSION));
