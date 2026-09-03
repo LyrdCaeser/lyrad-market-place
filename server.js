@@ -19,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'public'))); // Đặt file index.ht
 
 // Kết nối với Neon DB bằng Connection String
 const pool = new Pool({
-    connectionString: 'postgresql://neondb_owner:npg_b7dlXHyhDZ3o@ep-dawn-sunset-azv8vlwh-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+    connectionString: postgresql://neondb_owner:npg_D0dKZeQx8tSC@ep-wispy-recipe-b3lsg7w2-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 });
 
 // ==========================================
