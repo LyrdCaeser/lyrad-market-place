@@ -455,7 +455,9 @@
                 <a id="nav-tab-forum" onclick="switchTab('view-forum', this)">Diễn đàn Creator</a>
                 <a id="nav-tab-support" onclick="switchTab('view-support', this)">Hỗ Trợ & Hòm Thư</a>
                 
-                <button id="header-login-btn" class="btn-login-header" onclick="openAuthModal()">Đăng nhập</button>
+                <a onclick="switchTab('view-sales',this); market.openSales()">Đăng Bán Sản Phẩm</a>
+<a onclick="switchTab('view-review',this); market.openReview()">🔒 Kiểm Duyệt Sản Phẩm</a>
+<button id="header-login-btn" class="btn-login-header" onclick="openAuthModal()">Đăng nhập</button>
                 
                 <div id="header-user-profile" class="header-user-profile" style="display: none;" onclick="openProfileFromHeader()" title="Xem hồ sơ">
                     <img src="" class="avatar-box sync-user-avatar header-avatar" alt="Profile">
@@ -467,6 +469,8 @@
     <main id="view-explore" class="active-view"></main>
     <main id="view-games"></main>
     <main id="view-apps"></main>
+<main id="view-sales"></main>
+<main id="view-review"></main>
     <main id="view-app-detail"><div id="app-detail-content"></div></main>
 
     <main id="view-forum">
@@ -885,7 +889,7 @@
                 <button class="admin-tab-btn active" onclick="switchAdminTab('tab-laa', this)">Bảng Điều Khiển LAA</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-roles', this)">Phân Quyền & Cấp Bậc</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-users', this)">Quản Lý Người Dùng</button>
-                <button class="admin-tab-btn" onclick="switchAdminTab('tab-publisher', this)">Đăng Tải APK (Publisher)</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('tab-publisher', this)">Đăng Tải APK / EXE (Publisher)</button>
             </div>
 
             <div id="tab-laa" class="admin-grid">
@@ -962,11 +966,11 @@
             <!-- TAB PHÂN QUYỀN & CẤP BẬC -->
             <div id="tab-roles" class="admin-grid" style="display: none;">
                 <div class="admin-card">
-                    <h4 style="color: #0a84ff; border-bottom-color: #333;">👑 PHÂN QUYỀN HỆ THỐNG (ROLE)</h4>
-                    <input type="text" class="admin-input" id="role-uid" placeholder="Nhập UID (LYR-xxxx)...">
+                    <h4 style="color: #0a84ff; border-bottom-color: #333;">👑 NPH CẤP / THU HỒI QUYỀN ADMIN</h4>
+                    <input type="text" class="admin-input" id="role-uid" placeholder="Email Google cần cấp / thu hồi Admin...">
                     <select class="admin-input" id="role-select" style="background: #1c1c1e;">
                         <option value="USER">USER (Người dùng thường)</option>
-                        <option value="MODERATOR">MODERATOR (Kiểm duyệt viên)</option>
+                        
                         <option value="ADMIN">ADMIN (Quản trị viên)</option>
                     </select>
                     <div class="admin-btn-group">
@@ -1017,7 +1021,7 @@
             <div id="tab-publisher" class="admin-grid" style="display: none; grid-template-columns: 1fr; max-height: 60vh; overflow-y: auto;">
                 <div class="admin-card god-mode-card" style="background: rgba(52, 199, 89, 0.05); border-color: #34c759;">
                     <h4 style="color: #34c759; border-bottom-color: rgba(52, 199, 89, 0.5);">🚀 PUBLISHER UPLOAD CENTER</h4>
-                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản build APK. Hệ thống sẽ tự động cấp App ID và phân luồng mục hiển thị lên Market Place.</p>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản cài đặt APK hoặc EXE (tối đa 32 MB mỗi file). Hệ thống sẽ tự động cấp App ID và phân luồng mục hiển thị lên Market Place.</p>
                     
                     <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
                     
@@ -1034,12 +1038,12 @@
                         <select id="pub-icon-type" class="admin-input" onchange="togglePubIconInput()">
                             <option value="system">Icon Hệ Thống (Chữ cái đầu)</option>
                             <option value="library">Tải lên từ Thư viện máy</option>
-                            <option value="apk">Trích xuất tự động từ APK</option>
+                            
                         </select>
                         <input type="file" id="pub-icon-file" accept="image/*" class="admin-input" style="display:none; background: #1c1c1e; color: #aaa;">
                     </div>
 
-                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">File Cài Đặt (APK):</label>
+                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">File Cài Đặt (APK / EXE):</label>
                     <input type="file" id="pub-apk-file" accept=".apk" class="admin-input" style="background: #1c1c1e; color: #aaa;">
                     
                     <div class="admin-btn-group" style="margin-top: 10px;">
@@ -1051,7 +1055,7 @@
                         <div style="background: #111; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #34c759; margin-bottom: 15px; border: 1px solid #333;">
                             <div>[APP_ID]: <span id="res-appid"></span></div>
                             <div>[SHA-256 HASH]: <span id="res-hash"></span></div>
-                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: An toàn (Đã phân luồng thành công)</div>
+                            <div style="color: #ffcc00; margin-top: 5px;">Trạng thái: Đã lưu tệp gốc; chưa quét mã độc</div>
                         </div>
                         
                         <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (CSBM)</h5>
@@ -1131,7 +1135,7 @@
                 isDatabaseReady = true; // Kích hoạt cờ an toàn
             } catch (e) {
                 console.error("Lỗi đồng bộ Neon Database:", e);
-                isDatabaseReady = true; // FIX: Bỏ qua lỗi Quota Exceeded để web không bị kẹt ở màn hình đỏ
+                isDatabaseReady = false; // FIX: Bỏ qua lỗi Quota Exceeded để web không bị kẹt ở màn hình đỏ
             }
         }
 
@@ -1180,6 +1184,7 @@
                 document.getElementById('auth-close-btn').style.display = 'block';
 
                 saveSession(); updateExpUI(); renderPosts(); closeAuthModal();
+                market.syncRole().catch(() => {});
                 updateMessengerToolsUI();
                 alert("Xác thực Firebase thành công! Chào mừng " + currentUser.name);
             }).catch((error) => {
@@ -1252,7 +1257,7 @@
         // HÀM BỔ TRỢ QUẢN TRỊ TICKET
         function updateSupportAdminUI() {
             const adminTab = document.getElementById('admin-ticket-tab');
-            if (adminTab && currentUser && currentUser.role === 'ADMIN') {
+            if (adminTab && currentUser && ['ADMIN','NPH'].includes(currentUser.role)) {
                 adminTab.style.display = 'flex';
             } else if (adminTab) {
                 adminTab.style.display = 'none';
@@ -1316,7 +1321,7 @@
                 setInterval(() => {
                     if (currentUser && !isAnonymous && document.getElementById('view-support').classList.contains('active-view')) {
                         this.renderMailbox();
-                        if (currentUser.role === 'ADMIN') this.renderAdminTickets();
+                        if (['ADMIN','NPH'].includes(currentUser.role)) this.renderAdminTickets();
                     }
                 }, 5000);
             },
@@ -1325,7 +1330,7 @@
     if (isAnonymous) return alert("Tài khoản Ẩn Danh không thể sử dụng hệ thống Hỗ Trợ!");
     
     // CHẶN BẢO MẬT: Bắt buộc phải là ADMIN mới được chuyển vào tab Admin Tickets
-    if (secId === 'sec-admin-tickets' && currentUser.role !== 'ADMIN') {
+    if (secId === 'sec-admin-tickets' && !['ADMIN','NPH'].includes(currentUser.role)) {
         return alert("⛔ BẢO MẬT LAA: Bạn không có quyền truy cập khu vực này!");
     }
     
@@ -1429,7 +1434,7 @@
             },
 
             renderAdminTickets: function() {
-                if (currentUser.role !== 'ADMIN') return;
+                if (!['ADMIN','NPH'].includes(currentUser.role)) return;
                 const tickets = globalDB['lyrad_real_tickets'];
                 const listContainer = document.getElementById('admin-ticket-list');
                 
@@ -1484,7 +1489,7 @@
 
             replyTicket: function(ticketId) {
     // CHẶN BẢO MẬT: Phải là Admin mới được quyền đưa ra phán quyết
-    if (currentUser.role !== 'ADMIN') return alert("⛔ Chỉ Ban Quản Trị mới có quyền phản hồi Ticket!");
+    if (!['ADMIN','NPH'].includes(currentUser.role)) return alert("⛔ Chỉ Ban Quản Trị mới có quyền phản hồi Ticket!");
 
     const replyContent = document.getElementById('admin-reply-desc').value.trim();
     if (!replyContent) return alert("Vui lòng nhập phán quyết!");
@@ -1607,7 +1612,7 @@
                                 <span>⬇️ ${app.downloads.toLocaleString('vi-VN')}</span>
                                 <span>📦 ${app.size}</span>
                             </div>
-                            <button class="btn-download" onclick="event.stopPropagation(); triggerRealDownload('${app.name}', '${app.id}')">Tải về máy</button>
+                            <button class="btn-download" onclick="event.stopPropagation(); triggerRealDownload('', '${app.id}')">Tải về máy</button>
                         </div>
                     </div>
                 `;
@@ -1670,120 +1675,7 @@
             fileInput.style.display = (type === 'library' || type === 'apk') ? 'block' : 'none';
         }
 
-        function simulateApkUpload() {
-            if (checkAnonymousAction()) return;
-            const appName = document.getElementById('pub-app-name').value.trim();
-            const fileInput = document.getElementById('pub-apk-file');
-            const iconType = document.getElementById('pub-icon-type').value;
-            const iconInput = document.getElementById('pub-icon-file');
-            const appCategory = document.getElementById('pub-app-category').value;
-            
-            if (!appName) return alert("Vui lòng nhập tên ứng dụng / trò chơi của bạn!");
-            if (!fileInput.files || fileInput.files.length === 0) return alert("Vui lòng chọn file định dạng .apk!");
-            
-            if ((iconType === 'library' || iconType === 'apk') && (!iconInput.files || iconInput.files.length === 0)) {
-                return alert("Vui lòng chọn ảnh đại diện cho ứng dụng!");
-            }
-
-            const file = fileInput.files[0];
-            if (!file.name.toLowerCase().endsWith('.apk')) return alert("Hệ thống chỉ chấp nhận định dạng gói cài đặt Android (.apk)!");
-            
-            const btn = document.getElementById('btn-pub-upload');
-            const originalText = btn.innerText;
-            btn.innerText = "ĐANG PHÂN TÍCH QUA LAA SANDBOX...";
-            btn.disabled = true;
-            btn.style.opacity = '0.7';
-
-            const finalizeUpload = (iconBase64) => {
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                    
-                    const randomAppId = 'APP-VN-' + Math.floor(1000 + Math.random() * 9000);
-                    const randomHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                    
-                    let apps = globalDB[DB_KEY_APPS];
-                    apps.push({
-                        id: randomAppId,
-                        name: appName,
-                        category: appCategory, 
-                        hash: randomHash,
-                        publisher: currentUser.name,
-                        publisherUid: currentUser.uid,
-                        timestamp: Date.now(),
-                        downloads: 0,
-                        rating: 5.0,
-                        size: (file.size / (1024*1024)).toFixed(1) + ' MB',
-                        iconBase64: iconBase64,
-                        reviews: []
-                    });
-                    saveNeonDB(DB_KEY_APPS, apps);
-
-                    let posts = globalDB[DB_KEY_POSTS];
-                    posts.push({
-                        id: 'P-' + Math.floor(100000 + Math.random() * 900000),
-                        uid: currentUser.uid,
-                        name: currentUser.name,
-                        avatar: currentUser.avatar,
-                        level: currentUser.level,
-                        role: currentUser.role || 'USER',
-                        title: currentUser.title || 'Tân Thủ',
-                        content: `🚀 Vừa phát hành ${appCategory === 'game' ? 'trò chơi' : 'ứng dụng'} mới: **${appName}**\n\nMã phê duyệt (App ID): ${randomAppId}\nNhà phát hành đã cập nhật bản cài đặt mới nhất, các bạn tải ngay trên Market Place nhé!`,
-                        timestamp: Date.now(),
-                        reactions: {}, 
-                        comments: [],
-                        shares: 0
-                    });
-                    saveNeonDB(DB_KEY_POSTS, posts);
-
-                    renderApps();
-                    renderPosts();
-                    updateExpData(500);
-
-                    document.getElementById('res-appid').innerText = randomAppId;
-                    document.getElementById('res-hash').innerText = randomHash;
-                    
-                    const csbmText = `CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ
-Tên sản phẩm: ${appName.toUpperCase()}
-Mã định danh hệ thống: ${randomAppId}
-Phân loại nội dung: ${appCategory === 'game' ? 'Trò Chơi' : 'Ứng Dụng'}
-Ngày phê duyệt: ${new Date().toLocaleString('vi-VN')}
-
-1. CHẤP THUẬN QUYỀN TRUY CẬP (PERMISSIONS)
-${appCategory === 'game' ? 'Trò chơi' : 'Ứng dụng'} "${appName}" hoạt động trên nguyên tắc tối giản quyền (Principle of Least Privilege). Mọi quyền truy cập hệ thống cốt lõi (bao gồm nhưng không giới hạn: Camera, Micro, Bộ nhớ thiết bị, Vị trí, Mạng Wi-Fi/Dữ liệu) chỉ được kích hoạt và sử dụng đúng với mục đích hiển thị nội dung và tính năng trực tiếp cho người dùng. Bất kỳ hành vi lạm dụng quyền hạn ngầm nào (Background Data Collection) vượt ngoài phạm vi khai báo sẽ bị LAA Sandbox phát hiện và dẫn đến việc tiêu hủy file vĩnh viễn.
-
-2. BẢO MẬT MÃ NGUỒN & TÍNH TOÀN VẸN CỦA FILE
-Bản phân phối phần mềm này đã được máy quét bảo mật tĩnh và động của Lyrad Sandbox phân tích chuyên sâu toàn bộ tệp tin. 
-Mã băm định danh tuyệt đối (SHA-256): ${randomHash}
-
-⚠️ QUY TẮC PHÁT HÀNH TỐI THƯỢNG CỦA LAA:
-Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các nguyên tắc: 
-- NO MOCK (Không sử dụng luồng dữ liệu giả mạo).
-- NO GIẢ LẬP (Không chạy trên môi trường ảo hóa trái phép hoặc bypass signature).
-- NO DEMO (Không đăng tải các phiên bản dùng thử bị cắt xén).
-- NO TRẢI NGHIỆM (Trạng thái file tải lên bắt buộc phải là bản Release hoàn thiện 100%).
-- ĐẶC BIỆT NGHIÊM CẤM HÀNH VI ĂN BỚT CODE FILE. Mọi file cài đặt (APK) tải về phải giữ nguyên cấu trúc gốc, dữ liệu trả về 100% tuân thủ tiêu chuẩn Local Database đã được hệ thống định nghĩa.`;
-                    
-                    document.getElementById('res-csbm').value = csbmText;
-                    document.getElementById('pub-result-area').style.display = 'block';
-                    
-                    document.getElementById('pub-app-name').value = '';
-                    document.getElementById('pub-apk-file').value = '';
-                    document.getElementById('pub-icon-file').value = '';
-
-                    alert("Đăng tải APK thành công!\nỨng dụng đã được hiển thị công khai trên Market Place.");
-                }, 1800);
-            };
-
-            if (iconType !== 'system') {
-                const reader = new FileReader();
-                reader.onload = (e) => finalizeUpload(e.target.result);
-                reader.readAsDataURL(iconInput.files[0]);
-            } else {
-                finalizeUpload(null);
-            }
-        }
+        async function simulateApkUpload() { await market.publishCatalog(); }
 
         function adminDeleteContent(type) {
             if (type === 'post') {
@@ -1821,33 +1713,11 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
         }
 
         function triggerRealDownload(appName, appId) {
-            if(checkAnonymousAction()) return;
-            const content = `--- BẢN DỊCH NGƯỢC GIẢ LẬP LAA ---\nTên Ứng Dụng: ${appName}\nMã Định Danh (App ID): ${appId}\nThời gian đóng gói: ${new Date().toLocaleString('vi-VN')}\n\nĐây là file dữ liệu thực sinh ra từ trình duyệt (Blob) đại diện cho file APK gốc tải xuống từ Market Place. Cấm ăn bớt code, dữ liệu 100% tuân thủ Database Local.\nHash Check: OK`;
-            const blob = new Blob([content], { type: 'application/vnd.android.package-archive' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `${appName.replace(/\s+/g, '_')}_${appId}.apk`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            let apps = globalDB[DB_KEY_APPS];
-            let appIndex = apps.findIndex(x => x.id === appId);
-            if(appIndex !== -1) {
-                apps[appIndex].downloads += 1;
-                saveNeonDB(DB_KEY_APPS, apps);
-                renderApps();
-                if(document.getElementById('view-app-detail').classList.contains('active-view')) {
-                    renderAppDetail(appId);
-                }
-            }
-            updateExpData(35); 
+            const app = (globalDB[DB_KEY_APPS] || []).find(a => a.id === appId);
+            if (app && app.marketProduct) window.location.assign('/api/market/download/' + encodeURIComponent(appId));
+            else alert('Bản cũ chưa có file cài đặt gốc. Vui lòng chờ nhà phát hành đăng tải lại.');
         }
 
-        let currentReviewRating = 5;
         function setReviewRating(star) {
             currentReviewRating = star;
             const container = document.getElementById('review-rating-input');
@@ -1980,7 +1850,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
                             <div class="detail-stat-divider"></div>
                             <div class="detail-stat"><span class="detail-stat-val">${app.size}</span><span class="detail-stat-lbl">Kích thước file</span></div>
                         </div>
-                        <button class="btn-detail-download" onclick="triggerRealDownload('${app.name}', '${app.id}')">Cài đặt / Tải về Máy</button>
+                        <button class="btn-detail-download" onclick="triggerRealDownload('', '${app.id}')">Cài đặt / Tải về Máy</button>
                         <div style="font-size:11px; font-family:monospace; color:var(--text-sub); margin-top:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; display:inline-block;">App ID: ${app.id} <br> Hash: ${app.hash.substring(0,32)}...</div>
                     </div>
                 </div>
@@ -2486,13 +2356,17 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             currentUser.name = newName; saveSession(); updateExpUI(); renderPosts(); closeRenameModal();
         }
 
-        function openAdminAuth() { document.getElementById('adminAuthModal').style.display = 'flex'; }
+        function openAdminAuth() { verifyAdmin(); }
         function closeAdminAuth() { document.getElementById('adminAuthModal').style.display = 'none'; document.getElementById('admin-pwd-input').value = '';}
         
-        function verifyAdmin() {
-            if (document.getElementById('admin-pwd-input').value === 'QuangHo1997#a') {
-                closeAdminAuth(); document.getElementById('adminPanelModal').style.display = 'flex'; renderAdminUserList();
-            } else { alert("MÃ TRUY CẬP TỪ CHỐI!"); document.getElementById('admin-pwd-input').value = ''; }
+        async function verifyAdmin() {
+            try {
+                const actor = await market.syncRole();
+                if (!actor || !['ADMIN', 'NPH'].includes(actor.role)) throw new Error('Tài khoản chưa được NPH cấp quyền Admin.');
+                closeAdminAuth();
+                document.getElementById('adminPanelModal').style.display = 'flex';
+                renderAdminUserList();
+            } catch (error) { alert(error.message); }
         }
         function closeAdminPanel() { document.getElementById('adminPanelModal').style.display = 'none'; }
         
@@ -2568,11 +2442,11 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             document.querySelectorAll('.admin-input').forEach(i => { if(i.id.includes('uid') || i.id.includes('input')) i.value = ''; });
         }
 
-        function adminSetRole() {
-            let uid = document.getElementById('role-uid').value.trim();
-            let role = document.getElementById('role-select').value;
-            if(!uid) return alert("Vui lòng nhập UID!");
-            updateUserField(uid, 'role', role, `Đã thay đổi Role của ${uid} thành ${role}`);
+        async function adminSetRole() {
+            await market.setRole(
+                document.getElementById('role-uid').value,
+                document.getElementById('role-select').value
+            );
         }
 
         function adminSetTitle() {
@@ -2694,6 +2568,8 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
             updateExpUI();
             updateMessengerToolsUI();
             renderApps();
+            if (typeof market !== 'undefined') { market.refreshCatalog(); market.syncRole().catch(() => {}); }
+            else window.addEventListener('load', () => { market.refreshCatalog(); market.syncRole().catch(() => {}); }, { once: true });
             renderPosts();
             renderStories();
         });
@@ -2701,5 +2577,7 @@ Nhà phát hành (${currentUser.name}) cam kết tuân thủ tuyệt đối các
     
     <!-- FILE MESSENGER.JS RIÊNG ĐỂ KẾT NỐI API THỰC TẾ -->
     <script src="messenger.js"></script>
+<link rel="stylesheet" href="marketplace.css">
+<script src="marketplace.js"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@ const app = express();
 // Cấu hình CORS
 app.use(cors({
     origin: '*', // Cho phép mọi nguồn (Có thể đổi '*' thành link Vercel của bạn để bảo mật hơn)
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
 
@@ -19,8 +19,10 @@ app.use(express.static(path.join(__dirname, 'public'))); // Đặt file index.ht
 
 // Kết nối với Neon DB bằng Connection String
 const pool = new Pool({
-    connectionString: 'postgresql://neondb_owner:npg_D0dKZeQx8tSC@ep-wispy-recipe-b3lsg7w2-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+    connectionString: process.env.DATABASE_URL
 });
+
+app.use('/api/market', require('./lib/marketplace')(pool));
 
 // ==========================================
 // MODULE NEON DATABASE

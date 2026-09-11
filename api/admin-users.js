@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 
 // Vercel Serverless Function sử dụng CHUỖI KẾT NỐI REAL NEON DB CỦA BẠN
 const pool = new Pool({
-  connectionString: 'postgresql://neondb_owner:npg_b7dlXHyhDZ3o@ep-dawn-sunset-azv8vlwh-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+  connectionString: process.env.ADMIN_DATABASE_URL || process.env.DATABASE_URL,
 });
 
 export default async function handler(req, res) {

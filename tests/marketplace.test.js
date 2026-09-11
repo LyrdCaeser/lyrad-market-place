@@ -1,0 +1,65 @@
+const test=require('node:test');const assert=require('node:assert/strict');
+const {validateProduct,nextReview}=require('../lib/marketplace');
+const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
+test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
+test('sale requires price, payment and contact',()=>{for(const change of [{price:-1},{price:'abc'},{payment_method:''},{contact:''},{name:''},{name:'x'.repeat(161)}])assert.throws(()=>validateProduct({...valid,...change}));});
+test('pending can be approved, rejected or returned once',()=>{for(const status of ['approved','rejected','returned'])assert.doesNotThrow(()=>nextReview({status:'pending',return_count:0},status));});
+test('second return is blocked, including after history deletion',()=>{assert.throws(()=>nextReview({status:'pending',return_count:1},'returned'));assert.doesNotThrow(()=>nextReview({status:'pending',return_count:1},'approved'));assert.doesNotThrow(()=>nextReview({status:'pending',return_count:1},'rejected'));});
+test('stale reviews cannot overwrite completed decisions',()=>{for(const status of ['approved','rejected','returned'])assert.throws(()=>nextReview({status,return_count:0},'approved'));assert.throws(()=>nextReview({status:'pending',return_count:0},'pending'));});
+test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
+test('verified identity alone does not grant moderation; role and key are both required',async()=>{
+ const express=require('express');const savedFetch=global.fetch;const oldKey=process.env.PRODUCT_REVIEW_KEY,oldFirebase=process.env.FIREBASE_WEB_API_KEY;process.env.PRODUCT_REVIEW_KEY='test-secret';process.env.FIREBASE_WEB_API_KEY='test-project';
+ let role='USER';const pool={query:async(sql)=>({rows:sql.startsWith('SELECT role')?[{role}]:[]})};
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'uid',email:'verified@example.com',emailVerified:true}]})}):savedFetch(url,opts);
+ const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
+ const request=key=>savedFetch(`http://localhost:${server.address().port}/api/market/review`,{headers:{Authorization:'Bearer verified','X-Review-Key':key}});
+ try{assert.equal((await request('test-secret')).status,403);role='ADMIN';assert.equal((await request('wrong')).status,403);assert.equal((await request('test-secret')).status,200);}finally{server.close();global.fetch=savedFetch;if(oldKey===undefined)delete process.env.PRODUCT_REVIEW_KEY;else process.env.PRODUCT_REVIEW_KEY=oldKey;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
+});
+test('upload stores exact binary and computes its actual SHA-256',async()=>{
+ const express=require('express'),crypto=require('crypto');const savedFetch=global.fetch;const oldFirebase=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test-project';let saved;
+ const pool={query:async(sql,params)=>{if(sql.startsWith('INSERT INTO lyrad_market_files'))saved=params;return {rows:sql.startsWith('SELECT coalesce')?[{n:0}]:[]};}};
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'uid',email:'verified@example.com',emailVerified:true}]})}):savedFetch(url,opts);
+ const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
+ try{const bytes=Buffer.from('MZ exact test binary\u0000\u0001');const r=await savedFetch(`http://localhost:${server.address().port}/api/market/files`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({filename:'test.exe',platform:'windows',base64:bytes.toString('base64')})});assert.equal(r.status,200);assert.deepEqual(saved[5],bytes);assert.equal((await r.json()).sha256,crypto.createHash('sha256').update(bytes).digest('hex'));}finally{server.close();global.fetch=savedFetch;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
+});
+test('only the designated NPH can grant and revoke Admin; owner role is immutable', async () => {
+ const express = require('express');
+ const originalFetch = global.fetch;
+ const originalKey = process.env.FIREBASE_WEB_API_KEY;
+ process.env.FIREBASE_WEB_API_KEY = 'test-project';
+ const roles = new Map([['yuriyir57@gmail.com', 'NPH'], ['admin@example.com', 'ADMIN']]);
+ let identity = 'admin@example.com';
+ const pool = {query: async (sql, values) => {
+   if (sql.startsWith('SELECT role')) return {rows: roles.has(values[0]) ? [{role: roles.get(values[0])}] : []};
+   if (sql.startsWith('INSERT INTO lyrad_market_roles')) roles.set(values[0], 'ADMIN');
+   if (sql.startsWith('DELETE FROM lyrad_market_roles')) roles.delete(values[0]);
+   return {rows: []};
+ }};
+ global.fetch = (url, options) => String(url).startsWith('https://identitytoolkit.googleapis.com/')
+   ? Promise.resolve({ok: true, json: async () => ({users: [{localId: identity, email: identity, emailVerified: true}]})})
+   : originalFetch(url, options);
+ const app = express();
+ app.use(express.json());
+ app.use('/api/market', require('../lib/marketplace')(pool));
+ const server = app.listen(0);
+ await new Promise(resolve => server.once('listening', resolve));
+ const request = (email, role) => originalFetch(`http://localhost:${server.address().port}/api/market/roles`, {
+   method: 'PUT', headers: {Authorization: 'Bearer verified', 'Content-Type': 'application/json'}, body: JSON.stringify({email, role})
+ });
+ try {
+   assert.equal((await request('new@example.com', 'ADMIN')).status, 403);
+   identity = 'yuriyir57@gmail.com';
+   assert.equal((await request('NEW@example.com', 'ADMIN')).status, 200);
+   assert.equal(roles.get('new@example.com'), 'ADMIN');
+   assert.equal((await request('yuriyir57@gmail.com', 'USER')).status, 400);
+   assert.equal((await request('new@example.com', 'NPH')).status, 400);
+   assert.equal((await request('new@example.com', 'USER')).status, 200);
+   assert.equal(roles.has('new@example.com'), false);
+   identity = 'new@example.com';
+   assert.equal((await request('another@example.com', 'ADMIN')).status, 403);
+ } finally {
+   server.close(); global.fetch = originalFetch;
+   if (originalKey === undefined) delete process.env.FIREBASE_WEB_API_KEY;
+   else process.env.FIREBASE_WEB_API_KEY = originalKey;
+ }
+});
