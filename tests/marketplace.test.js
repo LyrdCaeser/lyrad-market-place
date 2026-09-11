@@ -20,7 +20,18 @@ test('upload stores exact binary and computes its actual SHA-256',async()=>{
  const pool={query:async(sql,params)=>{if(sql.startsWith('INSERT INTO lyrad_market_files'))saved=params;return {rows:sql.startsWith('SELECT coalesce')?[{n:0}]:[]};}};
  global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'uid',email:'verified@example.com',emailVerified:true}]})}):savedFetch(url,opts);
  const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
- try{const bytes=Buffer.from('MZ exact test binary\u0000\u0001');const r=await savedFetch(`http://localhost:${server.address().port}/api/market/files`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({filename:'test.exe',platform:'windows',base64:bytes.toString('base64')})});assert.equal(r.status,200);assert.deepEqual(saved[5],bytes);assert.equal((await r.json()).sha256,crypto.createHash('sha256').update(bytes).digest('hex'));}finally{server.close();global.fetch=savedFetch;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
+ try{
+  const send=(filename,platform,bytes)=>savedFetch(`http://localhost:${server.address().port}/api/market/files`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({filename,platform,base64:bytes.toString('base64')})});
+  for(const platform of ['android','windows']){
+   const fixtures=[['test.zip','504b0304'],['empty.ZIP','504b0506'],['split.zip','504b0708'],['old.rar','526172211a0700'],['new.RAR','526172211a070100'],['test.7z','377abcaf271c'],platform==='windows'?['test.exe','4d5a']:['test.apk','504b0304']];
+   for(const [filename,header] of fixtures){
+    const bytes=Buffer.concat([Buffer.from(header,'hex'),Buffer.from(' exact binary fixture')]);
+    const r=await send(filename,platform,bytes);assert.equal(r.status,200,filename);assert.deepEqual(saved[5],bytes);assert.equal((await r.json()).sha256,crypto.createHash('sha256').update(bytes).digest('hex'));
+    assert.equal((await send(filename,platform,Buffer.from('wrong format'))).status,400);
+   }
+   for(const [filename,header] of [['fake.7z','504b0304'],['fake.rar','526172211a07'],['bad.zip.exe','504b0304'],['bad.txt','504b0304'],platform==='windows'?['bad.apk','504b0304']:['bad.exe','4d5a']])assert.equal((await send(filename,platform,Buffer.from(header,'hex'))).status,400);
+  }
+ }finally{server.close();global.fetch=savedFetch;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
 });
 test('only the designated NPH can grant and revoke Admin; owner role is immutable', async () => {
  const express = require('express');
