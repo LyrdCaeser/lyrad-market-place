@@ -74,3 +74,33 @@ test('only the designated NPH can grant and revoke Admin; owner role is immutabl
    else process.env.FIREBASE_WEB_API_KEY = originalKey;
  }
 });
+
+test('seller identity uses Creator profile and reflects later renames', async () => {
+ const express=require('express'); const originalFetch=global.fetch, oldKey=process.env.FIREBASE_WEB_API_KEY;
+ process.env.FIREBASE_WEB_API_KEY='test';
+ let profiles=[{uid:'LYR-123',email:'OWNER@example.com',name:'Creator Name'}];
+ let product={owner_id:'firebase-owner',seller_name:'Google Name',seller_profile_uid:null};
+ const pool={query:async(sql,args)=>{
+  if(sql.startsWith('SELECT db_data'))return {rows:[{db_data:profiles}]};
+  if(sql.startsWith('SELECT role'))return {rows:[]};
+  if(sql.startsWith('UPDATE lyrad_products')){assert.equal(args[0],'firebase-owner');product={...product,seller_profile_uid:args[1],seller_name:args[2]};return {rows:[]};}
+  return {rows:[product]};
+ }};
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'firebase-owner',email:'owner@example.com',emailVerified:true,displayName:'Google Name'}]})}):originalFetch(url,opts);
+ const app=express();app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));const base=`http://localhost:${server.address().port}/api/market`;
+ try {
+  const actor=await (await originalFetch(base+'/me',{headers:{Authorization:'Bearer verified'}})).json();
+  assert.equal(actor.name,'Creator Name');assert.equal(actor.profileUid,'LYR-123');assert.equal(actor.role,'USER');
+  let rows=await (await originalFetch(base+'/products')).json();assert.equal(rows[0].seller_name,'Creator Name');
+  profiles[0].name='Renamed Creator';rows=await (await originalFetch(base+'/products')).json();assert.equal(rows[0].seller_name,'Renamed Creator');
+  profiles=[];rows=await (await originalFetch(base+'/products')).json();assert.equal(rows[0].seller_name,'Thành viên');
+ }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
+});
+test('profile matching rejects ambiguous identities and does not fall back to Gmail',()=>{
+ const {readProfiles,profileForEmail,profileName}=require('../lib/marketplace');
+ assert.deepEqual(readProfiles('bad JSON'),[]);assert.deepEqual(readProfiles('{}'),[]);
+ const users=[{uid:'a',email:'User@example.com',name:'Profile'}];
+ assert.equal(profileForEmail(users,'user@example.com').uid,'a');
+ assert.equal(profileForEmail([...users,...users],'user@example.com'),null);
+ assert.equal(profileName(null),'Thành viên');assert.equal(profileName({name:'  '}),'Thành viên');
+});

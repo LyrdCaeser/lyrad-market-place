@@ -8,7 +8,7 @@ const market = (() => {
     const headers={'Content-Type':'application/json',...options.headers};
     if(secure){const user=firebase.auth().currentUser;if(!user)throw new Error('Vui lòng đăng nhập Google để tiếp tục.');headers.Authorization='Bearer '+await user.getIdToken();}
     if(review)headers['X-Review-Key']=reviewKey;
-    const r=await fetch('/api/market'+path,{...options,headers});
+    const r=await fetch('/api/market'+path,{cache:'no-store',...options,headers});
     if(!r.ok){const b=await r.json().catch(()=>({}));throw new Error(b.error || 'Không thể kết nối máy chủ.');}return r.json();
   }
   function message(id,text){const el=document.getElementById(id);if(el){el.textContent=text;el.hidden=!text;}}
@@ -60,6 +60,8 @@ const market = (() => {
       currentUser.role = actor.role;
       updateExpUI();
     }
+    await refreshCatalog();
+    if (document.getElementById('sales-list')) await loadMine();
     return actor;
   }
   async function setRole(email, role) {

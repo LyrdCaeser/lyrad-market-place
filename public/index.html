@@ -1207,7 +1207,7 @@
             let users = globalDB[DB_KEY_USERS];
             let index = users.findIndex(u => u.uid === currentUser.uid);
             if(index !== -1) users[index] = currentUser; else users.push(currentUser);
-            saveNeonDB(DB_KEY_USERS, users);
+            return saveNeonDB(DB_KEY_USERS, users);
         }
 
         function getExpRequired(level) { return Math.floor(Math.pow(level, 3.2) * 5 + level * 4095); }
@@ -2349,11 +2349,12 @@
         function editDisplayName() { document.getElementById('renameModal').style.display = 'flex'; document.getElementById('new-name-input').value = currentUser.name; }
         function closeRenameModal() { document.getElementById('renameModal').style.display = 'none'; }
         
-        function submitNewName() {
+        async function submitNewName() {
             if (checkAnonymousAction()) return closeRenameModal();
             let newName = document.getElementById('new-name-input').value.trim();
             if (newName.length < 3) return alert("Tên quá ngắn.");
-            currentUser.name = newName; saveSession(); updateExpUI(); renderPosts(); closeRenameModal();
+            currentUser.name = newName; await saveSession(); updateExpUI(); renderPosts(); closeRenameModal();
+            await market.syncRole().catch(error => console.error("Không thể đồng bộ tên người bán:", error));
         }
 
         function openAdminAuth() { verifyAdmin(); }
