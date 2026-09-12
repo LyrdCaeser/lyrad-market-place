@@ -104,3 +104,37 @@ test('profile matching rejects ambiguous identities and does not fall back to Gm
  assert.equal(profileForEmail([...users,...users],'user@example.com'),null);
  assert.equal(profileName(null),'Thành viên');assert.equal(profileName({name:'  '}),'Thành viên');
 });
+
+test('guest downloads warn once, lock for 30 seconds, and recover without extending the lock', async()=>{
+ const express=require('express');let time=1000;const app=express();
+ app.get('/file',require('../lib/marketplace').createDownloadGate(()=>time),(req,res)=>res.send('allowed'));
+ const server=app.listen(0);await new Promise(r=>server.once('listening',r));const url=`http://localhost:${server.address().port}/file`;
+ try{
+  const first=await fetch(url);assert.equal(first.status,401);const cookie=first.headers.get('set-cookie').split(';')[0];
+  const second=await fetch(url,{headers:{Cookie:cookie}});assert.equal(second.status,429);assert.equal(second.headers.get('retry-after'),'30');
+  time+=12000;const retry=await fetch(url,{headers:{Cookie:cookie,Authorization:'Bearer verified'}});assert.equal(retry.status,429);assert.equal(retry.headers.get('retry-after'),'18');
+  const other=await fetch(url,{headers:{Authorization:'Bearer other'}});assert.equal(other.status,200);
+  time+=18000;assert.equal((await fetch(url,{headers:{Cookie:cookie,Authorization:'Bearer verified'}})).status,200);
+ }finally{server.close();}
+});
+test('direct catalog download requires a verified identity and preserves the original bytes',async()=>{
+ const express=require('express');const originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test';
+ const bytes=Buffer.from('original binary');let reads=0;
+ const pool={query:async(sql)=>{if(sql.startsWith('SELECT f.*')){reads++;return {rows:[{filename:'tool.rar',bytes}]};}return {rows:[]};}};
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:JSON.parse(opts.body).idToken==='valid',json:async()=>({users:[{localId:'user',email:'user@example.com',emailVerified:true}]})}):originalFetch(url,opts);
+ const app=express();app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));const url=`http://localhost:${server.address().port}/api/market/download/id`;
+ try{
+  assert.equal((await originalFetch(url)).status,401);assert.equal(reads,0);
+  assert.equal((await originalFetch(url,{headers:{Authorization:'Bearer forged'}})).status,401);assert.equal(reads,0);
+  const result=await originalFetch(url,{headers:{Authorization:'Bearer valid'}});assert.equal(result.status,200);assert.deepEqual(Buffer.from(await result.arrayBuffer()),bytes);assert.match(result.headers.get('cache-control'),/no-store/);
+ }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
+});
+
+test('repeated guest attempts escalate to five minutes and reset after a day',async()=>{
+ const express=require('express');let time=1000;const app=express();app.get('/file',require('../lib/marketplace').createDownloadGate(()=>time),(req,res)=>res.send('ok'));const server=app.listen(0);await new Promise(r=>server.once('listening',r));const url=`http://localhost:${server.address().port}/file`;
+ try{
+  const first=await fetch(url);const cookie=first.headers.get('set-cookie').split(';')[0];
+  for(const seconds of [30,60,120,300,300]){const r=await fetch(url,{headers:{Cookie:cookie}});assert.equal(r.status,429);assert.equal(Number(r.headers.get('retry-after')),seconds);time+=seconds*1000;}
+  time+=86400000;assert.equal((await fetch(url,{headers:{Cookie:cookie}})).status,401);
+ }finally{server.close();}
+});

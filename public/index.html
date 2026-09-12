@@ -1712,10 +1712,50 @@
             }
         }
 
-        function triggerRealDownload(appName, appId) {
-            const app = (globalDB[DB_KEY_APPS] || []).find(a => a.id === appId);
-            if (app && app.marketProduct) window.location.assign('/api/market/download/' + encodeURIComponent(appId));
-            else alert('Bản cũ chưa có file cài đặt gốc. Vui lòng chờ nhà phát hành đăng tải lại.');
+        let downloadRequestPending = false;
+        let downloadNoticeTimer;
+        function showDownloadNotice(text, seconds = 0) {
+            let notice = document.getElementById('download-notice');
+            if (!notice) {
+                notice = document.createElement('div'); notice.id = 'download-notice';
+                notice.setAttribute('role', 'status');
+                notice.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10000;width:min(90vw,520px);padding:18px;border-radius:14px;background:#fff0d8;color:#794200;box-shadow:0 8px 30px #0002';
+                document.body.appendChild(notice);
+            }
+            clearInterval(downloadNoticeTimer);
+            const until = Date.now() + seconds * 1000;
+            const render = () => {
+                const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+                notice.textContent = seconds ? (remaining ? text + ' Còn ' + remaining + ' giây.' : 'Đã hết thời gian khóa. Hãy đăng nhập để tải xuống.') : text;
+                if (!remaining) clearInterval(downloadNoticeTimer);
+            };
+            render(); if (seconds) downloadNoticeTimer = setInterval(render, 250);
+        }
+        async function triggerRealDownload(appName, appId) {
+            if (downloadRequestPending) return;
+            downloadRequestPending = true;
+            try {
+                const user = firebase.auth().currentUser;
+                const headers = {};
+                if (user && !user.isAnonymous) headers.Authorization = 'Bearer ' + await user.getIdToken();
+                const response = await fetch('/api/market/download/' + encodeURIComponent(appId), {headers, credentials:'same-origin', cache:'no-store'});
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    showDownloadNotice(data.error || 'Không thể tải tệp. Vui lòng thử lại.', Number(data.retryAfter) || 0);
+                    return;
+                }
+                const blob = await response.blob();
+                const disposition = response.headers.get('Content-Disposition') || '';
+                const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.href = url; link.download = encodedName ? decodeURIComponent(encodedName) : appName;
+                document.body.appendChild(link); link.click(); link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+                document.getElementById('download-notice')?.remove();
+                clearInterval(downloadNoticeTimer);
+            } catch (error) { showDownloadNotice('Không thể tải tệp. Vui lòng kiểm tra kết nối và đăng nhập lại.'); }
+            finally { downloadRequestPending = false; }
         }
 
         function setReviewRating(star) {
