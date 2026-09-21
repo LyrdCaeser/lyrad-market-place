@@ -31,7 +31,7 @@ app.use('/api/market', require('./lib/marketplace')(pool));
 // API Lấy toàn bộ dữ liệu từ DB
 app.get('/api/data', async (req, res) => {
     try {
-        const result = await pool.query('SELECT db_key, db_data FROM lyrad_db_storage');
+        const result = await pool.query("SELECT db_key, db_data FROM lyrad_db_storage WHERE db_key <> 'lyrad_real_chat'");
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -41,6 +41,7 @@ app.get('/api/data', async (req, res) => {
 // API Cập nhật dữ liệu vào DB (Ghi đè mảng JSON hiện tại)
 app.post('/api/data', async (req, res) => {
     const { key, value } = req.body;
+    if (key === 'lyrad_real_chat') return res.status(410).json({ error: 'Messenger đã được gỡ khỏi hệ thống.' });
     try {
         await pool.query(
             `INSERT INTO lyrad_db_storage (db_key, db_data) 
