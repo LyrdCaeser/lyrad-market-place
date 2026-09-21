@@ -315,6 +315,10 @@
         .btn-google { width: 100%; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; font-weight: 600; font-size: 14px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: var(--shadow-sm); transition: background 0.2s; cursor: pointer; margin-bottom: 8px;}
         .btn-google:hover { background: var(--bg-body); }
 
+        .guest-preview-note { margin-top: 18px; padding: 14px 16px; border: 1px solid rgba(0,122,255,0.2); border-radius: 12px; background: rgba(0,122,255,0.06); color: var(--text-sub); font-size: 14px; line-height: 1.5; }
+        .guest-preview-note strong { color: var(--text-main); }
+        .guest-login-cta { border: none; cursor: pointer; }
+
         /* POLICY SCROLLBOX CHUẨN TENCENT */
         .policy-scrollbox { 
             overflow-y: auto; padding-right: 16px; font-size: 14px; line-height: 1.7; 
@@ -1233,6 +1237,10 @@
             }
             return false;
         }
+
+        function isGuestCatalogViewer() {
+            return isAnonymous || !currentUser || currentUser.role === 'GUEST';
+        }
         
         // HÀM BỔ TRỢ QUẢN TRỊ TICKET
         function updateSupportAdminUI() {
@@ -1572,6 +1580,7 @@
         function generateAppGridHTML(appList) {
             if(appList.length === 0) return '';
             let html = '<div class="app-grid">';
+            const guestView = isGuestCatalogViewer();
             
             appList.sort((a,b) => b.timestamp - a.timestamp).forEach(app => {
                 let initial = app.name.charAt(0).toUpperCase();
@@ -1595,7 +1604,9 @@
                                 <span>📦 ${app.size}</span>
                                 <span>🧩 v${app.version || '1.0.0'}</span>
                             </div>
-                            <button class="btn-download" onclick="event.stopPropagation(); triggerRealDownload('', '${app.id}')">Tải về máy</button>
+                            ${guestView
+                                ? `<button class="btn-download guest-login-cta" onclick="event.stopPropagation(); openAuthModal()">Đăng nhập</button>`
+                                : `<button class="btn-download" onclick="event.stopPropagation(); triggerRealDownload('', '${app.id}')">Tải về máy</button>`}
                         </div>
                     </div>
                 `;
@@ -1715,6 +1726,10 @@
             render(); if (seconds) downloadNoticeTimer = setInterval(render, 250);
         }
         async function triggerRealDownload(appName, appId) {
+            if (isGuestCatalogViewer()) {
+                openAuthModal();
+                return;
+            }
             if (downloadRequestPending) return;
             downloadRequestPending = true;
             try {
@@ -1820,6 +1835,7 @@
             let iconHTML = app.iconBase64 ? `<img src="${app.iconBase64}">` : app.name.charAt(0).toUpperCase();
             
             let reviews = app.reviews || [];
+            const guestView = isGuestCatalogViewer();
             let avgRating = app.rating;
             if(reviews.length > 0) {
                 let total = reviews.reduce((sum, rev) => sum + rev.rating, 0);
@@ -1844,10 +1860,10 @@
                             </div>
                         </div>
                         <div class="review-text">${rev.text}</div>
-                        <div style="display:flex; gap:16px; align-items:center; border-top:1px solid var(--border); padding-top:12px;">
+                        ${guestView ? '' : `<div style="display:flex; gap:16px; align-items:center; border-top:1px solid var(--border); padding-top:12px;">
                             <span style="font-size:13px; color:var(--text-sub); cursor:pointer; font-weight:600;" onclick="alert('Đã thích đánh giá này!')">👍 Hữu ích</span>
                             <span style="font-size:13px; color:var(--text-sub); cursor:pointer; font-weight:600;" onclick="replyToReview('${app.id}', '${rev.id}')">💬 Trả lời</span>
-                        </div>
+                        </div>`}
                         ${repliesHTML ? `<div class="reply-section">${repliesHTML}</div>` : ''}
                     </div>
                 `;
@@ -1875,14 +1891,20 @@
                             <div class="detail-stat-divider"></div>
                             <div class="detail-stat"><span class="detail-stat-val">${app.size}</span><span class="detail-stat-lbl">Kích thước file</span></div>
                         </div>
-                        <button class="btn-detail-download" onclick="triggerRealDownload('', '${app.id}')">Cài đặt / Tải về Máy</button>
+                        ${guestView
+                            ? `<button class="btn-detail-download guest-login-cta" onclick="openAuthModal()">Đăng nhập để tải</button>
+                               <div class="guest-preview-note"><strong>Chế độ khách chỉ xem.</strong> Bạn vẫn có thể xem đầy đủ thông tin và đánh giá của app/game. Đăng nhập để tải xuống hoặc tham gia đánh giá.</div>`
+                            : `<button class="btn-detail-download" onclick="triggerRealDownload('', '${app.id}')">Cài đặt / Tải về Máy</button>`}
                         <div style="font-size:11px; font-family:monospace; color:var(--text-sub); margin-top:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; display:inline-block;">App ID: ${app.id}<br>Phiên bản: v${app.version || '1.0.0'}<br>Cập nhật: ${app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('vi-VN') : '—'}<br>Hash: ${app.hash.substring(0,32)}...</div>
                     </div>
                 </div>
 
                 <div class="detail-section-title">Đánh giá và Nhận xét</div>
                 
-                <div class="review-composer">
+                ${guestView ? `<div class="review-composer" style="text-align:center;">
+                    <p style="color:var(--text-sub); margin-bottom:14px;">Đăng nhập để viết đánh giá và tương tác.</p>
+                    <button class="btn-submit-post guest-login-cta" onclick="openAuthModal()">Đăng nhập</button>
+                </div>` : `<div class="review-composer">
                     <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
                         <img src="${currentUser.avatar}" class="sync-user-avatar" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:1px solid rgba(0,0,0,0.1);">
                         <div>
@@ -1897,7 +1919,7 @@
                     <div style="display:flex; justify-content:flex-end;">
                         <button class="btn-submit-post" onclick="submitAppReview('${app.id}')">Đăng Đánh Giá</button>
                     </div>
-                </div>
+                </div>`}
 
                 <div class="review-list">
                     ${reviewHTML}
@@ -2581,12 +2603,8 @@
                     title: 'Khách Tham Quan'
                 };
                 
-                // Khởi động bộ đếm thời gian 1p30s
-                anonTimeout = setTimeout(() => {
-                    alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (1p30s). Vui lòng đăng nhập để tiếp tục truy cập trang web.");
-                    openAuthModal();
-                    document.getElementById('auth-close-btn').style.display = 'none'; // Bắt buộc đăng nhập
-                }, 90000);
+                // Khách được xem danh sách và preview app/game không giới hạn thời gian.
+                document.getElementById('auth-close-btn').style.display = 'block';
             }
 
             // Render giao diện với Data Cloud Server

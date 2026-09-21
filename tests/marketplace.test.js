@@ -1,5 +1,6 @@
 const test=require('node:test');const assert=require('node:assert/strict');
 const {validateProduct,nextReview,normalizeVersion,decodeInstaller}=require('../lib/marketplace');
+const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
 test('sale requires price, payment and contact',()=>{for(const change of [{price:-1},{price:'abc'},{payment_method:''},{contact:''},{name:''},{name:'x'.repeat(161)}])assert.throws(()=>validateProduct({...valid,...change}));});
@@ -12,6 +13,14 @@ test('version names and replacement installers are validated',()=>{
  const apk=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('new apk')]);
  assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
  assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
+});
+test('guest catalog stays visible in read-only mode and routes actions to login',()=>{
+ const html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
+ assert.match(html,/Khách được xem danh sách và preview app\/game không giới hạn thời gian/);
+ assert.match(html,/isGuestCatalogViewer\(\)/);
+ assert.match(html,/Đăng nhập để tải/);
+ assert.match(html,/Chế độ khách chỉ xem/);
+ assert.doesNotMatch(html,/Hết thời gian trải nghiệm Ẩn Danh/);
 });
 test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['POST','products/00000000-0000-0000-0000-000000000000/version'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
 test('verified identity alone does not grant moderation; role and key are both required',async()=>{
