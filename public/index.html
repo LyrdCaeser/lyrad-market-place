@@ -970,6 +970,7 @@
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản cài đặt APK hoặc EXE (tối đa 32 MB mỗi file). Hệ thống sẽ tự động cấp App ID và phân luồng mục hiển thị lên Market Place.</p>
                     
                     <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
+                    <input type="text" class="admin-input" id="pub-app-version" value="1.0.0" maxlength="40" placeholder="Phiên bản phát hành (VD: 1.0.0)...">
                     
                     <div style="margin-bottom: 12px;">
                         <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Phân loại Danh mục (Category):</label>
@@ -1007,6 +1008,23 @@
                         <h5 style="color: #fff; margin-bottom: 10px; font-size: 14px;">📜 CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (CSBM)</h5>
                         <textarea class="admin-input" id="res-csbm" rows="16" style="font-family: inherit; font-size: 12px; line-height: 1.6; resize: none; background: #111;" readonly></textarea>
                     </div>
+                </div>
+
+                <div class="admin-card god-mode-card" style="background: rgba(10, 132, 255, 0.06); border-color: #0a84ff;">
+                    <h4 style="color: #0a84ff; border-bottom-color: rgba(10,132,255,0.45);">♻️ UPDATE VERSION APK / EXE</h4>
+                    <p style="font-size:13px; color:#aaa; margin-bottom:14px;">Thay bản cài đặt của App/Game đã đăng nhưng giữ nguyên App ID, icon, lượt tải, đánh giá và toàn bộ dữ liệu hiện có.</p>
+                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Chọn App/Game cần cập nhật:</label>
+                    <select id="version-product-select" class="admin-input" style="background:#1c1c1e;" onchange="market.selectVersionProduct()">
+                        <option value="">Đang tải danh sách sản phẩm...</option>
+                    </select>
+                    <div id="version-current-info" style="display:none; margin:0 0 12px; padding:10px 12px; border-radius:8px; background:#111; color:#aaa; font-size:12px; line-height:1.6;"></div>
+                    <input type="text" id="version-new-number" class="admin-input" maxlength="40" placeholder="Phiên bản mới (VD: 1.1.0)...">
+                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Tệp phiên bản mới (tối đa 32 MB):</label>
+                    <input type="file" id="version-new-file" accept=".apk,.zip,.rar,.7z" class="admin-input" style="background:#1c1c1e; color:#aaa;">
+                    <div class="admin-btn-group" style="margin-top:10px;">
+                        <button type="button" id="btn-version-update" class="admin-btn" style="background:#0a84ff; color:white; border-color:#0a84ff;" onclick="market.updateVersion()">CẬP NHẬT PHIÊN BẢN</button>
+                    </div>
+                    <p id="version-manager-message" class="market-message" role="status" hidden></p>
                 </div>
             </div>
 
@@ -1575,6 +1593,7 @@
                                 <span>⭐ ${avgRating}</span>
                                 <span>⬇️ ${app.downloads.toLocaleString('vi-VN')}</span>
                                 <span>📦 ${app.size}</span>
+                                <span>🧩 v${app.version || '1.0.0'}</span>
                             </div>
                             <button class="btn-download" onclick="event.stopPropagation(); triggerRealDownload('', '${app.id}')">Tải về máy</button>
                         </div>
@@ -1716,6 +1735,8 @@
                 link.href = url; link.download = encodedName ? decodeURIComponent(encodedName) : appName;
                 document.body.appendChild(link); link.click(); link.remove();
                 setTimeout(() => URL.revokeObjectURL(url), 60000);
+                const downloadedApp = (globalDB[DB_KEY_APPS] || []).find(app => app.id === appId);
+                if (downloadedApp) { downloadedApp.downloads = Number(downloadedApp.downloads || 0) + 1; renderApps(); }
                 document.getElementById('download-notice')?.remove();
                 clearInterval(downloadNoticeTimer);
             } catch (error) { showDownloadNotice('Không thể tải tệp. Vui lòng kiểm tra kết nối và đăng nhập lại.'); }
@@ -1855,7 +1876,7 @@
                             <div class="detail-stat"><span class="detail-stat-val">${app.size}</span><span class="detail-stat-lbl">Kích thước file</span></div>
                         </div>
                         <button class="btn-detail-download" onclick="triggerRealDownload('', '${app.id}')">Cài đặt / Tải về Máy</button>
-                        <div style="font-size:11px; font-family:monospace; color:var(--text-sub); margin-top:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; display:inline-block;">App ID: ${app.id} <br> Hash: ${app.hash.substring(0,32)}...</div>
+                        <div style="font-size:11px; font-family:monospace; color:var(--text-sub); margin-top:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; display:inline-block;">App ID: ${app.id}<br>Phiên bản: v${app.version || '1.0.0'}<br>Cập nhật: ${app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('vi-VN') : '—'}<br>Hash: ${app.hash.substring(0,32)}...</div>
                     </div>
                 </div>
 
@@ -2385,7 +2406,7 @@
             
             if(tabId === 'tab-laa') { document.getElementById('tab-laa').style.display = 'grid'; } 
             else if (tabId === 'tab-users') { document.getElementById('tab-users').style.display = 'block'; renderAdminUserList(); } 
-            else if (tabId === 'tab-publisher') { document.getElementById('tab-publisher').style.display = 'grid'; }
+            else if (tabId === 'tab-publisher') { document.getElementById('tab-publisher').style.display = 'grid'; market.loadVersionManager(); }
             else if (tabId === 'tab-roles') { document.getElementById('tab-roles').style.display = 'grid'; }
         }
 

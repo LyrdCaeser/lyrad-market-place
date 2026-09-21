@@ -1,12 +1,19 @@
 const test=require('node:test');const assert=require('node:assert/strict');
-const {validateProduct,nextReview}=require('../lib/marketplace');
+const {validateProduct,nextReview,normalizeVersion,decodeInstaller}=require('../lib/marketplace');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
 test('sale requires price, payment and contact',()=>{for(const change of [{price:-1},{price:'abc'},{payment_method:''},{contact:''},{name:''},{name:'x'.repeat(161)}])assert.throws(()=>validateProduct({...valid,...change}));});
 test('pending can be approved, rejected or returned once',()=>{for(const status of ['approved','rejected','returned'])assert.doesNotThrow(()=>nextReview({status:'pending',return_count:0},status));});
 test('second return is blocked, including after history deletion',()=>{assert.throws(()=>nextReview({status:'pending',return_count:1},'returned'));assert.doesNotThrow(()=>nextReview({status:'pending',return_count:1},'approved'));assert.doesNotThrow(()=>nextReview({status:'pending',return_count:1},'rejected'));});
 test('stale reviews cannot overwrite completed decisions',()=>{for(const status of ['approved','rejected','returned'])assert.throws(()=>nextReview({status,return_count:0},'approved'));assert.throws(()=>nextReview({status:'pending',return_count:0},'pending'));});
-test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
+test('version names and replacement installers are validated',()=>{
+ for(const value of ['1.0.0','2.0.0-beta','2026.09+hotfix'])assert.equal(normalizeVersion(value),value);
+ for(const value of ['', ' bad version ', '../1.0', 'v'.repeat(41)])assert.throws(()=>normalizeVersion(value));
+ const apk=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('new apk')]);
+ assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
+ assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
+});
+test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['POST','products/00000000-0000-0000-0000-000000000000/version'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
 test('verified identity alone does not grant moderation; role and key are both required',async()=>{
  const express=require('express');const savedFetch=global.fetch;const oldKey=process.env.PRODUCT_REVIEW_KEY,oldFirebase=process.env.FIREBASE_WEB_API_KEY;process.env.PRODUCT_REVIEW_KEY='test-secret';process.env.FIREBASE_WEB_API_KEY='test-project';
  let role='USER';const pool={query:async(sql)=>({rows:sql.startsWith('SELECT role')?[{role}]:[]})};
@@ -32,6 +39,30 @@ test('upload stores exact binary and computes its actual SHA-256',async()=>{
    for(const [filename,header] of [['fake.7z','504b0304'],['fake.rar','526172211a07'],['bad.zip.exe','504b0304'],['bad.txt','504b0304'],platform==='windows'?['bad.apk','504b0304']:['bad.exe','4d5a']])assert.equal((await send(filename,platform,Buffer.from(header,'hex'))).status,400);
   }
  }finally{server.close();global.fetch=savedFetch;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
+});
+test('version update replaces only the installer and preserves product identity and metrics',async()=>{
+ const express=require('express');const originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test';
+ const product={id:'00000000-0000-0000-0000-000000000001',owner_id:'original-owner',kind:'catalog',status:'approved',platform:'android',file_id:'00000000-0000-0000-0000-000000000002',version:'1.0.0',download_count:77,name:'Stable App'};
+ let insertedFile,historyNote,deletedOld=false;
+ const client={query:async(sql,args)=>{
+  if(sql==='BEGIN'||sql==='COMMIT'||sql==='ROLLBACK')return {rows:[]};
+  if(sql.startsWith('SELECT * FROM lyrad_products'))return {rows:[{...product}]};
+  if(sql.startsWith('SELECT coalesce'))return {rows:[{n:0}]};
+  if(sql.startsWith('INSERT INTO lyrad_market_files')){insertedFile=args;return {rows:[]};}
+  if(sql.startsWith('UPDATE lyrad_products SET file_id')){assert.equal(args[0],product.id);product.file_id=args[1];product.version=args[2];return {rows:[]};}
+  if(sql.startsWith('INSERT INTO lyrad_product_history')){historyNote=args[3];return {rows:[]};}
+  if(sql.startsWith('DELETE FROM lyrad_market_files')){deletedOld=args[0]==='00000000-0000-0000-0000-000000000002';return {rows:[]};}
+  throw new Error('Unexpected SQL: '+sql);
+ },release(){}};
+ const pool={query:async(sql)=>{if(sql.startsWith('SELECT db_data'))return {rows:[]};if(sql.startsWith('SELECT role'))return {rows:[{role:'ADMIN'}]};return {rows:[]};},connect:async()=>client};
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):originalFetch(url,opts);
+ const app=express();app.use(express.json({limit:'50mb'}));app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
+ const bytes=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('version two')]);
+ try{
+  const response=await originalFetch(`http://localhost:${server.address().port}/api/market/products/${product.id}/version`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({version:'2.0.0',filename:'stable-v2.apk',base64:bytes.toString('base64')})});
+  assert.equal(response.status,200);const body=await response.json();assert.equal(body.id,product.id);assert.equal(body.version,'2.0.0');
+  assert.equal(product.download_count,77);assert.equal(product.name,'Stable App');assert.equal(insertedFile[2],'stable-v2.apk');assert.match(historyNote,/1\.0\.0 → 2\.0\.0/);assert.equal(deletedOld,true);
+ }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
 });
 test('only the designated NPH can grant and revoke Admin; owner role is immutable', async () => {
  const express = require('express');
@@ -120,7 +151,7 @@ test('guest downloads warn once, lock for 30 seconds, and recover without extend
 test('direct catalog download requires a verified identity and preserves the original bytes',async()=>{
  const express=require('express');const originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test';
  const bytes=Buffer.from('original binary');let reads=0;
- const pool={query:async(sql)=>{if(sql.startsWith('SELECT f.*')){reads++;return {rows:[{filename:'tool.rar',bytes}]};}return {rows:[]};}};
+ const pool={query:async(sql)=>{if(sql.startsWith('WITH target AS')){reads++;return {rows:[{filename:'tool.rar',bytes}]};}return {rows:[]};}};
  global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:JSON.parse(opts.body).idToken==='valid',json:async()=>({users:[{localId:'user',email:'user@example.com',emailVerified:true}]})}):originalFetch(url,opts);
  const app=express();app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));const url=`http://localhost:${server.address().port}/api/market/download/id`;
  try{
