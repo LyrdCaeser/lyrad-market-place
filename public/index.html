@@ -278,6 +278,10 @@
         .profile-name { font-size: 20px; font-weight: 800; color: var(--text-main); }
         .btn-edit-name { background: rgba(0,0,0,0.05); border: none; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: background 0.2s; margin-right: 8px; }
         .btn-edit-name:hover { background: rgba(0,0,0,0.1); }
+        .btn-account-logout { margin-left: auto; padding: 10px 16px; border: 1px solid rgba(255,59,48,0.35); border-radius: 10px; background: rgba(255,59,48,0.08); color: #d92d20; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.2s; }
+        .btn-account-logout:hover { background: rgba(255,59,48,0.14); transform: translateY(-1px); }
+        .btn-account-logout:disabled { opacity: 0.55; cursor: wait; transform: none; }
+        @media (max-width: 768px) { .btn-account-logout { width: 100%; margin-left: 0; } }
         
         .exp-table { background: var(--bg-body); border-radius: 12px; padding: 16px; font-size: 13px; }
         .exp-table h4 { color: var(--text-main); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -508,6 +512,7 @@
                             <div class="exp-bar-fill" id="user-display-exp-fill"></div>
                         </div>
                     </div>
+                    <button type="button" id="profile-logout-btn" class="btn-account-logout" onclick="logoutAccount()">Đăng Xuất Tài Khoản</button>
                 </div>
 
                 <div class="exp-table">
@@ -1119,6 +1124,45 @@
             });
         }
 
+        async function logoutAccount() {
+            if (isAnonymous) {
+                toggleAuth('login');
+                openAuthModal();
+                return;
+            }
+            if (!confirm('Bạn có chắc muốn đăng xuất tài khoản hiện tại để đăng nhập lại?')) return;
+
+            const logoutBtn = document.getElementById('profile-logout-btn');
+            if (logoutBtn) logoutBtn.disabled = true;
+            try {
+                await firebase.auth().signOut();
+                localStorage.removeItem(DB_KEY_SESSION);
+                if (anonTimeout) clearTimeout(anonTimeout);
+
+                isAnonymous = true;
+                currentUser = {
+                    uid: 'ANON-' + Math.floor(100000 + Math.random() * 900000),
+                    name: 'Người Dùng Ẩn Danh',
+                    level: 1, currentExp: 0,
+                    status: 'Ẩn Danh',
+                    avatar: 'https://ui-avatars.com/api/?name=Anon&background=86868b',
+                    role: 'GUEST',
+                    title: 'Khách Tham Quan'
+                };
+
+                updateExpUI();
+                renderPosts();
+                renderStories();
+                toggleAuth('login');
+                document.getElementById('auth-close-btn').style.display = 'block';
+                openAuthModal();
+            } catch (error) {
+                alert('Đăng xuất thất bại: ' + error.message);
+            } finally {
+                if (logoutBtn) logoutBtn.disabled = false;
+            }
+        }
+
         function getTitleByLevel(lvl) {
             if (lvl < 10) return 'Tân Thủ';
             if (lvl < 30) return 'Tân Binh';
@@ -1199,6 +1243,8 @@
                 if (loginBtn) loginBtn.style.display = 'inline-flex';
                 if (profileAvt) profileAvt.style.display = 'none';
             }
+            const logoutBtn = document.getElementById('profile-logout-btn');
+            if (logoutBtn) logoutBtn.style.display = currentUser && !isAnonymous ? 'inline-flex' : 'none';
 
             const expReq = getExpRequired(currentUser.level);
             ['post','like','cmt','dl','5star','review','top','code'].forEach(id => {
