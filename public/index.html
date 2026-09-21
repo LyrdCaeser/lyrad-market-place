@@ -2603,8 +2603,12 @@
                     title: 'Khách Tham Quan'
                 };
                 
-                // Khách được xem danh sách và preview app/game không giới hạn thời gian.
-                document.getElementById('auth-close-btn').style.display = 'block';
+                // Khách được xem danh sách và preview app/game trong 30 giây.
+                anonTimeout = setTimeout(() => {
+                    alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (30 giây). Vui lòng đăng nhập để tiếp tục truy cập trang web.");
+                    openAuthModal();
+                    document.getElementById('auth-close-btn').style.display = 'none'; // Bắt buộc đăng nhập
+                }, 30000);
             }
 
             // Render giao diện với Data Cloud Server

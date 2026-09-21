@@ -14,13 +14,14 @@ test('version names and replacement installers are validated',()=>{
  assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
  assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
 });
-test('guest catalog stays visible in read-only mode and routes actions to login',()=>{
+test('guest catalog is read-only and requires login after 30 seconds',()=>{
  const html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
- assert.match(html,/Khách được xem danh sách và preview app\/game không giới hạn thời gian/);
+ assert.match(html,/Khách được xem danh sách và preview app\/game trong 30 giây/);
  assert.match(html,/isGuestCatalogViewer\(\)/);
  assert.match(html,/Đăng nhập để tải/);
  assert.match(html,/Chế độ khách chỉ xem/);
- assert.doesNotMatch(html,/Hết thời gian trải nghiệm Ẩn Danh/);
+ assert.match(html,/Hết thời gian trải nghiệm Ẩn Danh \(30 giây\)/);
+ assert.match(html,/\}, 30000\);/);
 });
 test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['POST','products/00000000-0000-0000-0000-000000000000/version'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
 test('verified identity alone does not grant moderation; role and key are both required',async()=>{
