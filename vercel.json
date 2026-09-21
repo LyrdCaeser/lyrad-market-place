@@ -2,7 +2,7 @@
   "rewrites": [
     { 
       "source": "/api/:path*", 
-      "destination": "https://lyrad-market-backend.onrender.com/api/:path*" 
+      "destination": "https://lyrad-market-backend-v2.onrender.com/api/:path*" 
     },
     { 
       "source": "/(.*)", 
