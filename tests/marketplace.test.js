@@ -1,5 +1,5 @@
 const test=require('node:test');const assert=require('node:assert/strict');
-const {validateProduct,nextReview,normalizeVersion,decodeInstaller,scanWithLaa}=require('../lib/marketplace');
+const {validateProduct,nextReview,normalizeVersion,normalizeIconData,decodeInstaller,scanWithLaa}=require('../lib/marketplace');
 const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
@@ -13,6 +13,27 @@ test('version names and replacement installers are validated',()=>{
  const apk=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('new apk')]);
  assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
  assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
+});
+test('product icons accept real safe image data URLs only',()=>{
+ const png=Buffer.from('89504e470d0a1a0a00000000','hex');
+ const value='data:image/png;base64,'+png.toString('base64');
+ assert.equal(normalizeIconData(value),value);
+ for(const invalid of ['not-an-image','data:image/svg+xml;base64,PHN2Zz4=','data:image/png;base64,'+Buffer.from('fake').toString('base64')])assert.throws(()=>normalizeIconData(invalid));
+});
+test('Admin can replace a catalog icon without replacing the product',async()=>{
+ const express=require('express'),originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test';
+ const productId='00000000-0000-0000-0000-000000000099';let updated;
+ const pool={query:async(sql,args)=>{
+  if(sql.startsWith('SELECT db_data'))return {rows:[]};
+  if(sql.startsWith('SELECT role'))return {rows:[{role:'ADMIN'}]};
+  if(sql.startsWith('UPDATE lyrad_products SET icon_data')){updated=args;return {rows:[{id:productId}]};}
+  return {rows:[]};
+ }};
+ global.fetch=(url,options)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):originalFetch(url,options);
+ const png=Buffer.from('89504e470d0a1a0a00000000','hex'),icon='data:image/png;base64,'+png.toString('base64');
+ const app=express();app.use(express.json({limit:'50mb'}));app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(resolve=>server.once('listening',resolve));
+ try{const response=await originalFetch(`http://localhost:${server.address().port}/api/market/products/${productId}/icon`,{method:'PUT',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({icon_data:icon})});assert.equal(response.status,200);assert.equal(updated[0],productId);assert.equal(updated[1],icon);}
+ finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
 });
 test('LAA Sandbox reports risky installers without blocking publication',async()=>{
  const originalFetch=global.fetch,oldUrl=process.env.LAA_SANDBOX_URL,oldKey=process.env.LAA_SCAN_KEY;

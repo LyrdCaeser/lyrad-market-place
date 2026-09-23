@@ -991,7 +991,7 @@
                             <option value="library">Tải lên từ Thư viện máy</option>
                             
                         </select>
-                        <input type="file" id="pub-icon-file" accept="image/*" class="admin-input" style="display:none; background: #1c1c1e; color: #aaa;">
+                        <input type="file" id="pub-icon-file" accept=".png,.jpg,.jpeg,.webp,.gif" class="admin-input" style="display:none; background: #1c1c1e; color: #aaa;">
                     </div>
 
                     <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">File Cài Đặt (APK / EXE):</label>
@@ -1022,6 +1022,11 @@
                         <option value="">Đang tải danh sách sản phẩm...</option>
                     </select>
                     <div id="version-current-info" style="display:none; margin:0 0 12px; padding:10px 12px; border-radius:8px; background:#111; color:#aaa; font-size:12px; line-height:1.6;"></div>
+                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Đổi ảnh đại diện (giữ nguyên dữ liệu):</label>
+                    <input type="file" id="version-new-icon" accept=".png,.jpg,.jpeg,.webp,.gif" class="admin-input" style="background:#1c1c1e; color:#aaa;">
+                    <div class="admin-btn-group" style="margin:0 0 14px;">
+                        <button type="button" id="btn-icon-update" class="admin-btn" onclick="market.updateIcon()">CẬP NHẬT ẢNH ĐẠI DIỆN</button>
+                    </div>
                     <input type="text" id="version-new-number" class="admin-input" maxlength="40" placeholder="Phiên bản mới (VD: 1.1.0)...">
                     <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Tệp phiên bản mới (tối đa 32 MB):</label>
                     <input type="file" id="version-new-file" accept=".apk,.zip,.rar,.7z" class="admin-input" style="background:#1c1c1e; color:#aaa;">

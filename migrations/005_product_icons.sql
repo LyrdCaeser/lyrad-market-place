@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE lyrad_products
+  ADD COLUMN IF NOT EXISTS icon_data text NOT NULL DEFAULT '';
+
+COMMIT;
