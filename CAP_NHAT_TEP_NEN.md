@@ -2,7 +2,7 @@
 
 - Mobile: .apk, .zip, .rar, .7z.
 - PC: .exe, .zip, .rar, .7z.
-- Giữ giới hạn 32 MB/tệp; kiểm tra chữ ký định dạng, hỗ trợ RAR 4/5.
+- Giới hạn 80 MB/tệp; kiểm tra chữ ký định dạng, hỗ trợ RAR 4/5.
 - Đồng bộ bộ chọn tệp khi đổi nền tảng, sửa bài và nhập mới.
 - Lưu nguyên byte và SHA-256; không giải nén trên máy chủ.
 
