@@ -14,11 +14,17 @@ test('version names and replacement installers are validated',()=>{
  assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
  assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
 });
-test('LAA Sandbox rejects a risky installer before publication',async()=>{
+test('LAA Sandbox reports risky installers without blocking publication',async()=>{
  const originalFetch=global.fetch,oldUrl=process.env.LAA_SANDBOX_URL,oldKey=process.env.LAA_SCAN_KEY;
  process.env.LAA_SANDBOX_URL='https://laa.test';process.env.LAA_SCAN_KEY='secret';
- global.fetch=async()=>({ok:true,status:200,json:async()=>({status:'completed',is_safe:false,scan_id:'LAA-RISK',sha256:'a'.repeat(64),risks:['malware marker'],message:'LAA phát hiện rủi ro; tệp bị từ chối.'})});
- try{await assert.rejects(()=>scanWithLaa({filename:'risk.exe',bytes:Buffer.from('MZ'),sha256:'a'.repeat(64)}),error=>error.status===422&&error.scan.scan_id==='LAA-RISK');}
+ global.fetch=async()=>({ok:true,status:200,json:async()=>({status:'completed',is_safe:false,risk_level:'DANGEROUS',safety_score:10,scan_id:'LAA-RISK',sha256:'a'.repeat(64),risks:['malware marker'],message:'DANGEROUS · 10/100'})});
+ try{const scan=await scanWithLaa({filename:'risk.exe',bytes:Buffer.from('MZ'),sha256:'a'.repeat(64)});assert.equal(scan.risk_level,'DANGEROUS');assert.equal(scan.safety_score,10);}
+ finally{global.fetch=originalFetch;if(oldUrl===undefined)delete process.env.LAA_SANDBOX_URL;else process.env.LAA_SANDBOX_URL=oldUrl;if(oldKey===undefined)delete process.env.LAA_SCAN_KEY;else process.env.LAA_SCAN_KEY=oldKey;}
+});
+test('LAA connection errors become advisory ERROR results',async()=>{
+ const originalFetch=global.fetch,oldUrl=process.env.LAA_SANDBOX_URL,oldKey=process.env.LAA_SCAN_KEY;
+ process.env.LAA_SANDBOX_URL='https://laa.test';process.env.LAA_SCAN_KEY='secret';global.fetch=async()=>{throw new Error('offline');};
+ try{const scan=await scanWithLaa({filename:'app.apk',bytes:Buffer.from('PK'),sha256:'b'.repeat(64)});assert.equal(scan.risk_level,'ERROR');assert.equal(scan.safety_score,0);assert.match(scan.message,/không chặn/i);}
  finally{global.fetch=originalFetch;if(oldUrl===undefined)delete process.env.LAA_SANDBOX_URL;else process.env.LAA_SANDBOX_URL=oldUrl;if(oldKey===undefined)delete process.env.LAA_SCAN_KEY;else process.env.LAA_SCAN_KEY=oldKey;}
 });
 test('guest catalog is read-only and requires login after 30 seconds',()=>{

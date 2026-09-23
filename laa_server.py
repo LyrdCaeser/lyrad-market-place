@@ -6,8 +6,6 @@ import uuid
 import zipfile
 from pathlib import Path
 
-import pefile
-from androguard.core.apk import APK
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -93,33 +91,74 @@ def inspect_zip(path: Path) -> tuple[list[str], list[str]]:
 
 def inspect_apk(path: Path) -> tuple[list[str], list[str], str | None]:
     checks, risks = inspect_zip(path)
-    apk = APK(str(path))
-    package_name = apk.get_package()
-    permissions = set(apk.get_permissions() or [])
-    flagged = sorted(permission.rsplit(".", 1)[-1] for permission in permissions & DANGEROUS_PERMISSIONS)
+    # Light mode: inspect the archive and only read the manifest bytes.  Full
+    # DEX/resource decoding is intentionally avoided so an upload cannot keep
+    # the small Render worker busy for minutes.
+    package_name = None
+    with zipfile.ZipFile(path) as archive:
+        try:
+            manifest = archive.read("AndroidManifest.xml").upper()
+        except KeyError:
+            manifest = b""
+            risks.append("APK thiếu AndroidManifest.xml")
+    flagged = sorted(
+        permission.rsplit(".", 1)[-1]
+        for permission in DANGEROUS_PERMISSIONS
+        if permission.encode().upper() in manifest
+    )
     if flagged:
         risks.append("Quyền Android nhạy cảm: " + ", ".join(flagged))
-    checks.append(f"Phân tích AndroidManifest: {len(permissions)} quyền")
+    checks.append("Kiểm tra nhanh AndroidManifest và quyền nhạy cảm")
     return checks, risks, package_name
 
 
+def safety_rating(risks: list[str], analysis_error: bool = False) -> tuple[int, str]:
+    """Return an advisory safety score. The scanner never blocks publication."""
+    if analysis_error:
+        return 0, "ERROR"
+    score = 100
+    for risk in risks:
+        lowered = risk.lower()
+        if any(marker in lowered for marker in (
+            "ransomware", "mimikatz", "đào tiền", "tiêm mã", "tiêm luồng",
+            "ghi bộ nhớ tiến trình", "cấp phát bộ nhớ tiến trình",
+        )):
+            score -= 55
+        elif any(marker in lowered for marker in (
+            "zip bomb", "đường dẫn nguy hiểm", "được mã hóa", "thiếu androidmanifest",
+        )):
+            score -= 30
+        else:
+            score -= 15
+    score = max(0, min(100, score))
+    if score >= 85:
+        level = "SAFE"
+    elif score >= 60:
+        level = "WARNING"
+    elif score >= 30:
+        level = "ERROR"
+    else:
+        level = "DANGEROUS"
+    return score, level
+
+
 def inspect_exe(path: Path) -> tuple[list[str], list[str]]:
-    checks = ["Xác thực cấu trúc Portable Executable (PE)"]
+    checks = ["Kiểm tra nhanh cấu trúc Portable Executable (PE)"]
     risks: list[str] = []
-    pe = pefile.PE(str(path), fast_load=True)
-    pe.parse_data_directories(
-        directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"]]
-    )
-    imports = {
-        item.name.decode("ascii", errors="ignore").lower()
-        for library in getattr(pe, "DIRECTORY_ENTRY_IMPORT", [])
-        for item in library.imports
-        if item.name
-    }
-    injection_api = {"createremotethread", "writeprocessmemory", "virtualallocex"}
-    if len(imports & injection_api) >= 2:
-        risks.append("Tổ hợp API tiêm mã vào tiến trình khác")
-    checks.append(f"Phân tích bảng import PE: {len(imports)} API")
+    with path.open("rb") as source:
+        dos_header = source.read(64)
+        if len(dos_header) < 64 or not dos_header.startswith(b"MZ"):
+            risks.append("Thiếu chữ ký MZ hợp lệ")
+            return checks, risks
+        pe_offset = int.from_bytes(dos_header[60:64], "little")
+        if pe_offset > 16 * 1024 * 1024:
+            risks.append("Vị trí PE header bất thường")
+            return checks, risks
+        source.seek(pe_offset)
+        if source.read(4) != b"PE\x00\x00":
+            risks.append("Thiếu chữ ký PE hợp lệ")
+        else:
+            checks.append("Chữ ký MZ/PE hợp lệ")
     return checks, risks
 
 
@@ -166,6 +205,7 @@ async def scan_installer(
         checks = [f"Đối chiếu SHA-256 ({size} byte)", "Quét chỉ dấu nhị phân tĩnh"]
         risks = marker_scan(temp_path)
         package_name = None
+        analysis_error = False
         try:
             if suffix == ".apk":
                 extra_checks, extra_risks, package_name = inspect_apk(temp_path)
@@ -180,16 +220,16 @@ async def scan_installer(
             risks.extend(extra_risks)
         except Exception as error:
             risks.append(f"Không thể phân tích cấu trúc {suffix[1:].upper()}: {str(error)[:180]}")
+            analysis_error = True
 
         risks = list(dict.fromkeys(risks))
-        is_safe = not risks
-        verdict = "no_high_risk_indicators" if is_safe else "risk_detected"
-        message = (
-            "Không phát hiện chỉ dấu rủi ro cao trong phạm vi quét tĩnh LAA."
-            if is_safe else "LAA phát hiện rủi ro; tệp bị từ chối."
-        )
+        safety_score, risk_level = safety_rating(risks, analysis_error)
+        is_safe = risk_level == "SAFE"
+        verdict = risk_level.lower()
+        message = f"{risk_level} · Điểm an toàn {safety_score}/100. Đây là cảnh báo tham khảo, không chặn đăng tệp."
         return {
             "status": "completed", "is_safe": is_safe, "verdict": verdict,
+            "risk_level": risk_level, "safety_score": safety_score,
             "scan_id": scan_id, "engine": "LAA Sandbox Static Analyzer 2.0",
             "sha256": server_sha256, "filename": filename, "app_name": app_name[:160],
             "app_version": app_version[:40], "package_name": package_name,
@@ -198,10 +238,14 @@ async def scan_installer(
     except HTTPException:
         raise
     except Exception as error:
-        return JSONResponse(status_code=500, content={
-            "status": "error", "is_safe": False, "scan_id": scan_id,
-            "message": f"Lỗi hệ thống LAA: {str(error)[:300]}",
-        })
+        return {
+            "status": "completed", "is_safe": False, "verdict": "error",
+            "risk_level": "ERROR", "safety_score": 0, "scan_id": scan_id,
+            "engine": "LAA Sandbox Static Analyzer 2.0", "sha256": calculate_sha256(temp_path) if temp_path and temp_path.exists() else "",
+            "filename": filename, "app_name": app_name[:160], "app_version": app_version[:40],
+            "package_name": None, "checks": [], "risks": [f"Lỗi máy quét: {str(error)[:180]}"],
+            "message": "ERROR · Điểm an toàn 0/100 vì máy quét không hoàn tất. Đây chỉ là cảnh báo, không chặn đăng tệp.",
+        }
     finally:
         await apk_file.close()
         if temp_path and temp_path.exists():
