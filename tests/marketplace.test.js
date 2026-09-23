@@ -1,5 +1,5 @@
 const test=require('node:test');const assert=require('node:assert/strict');
-const {validateProduct,nextReview,normalizeVersion,decodeInstaller}=require('../lib/marketplace');
+const {validateProduct,nextReview,normalizeVersion,decodeInstaller,scanWithLaa}=require('../lib/marketplace');
 const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
@@ -13,6 +13,13 @@ test('version names and replacement installers are validated',()=>{
  const apk=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('new apk')]);
  assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
  assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
+});
+test('LAA Sandbox rejects a risky installer before publication',async()=>{
+ const originalFetch=global.fetch,oldUrl=process.env.LAA_SANDBOX_URL,oldKey=process.env.LAA_SCAN_KEY;
+ process.env.LAA_SANDBOX_URL='https://laa.test';process.env.LAA_SCAN_KEY='secret';
+ global.fetch=async()=>({ok:true,status:200,json:async()=>({status:'completed',is_safe:false,scan_id:'LAA-RISK',sha256:'a'.repeat(64),risks:['malware marker'],message:'LAA phát hiện rủi ro; tệp bị từ chối.'})});
+ try{await assert.rejects(()=>scanWithLaa({filename:'risk.exe',bytes:Buffer.from('MZ'),sha256:'a'.repeat(64)}),error=>error.status===422&&error.scan.scan_id==='LAA-RISK');}
+ finally{global.fetch=originalFetch;if(oldUrl===undefined)delete process.env.LAA_SANDBOX_URL;else process.env.LAA_SANDBOX_URL=oldUrl;if(oldKey===undefined)delete process.env.LAA_SCAN_KEY;else process.env.LAA_SCAN_KEY=oldKey;}
 });
 test('guest catalog is read-only and requires login after 30 seconds',()=>{
  const html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
@@ -33,9 +40,9 @@ test('verified identity alone does not grant moderation; role and key are both r
  try{assert.equal((await request('test-secret')).status,403);role='ADMIN';assert.equal((await request('wrong')).status,403);assert.equal((await request('test-secret')).status,200);}finally{server.close();global.fetch=savedFetch;if(oldKey===undefined)delete process.env.PRODUCT_REVIEW_KEY;else process.env.PRODUCT_REVIEW_KEY=oldKey;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
 });
 test('upload stores exact binary and computes its actual SHA-256',async()=>{
- const express=require('express'),crypto=require('crypto');const savedFetch=global.fetch;const oldFirebase=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test-project';let saved;
+ const express=require('express'),crypto=require('crypto');const savedFetch=global.fetch;const oldFirebase=process.env.FIREBASE_WEB_API_KEY,oldLaaUrl=process.env.LAA_SANDBOX_URL,oldLaaKey=process.env.LAA_SCAN_KEY;process.env.FIREBASE_WEB_API_KEY='test-project';process.env.LAA_SANDBOX_URL='https://laa.test';process.env.LAA_SCAN_KEY='test-key';let saved;
  const pool={query:async(sql,params)=>{if(sql.startsWith('INSERT INTO lyrad_market_files'))saved=params;return {rows:sql.startsWith('SELECT coalesce')?[{n:0}]:[]};}};
- global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'uid',email:'verified@example.com',emailVerified:true}]})}):savedFetch(url,opts);
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'uid',email:'verified@example.com',emailVerified:true}]})}):String(url)==='https://laa.test/v1/sandbox/scan'?Promise.resolve({ok:true,status:200,json:async()=>({status:'completed',is_safe:true,scan_id:'LAA-TEST',engine:'LAA Test',sha256:opts.body.get('local_sha256'),checks:['hash'],risks:[],message:'passed'})}):savedFetch(url,opts);
  const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
  try{
   const send=(filename,platform,bytes)=>savedFetch(`http://localhost:${server.address().port}/api/market/files`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({filename,platform,base64:bytes.toString('base64')})});
@@ -48,10 +55,10 @@ test('upload stores exact binary and computes its actual SHA-256',async()=>{
    }
    for(const [filename,header] of [['fake.7z','504b0304'],['fake.rar','526172211a07'],['bad.zip.exe','504b0304'],['bad.txt','504b0304'],platform==='windows'?['bad.apk','504b0304']:['bad.exe','4d5a']])assert.equal((await send(filename,platform,Buffer.from(header,'hex'))).status,400);
   }
- }finally{server.close();global.fetch=savedFetch;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;}
+ }finally{server.close();global.fetch=savedFetch;if(oldFirebase===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldFirebase;if(oldLaaUrl===undefined)delete process.env.LAA_SANDBOX_URL;else process.env.LAA_SANDBOX_URL=oldLaaUrl;if(oldLaaKey===undefined)delete process.env.LAA_SCAN_KEY;else process.env.LAA_SCAN_KEY=oldLaaKey;}
 });
 test('version update replaces only the installer and preserves product identity and metrics',async()=>{
- const express=require('express');const originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test';
+ const express=require('express');const originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY,oldLaaUrl=process.env.LAA_SANDBOX_URL,oldLaaKey=process.env.LAA_SCAN_KEY;process.env.FIREBASE_WEB_API_KEY='test';process.env.LAA_SANDBOX_URL='https://laa.test';process.env.LAA_SCAN_KEY='test-key';
  const product={id:'00000000-0000-0000-0000-000000000001',owner_id:'original-owner',kind:'catalog',status:'approved',platform:'android',file_id:'00000000-0000-0000-0000-000000000002',version:'1.0.0',download_count:77,name:'Stable App'};
  let insertedFile,historyNote,deletedOld=false;
  const client={query:async(sql,args)=>{
@@ -65,14 +72,14 @@ test('version update replaces only the installer and preserves product identity 
   throw new Error('Unexpected SQL: '+sql);
  },release(){}};
  const pool={query:async(sql)=>{if(sql.startsWith('SELECT db_data'))return {rows:[]};if(sql.startsWith('SELECT role'))return {rows:[{role:'ADMIN'}]};return {rows:[]};},connect:async()=>client};
- global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):originalFetch(url,opts);
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):String(url)==='https://laa.test/v1/sandbox/scan'?Promise.resolve({ok:true,status:200,json:async()=>({status:'completed',is_safe:true,scan_id:'LAA-TEST',engine:'LAA Test',sha256:opts.body.get('local_sha256'),checks:['hash'],risks:[],message:'passed'})}):originalFetch(url,opts);
  const app=express();app.use(express.json({limit:'50mb'}));app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
  const bytes=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('version two')]);
  try{
   const response=await originalFetch(`http://localhost:${server.address().port}/api/market/products/${product.id}/version`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({version:'2.0.0',filename:'stable-v2.apk',base64:bytes.toString('base64')})});
   assert.equal(response.status,200);const body=await response.json();assert.equal(body.id,product.id);assert.equal(body.version,'2.0.0');
   assert.equal(product.download_count,77);assert.equal(product.name,'Stable App');assert.equal(insertedFile[2],'stable-v2.apk');assert.match(historyNote,/1\.0\.0 → 2\.0\.0/);assert.equal(deletedOld,true);
- }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
+ }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;if(oldLaaUrl===undefined)delete process.env.LAA_SANDBOX_URL;else process.env.LAA_SANDBOX_URL=oldLaaUrl;if(oldLaaKey===undefined)delete process.env.LAA_SCAN_KEY;else process.env.LAA_SCAN_KEY=oldLaaKey;}
 });
 test('only the designated NPH can grant and revoke Admin; owner role is immutable', async () => {
  const express = require('express');
