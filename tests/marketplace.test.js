@@ -3,7 +3,7 @@ const {validateProduct,nextReview,normalizeVersion,normalizeIconData,decodeInsta
 const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('upload limits allow 80 MB files, 128 MB for users and 1 GB for Admin/NPH',()=>{assert.equal(MAX_FILE,80*1024*1024);assert.equal(MAX_USER_STORAGE,128*1024*1024);assert.equal(MAX_ACCOUNT_STORAGE,1024*1024*1024);});
-test('version update UI includes progress and LAA terminal states',()=>{const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8');for(const text of ['version-upload-progress','version-upload-progress-bar','version-laa-terminal','LAA SANDBOX TERMINAL · UPDATE VERSION','beginVersionLaaTerminal(file,version)','Cập nhật hoàn tất'])assert.match(source,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));});
+test('version update UI includes progress and its own non-LAA terminal',()=>{const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8');for(const text of ['version-upload-progress','version-upload-progress-bar','version-update-terminal','UPDATE VERSION TERMINAL','beginVersionTerminal(file,version)','Cập nhật hoàn tất'])assert.match(source,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));assert.doesNotMatch(source,/LAA SANDBOX TERMINAL · UPDATE VERSION/);});
 test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
 test('sale requires price, payment and contact',()=>{for(const change of [{price:-1},{price:'abc'},{payment_method:''},{contact:''},{name:''},{name:'x'.repeat(161)}])assert.throws(()=>validateProduct({...valid,...change}));});
 test('pending can be approved, rejected or returned once',()=>{for(const status of ['approved','rejected','returned'])assert.doesNotThrow(()=>nextReview({status:'pending',return_count:0},status));});
@@ -89,7 +89,7 @@ test('upload stores exact binary and computes its actual SHA-256',async()=>{
 test('version update replaces only the installer and preserves product identity and metrics',async()=>{
  const express=require('express');const originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY,oldLaaUrl=process.env.LAA_SANDBOX_URL,oldLaaKey=process.env.LAA_SCAN_KEY;process.env.FIREBASE_WEB_API_KEY='test';process.env.LAA_SANDBOX_URL='https://laa.test';process.env.LAA_SCAN_KEY='test-key';
  const product={id:'00000000-0000-0000-0000-000000000001',owner_id:'original-owner',kind:'catalog',status:'approved',platform:'android',file_id:'00000000-0000-0000-0000-000000000002',version:'1.0.0',download_count:77,name:'Stable App'};
- let insertedFile,historyNote,deletedOld=false;
+ let insertedFile,historyNote,deletedOld=false,laaCalls=0;
  const client={query:async(sql,args)=>{
   if(sql==='BEGIN'||sql==='COMMIT'||sql==='ROLLBACK')return {rows:[]};
   if(sql.startsWith('SELECT * FROM lyrad_products'))return {rows:[{...product}]};
@@ -101,13 +101,13 @@ test('version update replaces only the installer and preserves product identity 
   throw new Error('Unexpected SQL: '+sql);
  },release(){}};
  const pool={query:async(sql)=>{if(sql.startsWith('SELECT db_data'))return {rows:[]};if(sql.startsWith('SELECT role'))return {rows:[{role:'ADMIN'}]};return {rows:[]};},connect:async()=>client};
- global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):String(url)==='https://laa.test/v1/sandbox/scan'?Promise.resolve({ok:true,status:200,json:async()=>({status:'completed',is_safe:true,scan_id:'LAA-TEST',engine:'LAA Test',sha256:opts.body.get('local_sha256'),checks:['hash'],risks:[],message:'passed'})}):originalFetch(url,opts);
+ global.fetch=(url,opts)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):String(url)==='https://laa.test/v1/sandbox/scan'?(laaCalls++,Promise.resolve({ok:true,status:200,json:async()=>({})})):originalFetch(url,opts);
  const app=express();app.use(express.json({limit:'50mb'}));app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(r=>server.once('listening',r));
  const bytes=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('version two')]);
  try{
   const response=await originalFetch(`http://localhost:${server.address().port}/api/market/products/${product.id}/version`,{method:'POST',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({version:'2.0.0',filename:'stable-v2.apk',base64:bytes.toString('base64')})});
   assert.equal(response.status,200);const body=await response.json();assert.equal(body.id,product.id);assert.equal(body.version,'2.0.0');
-  assert.equal(product.download_count,77);assert.equal(product.name,'Stable App');assert.equal(insertedFile[2],'stable-v2.apk');assert.match(historyNote,/1\.0\.0 → 2\.0\.0/);assert.equal(deletedOld,true);
+  assert.equal(product.download_count,77);assert.equal(product.name,'Stable App');assert.equal(insertedFile[2],'stable-v2.apk');assert.match(historyNote,/1\.0\.0 → 2\.0\.0/);assert.equal(deletedOld,true);assert.equal(laaCalls,0,'Update Version must not call LAA Sandbox');
  }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;if(oldLaaUrl===undefined)delete process.env.LAA_SANDBOX_URL;else process.env.LAA_SANDBOX_URL=oldLaaUrl;if(oldLaaKey===undefined)delete process.env.LAA_SCAN_KEY;else process.env.LAA_SCAN_KEY=oldLaaKey;}
 });
 test('only the designated NPH can grant and revoke Admin; owner role is immutable', async () => {

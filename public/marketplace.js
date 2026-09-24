@@ -157,32 +157,30 @@ const market = (() => {
     button.closest('.admin-btn-group').insertAdjacentHTML('afterend','<div id="version-upload-progress" role="status" aria-live="polite" style="display:none;margin-top:12px"><div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;color:#ddd;font-size:12px"><span id="version-upload-progress-label">Đang tải phiên bản mới lên máy chủ…</span><strong id="version-upload-progress-value" style="color:#0a84ff">0%</strong></div><div style="height:10px;overflow:hidden;border-radius:999px;background:#242426;border:1px solid #3a3a3c"><div id="version-upload-progress-bar" style="width:0%;height:100%;border-radius:inherit;background:#0a84ff;box-shadow:0 0 10px rgba(10,132,255,.65);transition:width .18s ease"></div></div></div>');
     return document.getElementById('version-upload-progress');
   }
-  function ensureVersionLaaTerminal(){
-    let box=document.getElementById('version-laa-terminal');if(box)return box;
+  function ensureVersionTerminal(){
+    let box=document.getElementById('version-update-terminal');if(box)return box;
     const progress=ensureVersionProgress();if(!progress)return null;
-    progress.insertAdjacentHTML('afterend','<section id="version-laa-terminal" aria-live="polite" style="display:none;margin-top:14px;border:1px solid #0a84ff;border-radius:9px;background:#070a0f;overflow:hidden"><header style="display:flex;justify-content:space-between;gap:12px;padding:9px 12px;background:#0d1520;color:#64b5ff;font:700 12px monospace"><span>🛡️ LAA SANDBOX TERMINAL · UPDATE VERSION</span><span id="version-laa-terminal-state">SCANNING</span></header><div id="version-laa-terminal-lines" style="height:180px;overflow:auto;padding:11px 12px;color:#b9dcff;font:12px/1.55 Consolas,monospace;white-space:pre-wrap"></div></section>');
-    return document.getElementById('version-laa-terminal');
+    progress.insertAdjacentHTML('afterend','<section id="version-update-terminal" aria-live="polite" style="display:none;margin-top:14px;border:1px solid #0a84ff;border-radius:9px;background:#070a0f;overflow:hidden"><header style="display:flex;justify-content:space-between;gap:12px;padding:9px 12px;background:#0d1520;color:#64b5ff;font:700 12px monospace"><span>⚙️ UPDATE VERSION TERMINAL</span><span id="version-update-terminal-state">PROCESSING</span></header><div id="version-update-terminal-lines" style="height:180px;overflow:auto;padding:11px 12px;color:#b9dcff;font:12px/1.55 Consolas,monospace;white-space:pre-wrap"></div></section>');
+    return document.getElementById('version-update-terminal');
   }
-  function versionLaaLog(text,type='info'){
-    const box=ensureVersionLaaTerminal(),lines=document.getElementById('version-laa-terminal-lines');if(!box||!lines)return;
+  function versionLog(text,type='info'){
+    const box=ensureVersionTerminal(),lines=document.getElementById('version-update-terminal-lines');if(!box||!lines)return;
     box.style.display='block';const line=document.createElement('div');line.textContent='['+new Date().toLocaleTimeString('vi-VN')+'] '+text;line.style.color=type==='error'?'#ff6961':type==='success'?'#34c759':type==='warn'?'#ffd60a':'#b9dcff';lines.append(line);lines.scrollTop=lines.scrollHeight;
   }
-  function resetVersionLaaTerminal(){const box=ensureVersionLaaTerminal(),lines=document.getElementById('version-laa-terminal-lines'),state=document.getElementById('version-laa-terminal-state');if(box){box.style.display='none';box.dataset.active='';}if(lines)lines.replaceChildren();if(state){state.textContent='SCANNING';state.style.color='#64b5ff';}}
-  function beginVersionLaaTerminal(file,version){const box=ensureVersionLaaTerminal();if(!box||box.dataset.active==='true')return;box.dataset.active='true';versionLaaLog('UPLOAD 100% · Đã nhận '+file.name,'success');versionLaaLog('Chuẩn bị thay thế bằng phiên bản v'+version+'…');versionLaaLog('Đối chiếu SHA-256 của tệp gốc…');versionLaaLog('Đang gửi mẫu sang máy quét LAA Sandbox…');versionLaaLog('Phân tích nhanh cấu trúc, quyền truy cập và chỉ dấu nhị phân…','warn');}
-  function finishVersionLaaTerminal(scan,failed=false){
-    const state=document.getElementById('version-laa-terminal-state');
-    if(scan?.checks)scan.checks.forEach(check=>versionLaaLog('CHECK · '+check,'success'));
-    if(scan?.risks?.length)scan.risks.forEach(risk=>versionLaaLog('RISK · '+risk,'error'));
-    if(scan?.scan_id)versionLaaLog('SCAN ID · '+scan.scan_id);
-    const level=failed?'ERROR':(['SAFE','WARNING','ERROR','DANGEROUS'].includes(scan?.risk_level)?scan.risk_level:'ERROR');
-    const colors={SAFE:'#34c759',WARNING:'#ffd60a',ERROR:'#ff9f0a',DANGEROUS:'#ff453a'},logType=level==='SAFE'?'success':level==='WARNING'?'warn':'error';
-    versionLaaLog((scan?.message||'Không nhận được kết quả quét.')+' · Chỉ cảnh báo, không chặn cập nhật.',logType);
-    if(state){state.textContent=level+' · '+(Number.isFinite(Number(scan?.safety_score))?Math.round(Number(scan.safety_score)):0)+'/100';state.style.color=colors[level];}
+  function resetVersionTerminal(){const box=ensureVersionTerminal(),lines=document.getElementById('version-update-terminal-lines'),state=document.getElementById('version-update-terminal-state');if(box){box.style.display='none';box.dataset.active='';}if(lines)lines.replaceChildren();if(state){state.textContent='PROCESSING';state.style.color='#64b5ff';}}
+  function beginVersionTerminal(file,version){const box=ensureVersionTerminal();if(!box||box.dataset.active==='true')return;box.dataset.active='true';versionLog('UPLOAD 100% · Đã nhận '+file.name,'success');versionLog('Chuẩn bị thay thế bằng phiên bản v'+version+'…');versionLog('Kiểm tra định dạng và chữ ký tệp…');versionLog('Tính SHA-256 từ nội dung tệp gốc…');versionLog('Máy chủ đang lưu bản mới và giữ nguyên dữ liệu ứng dụng…','warn');}
+  function finishVersionTerminal(result,failed=false){
+    const state=document.getElementById('version-update-terminal-state');
+    if(failed){versionLog(result?.message||'Máy chủ không thể cập nhật phiên bản.','error');if(state){state.textContent='ERROR';state.style.color='#ff453a';}return;}
+    versionLog('SHA-256 · '+result.sha256,'success');
+    versionLog('Đã lưu '+result.filename+' · '+(Number(result.file_size)/1048576).toFixed(1)+' MB','success');
+    versionLog('Phiên bản v'+result.version+' đã thay thế bản cũ. App ID và dữ liệu được giữ nguyên.','success');
+    if(state){state.textContent='COMPLETED';state.style.color='#34c759';}
   }
   function versionProgress(percent,status='Đang tải phiên bản mới lên máy chủ…',state='uploading'){
     const box=ensureVersionProgress(),bar=document.getElementById('version-upload-progress-bar'),value=document.getElementById('version-upload-progress-value'),label=document.getElementById('version-upload-progress-label'),btn=document.getElementById('btn-version-update');if(!box||!bar||!value||!label)return;
     const safe=Math.max(0,Math.min(100,Number(percent)||0));box.style.display='block';bar.style.width=safe+'%';bar.style.background=state==='error'?'#ff453a':state==='success'?'#34c759':'#0a84ff';bar.style.boxShadow=state==='error'?'0 0 10px rgba(255,69,58,.65)':state==='success'?'0 0 10px rgba(52,199,89,.65)':'0 0 10px rgba(10,132,255,.65)';value.style.color=state==='error'?'#ff453a':state==='success'?'#34c759':'#64b5ff';value.textContent=Math.round(safe)+'%';label.textContent=status;
-    if(btn&&state==='uploading')btn.textContent=safe<100?'ĐANG TẢI PHIÊN BẢN... '+Math.round(safe)+'%':'ĐANG QUÉT & LƯU PHIÊN BẢN...';
+    if(btn&&state==='uploading')btn.textContent=safe<100?'ĐANG TẢI PHIÊN BẢN... '+Math.round(safe)+'%':'ĐANG XÁC MINH & LƯU PHIÊN BẢN...';
   }
   async function updateVersion(){
     const id=document.getElementById('version-product-select').value, product=publicProducts.find(item=>item.id===id);
@@ -195,14 +193,14 @@ const market = (() => {
     const installer=product.platform==='windows'?'.exe':'.apk';
     if(![installer,'.zip','.rar','.7z'].some(ext=>file.name.toLowerCase().endsWith(ext)))return message('version-manager-message',`Sản phẩm này chỉ nhận ${installer}, ZIP, RAR hoặc 7Z.`);
     if(!confirm(`Cập nhật ${product.name} từ v${product.version||'1.0.0'} lên v${version}? App ID và dữ liệu hiện tại sẽ được giữ nguyên.`))return;
-    const defaultText=btn.textContent;let uploadedPercent=0;btn.disabled=true;btn.setAttribute('aria-busy','true');message('version-manager-message','Đang tải lên và thay thế phiên bản...');versionProgress(0);resetVersionLaaTerminal();
+    const defaultText=btn.textContent;let uploadedPercent=0;btn.disabled=true;btn.setAttribute('aria-busy','true');message('version-manager-message','Đang tải lên và thay thế phiên bản...');versionProgress(0);resetVersionTerminal();
     try{
-      const result=await uploadBinary('/products/'+encodeURIComponent(id)+'/version',file,product.platform,version,percent=>{uploadedPercent=percent;versionProgress(percent,percent<100?'Đang tải phiên bản mới lên máy chủ…':'Upload 100% · LAA Sandbox đang chấm điểm…');if(percent===100)beginVersionLaaTerminal(file,version);});
-      finishVersionLaaTerminal(result.scan);
+      const result=await uploadBinary('/products/'+encodeURIComponent(id)+'/version',file,product.platform,version,percent=>{uploadedPercent=percent;versionProgress(percent,percent<100?'Đang tải phiên bản mới lên máy chủ…':'Upload 100% · Máy chủ đang xác minh và lưu phiên bản…');if(percent===100)beginVersionTerminal(file,version);});
+      finishVersionTerminal(result);
       await refreshCatalog();await loadVersionManager(result.id);
       versionProgress(100,'Cập nhật hoàn tất · Phiên bản mới đã thay thế bản cũ.','success');
-      message('version-manager-message',`Đã cập nhật ${product.name} lên v${result.version}. App ID và dữ liệu cũ được giữ nguyên. LAA: ${result.scan?.risk_level||'ERROR'} · ${Number(result.scan?.safety_score)||0}/100 (chỉ cảnh báo).`);
-    }catch(error){if(document.getElementById('version-laa-terminal')?.style.display!=='none')finishVersionLaaTerminal(error.details?.scan||{message:error.message,risk_level:'ERROR',safety_score:0},true);versionProgress(uploadedPercent,'Cập nhật thất bại: '+error.message,'error');message('version-manager-message',error.message);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=defaultText;}
+      message('version-manager-message',`Đã cập nhật ${product.name} lên v${result.version}. App ID và dữ liệu cũ được giữ nguyên.`);
+    }catch(error){if(document.getElementById('version-update-terminal')?.style.display!=='none')finishVersionTerminal({message:error.message},true);versionProgress(uploadedPercent,'Cập nhật thất bại: '+error.message,'error');message('version-manager-message',error.message);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=defaultText;}
   }
   async function updateIcon(){
     const id=document.getElementById('version-product-select').value,product=publicProducts.find(item=>item.id===id),file=document.getElementById('version-new-icon').files[0],btn=document.getElementById('btn-icon-update');
