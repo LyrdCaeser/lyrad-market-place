@@ -1089,6 +1089,13 @@
         let currentUser = null;
         let isAnonymous = false; // Phân định người dùng ảo tránh phá hoại
         let anonTimeout = null;
+        let userPresence = {};
+        let presenceHeartbeat = null;
+        let presenceToken = '';
+        let adminPresenceRefresh = null;
+        const PRESENCE_SESSION_ID = sessionStorage.getItem('lyrad_presence_session') ||
+            (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
+        sessionStorage.setItem('lyrad_presence_session', PRESENCE_SESSION_ID);
         const maxGlobalLevel = 1000;
 
         // CẤU HÌNH FIREBASE
@@ -1185,6 +1192,7 @@
             const logoutBtn = document.getElementById('profile-logout-btn');
             if (logoutBtn) logoutBtn.disabled = true;
             try {
+                await stopUserPresence(true);
                 await firebase.auth().signOut();
                 localStorage.removeItem(DB_KEY_SESSION);
                 if (anonTimeout) clearTimeout(anonTimeout);
@@ -2435,7 +2443,11 @@
                 renderAdminUserList();
             } catch (error) { alert(error.message); }
         }
-        function closeAdminPanel() { document.getElementById('adminPanelModal').style.display = 'none'; }
+        function closeAdminPanel() {
+            document.getElementById('adminPanelModal').style.display = 'none';
+            if (adminPresenceRefresh) clearInterval(adminPresenceRefresh);
+            adminPresenceRefresh = null;
+        }
         
         function switchAdminTab(tabId, el) {
             document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2445,8 +2457,15 @@
             document.getElementById('tab-publisher').style.display = 'none';
             document.getElementById('tab-roles').style.display = 'none'; 
             
+            if (adminPresenceRefresh) clearInterval(adminPresenceRefresh);
+            adminPresenceRefresh = null;
             if(tabId === 'tab-laa') { document.getElementById('tab-laa').style.display = 'grid'; } 
-            else if (tabId === 'tab-users') { document.getElementById('tab-users').style.display = 'block'; renderAdminUserList(); } 
+            else if (tabId === 'tab-users') {
+                document.getElementById('tab-users').style.display = 'block';
+                renderAdminUserList();
+                refreshAdminPresence();
+                adminPresenceRefresh = setInterval(refreshAdminPresence, 10000);
+            }
             else if (tabId === 'tab-publisher') { document.getElementById('tab-publisher').style.display = 'grid'; market.loadVersionManager(); }
             else if (tabId === 'tab-roles') { document.getElementById('tab-roles').style.display = 'grid'; }
         }
@@ -2456,19 +2475,73 @@
             let tbody = document.getElementById('admin-user-tbody');
             let html = '';
             users.forEach(u => {
-                let color = '#34c759'; if(u.status.includes('Mute')) color = '#ffcc00'; if(u.status.includes('Khóa')) color = '#ff3b30';
+                const systemStatus = String(u.status || '');
+                const hasPenalty = systemStatus.includes('Mute') || systemStatus.includes('Khóa') || systemStatus.includes('Cấm');
+                const online = Boolean(userPresence[u.uid]?.online);
+                const visibleStatus = hasPenalty ? systemStatus : (online ? 'Hoạt Động' : 'OFFLINE');
+                let color = online ? '#34c759' : '#8e8e93';
+                if(systemStatus.includes('Mute')) color = '#ffcc00';
+                if(systemStatus.includes('Khóa') || systemStatus.includes('Cấm')) color = '#ff3b30';
                 let isMe = u.uid === currentUser.uid;
                 html += `<tr style="${isMe ? 'background:rgba(0,122,255,0.1)' : ''}">
                     <td>${u.uid} ${isMe ? '(Bạn)' : ''}</td>
                     <td>${u.name}</td>
                     <td><span style="color:#0a84ff; font-weight:bold;">${u.role || 'USER'}</span><br><span style="font-size:11px; color:#aaa;">${u.title || 'Tân Thủ'}</span></td>
                     <td>LV.${u.level}<br><span style="font-size:11px; color:#aaa;">${(u.currentExp || 0).toLocaleString()} EXP</span></td>
-                    <td><span style="color:${color}; font-weight:bold;">${u.status}</span></td>
+                    <td><span style="color:${color}; font-weight:bold;">${visibleStatus}</span></td>
                 </tr>`;
             });
             tbody.innerHTML = html;
             renderAdminAnonymousList();
         }
+
+        async function refreshAdminPresence() {
+            const user = firebase.auth().currentUser;
+            if (!user || document.getElementById('adminPanelModal').style.display === 'none') return;
+            try {
+                const token = await user.getIdToken();
+                const response = await fetch('/api/market/presence', {cache:'no-store', headers:{Authorization:'Bearer '+token}});
+                if (!response.ok) return;
+                userPresence = await response.json();
+                renderAdminUserList();
+            } catch (error) { console.error('Không thể cập nhật trạng thái hoạt động:', error); }
+        }
+
+        async function sendUserPresence(online, keepalive=false) {
+            const user = firebase.auth().currentUser;
+            if (!user && !presenceToken) return;
+            try {
+                const token = online && user ? await user.getIdToken() : (presenceToken || await user.getIdToken());
+                presenceToken = token;
+                await fetch('/api/market/presence', {
+                    method: online ? 'POST' : 'DELETE',
+                    keepalive,
+                    headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+                    body:JSON.stringify({session_id:PRESENCE_SESSION_ID})
+                });
+            } catch (error) { if (!keepalive) console.error('Không thể gửi trạng thái hoạt động:', error); }
+        }
+
+        async function startUserPresence(user) {
+            if (!user || user.isAnonymous) return;
+            if (presenceHeartbeat) clearInterval(presenceHeartbeat);
+            presenceToken = await user.getIdToken().catch(()=> '');
+            await sendUserPresence(true);
+            presenceHeartbeat = setInterval(() => sendUserPresence(true), 15000);
+        }
+
+        async function stopUserPresence(notifyServer=false) {
+            if (presenceHeartbeat) clearInterval(presenceHeartbeat);
+            presenceHeartbeat = null;
+            if (notifyServer) await sendUserPresence(false, true);
+            presenceToken = '';
+        }
+
+        window.addEventListener('pagehide', () => { sendUserPresence(false, true); });
+        firebase.auth().onAuthStateChanged(user => {
+            if (user && !user.isAnonymous) startUserPresence(user);
+            else stopUserPresence(false);
+        });
 
         function switchAdminUserView(view) {
             const showAnonymous = view === 'anonymous';

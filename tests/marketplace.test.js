@@ -67,6 +67,47 @@ test('anonymous guests are persisted and remain visible after their 30-second lo
  assert.match(html,/localStorage\.setItem\(ANONYMOUS_SESSION_KEY/);
  assert.match(html,/saveNeonDB\(DB_KEY_ANONYMOUS, guests\)/);
 });
+test('member status uses authenticated presence instead of a permanently active label',()=>{
+ const html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
+ for(const text of ['PRESENCE_SESSION_ID','presenceHeartbeat','pagehide','refreshAdminPresence','OFFLINE']) assert.match(html,new RegExp(text));
+ assert.match(html,/setInterval\(\(\) => sendUserPresence\(true\), 15000\)/);
+ const server=fs.readFileSync(require.resolve('../lib/marketplace'),'utf8');
+ assert.match(server,/Date\.now\(\)-40000/);
+ assert.match(server,/router\.post\('\/presence'/);
+ assert.match(server,/router\.delete\('\/presence'/);
+ assert.match(server,/router\.get\('\/presence'/);
+});
+test('presence API tracks each signed-in browser tab and reports offline after the last tab leaves',async()=>{
+ const express=require('express'), originalFetch=global.fetch, oldKey=process.env.FIREBASE_WEB_API_KEY;
+ process.env.FIREBASE_WEB_API_KEY='test';let stored={};
+ const profiles=[{uid:'LYR-ONLINE',email:'admin@example.com',name:'Admin'}];
+ const client={query:async(sql,args)=>{
+  if(sql==='BEGIN'||sql==='COMMIT'||sql==='ROLLBACK')return {rows:[]};
+  if(sql.includes("'{}'::jsonb"))return {rows:[]};
+  if(sql.includes("db_key='lyrad_user_presence'"))return {rows:Object.keys(stored).length?[{db_data:stored}]:[]};
+  if(sql.startsWith('INSERT INTO lyrad_db_storage')){stored=JSON.parse(args[0]);return {rows:[]};}
+  throw new Error('Unexpected transaction SQL: '+sql);
+ },release(){}};
+ const pool={query:async(sql)=>{
+  if(sql.includes("db_key='lyrad_real_users'"))return {rows:[{db_data:profiles}]};
+  if(sql.startsWith('SELECT role'))return {rows:[{role:'ADMIN'}]};
+  if(sql.includes("db_key='lyrad_user_presence'"))return {rows:Object.keys(stored).length?[{db_data:stored}]:[]};
+  if(sql.startsWith('UPDATE lyrad_products'))return {rows:[]};
+  throw new Error('Unexpected pool SQL: '+sql);
+ },connect:async()=>client};
+ global.fetch=(url)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):originalFetch(url);
+ const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(resolve=>server.once('listening',resolve));
+ const url=`http://localhost:${server.address().port}/api/market/presence`, headers={Authorization:'Bearer verified','Content-Type':'application/json'}, options=sessionId=>({headers,body:JSON.stringify({session_id:sessionId})});
+ try{
+  assert.equal((await originalFetch(url,{...options('tab-session-001'),method:'POST'})).status,200);
+  assert.equal((await originalFetch(url,{...options('tab-session-002'),method:'POST'})).status,200);
+  let state=await (await originalFetch(url,{headers:{Authorization:'Bearer verified'}})).json();assert.equal(state['LYR-ONLINE'].online,true);
+  assert.equal((await originalFetch(url,{...options('tab-session-001'),method:'DELETE'})).status,200);
+  state=await (await originalFetch(url,{headers:{Authorization:'Bearer verified'}})).json();assert.equal(state['LYR-ONLINE'].online,true);
+  assert.equal((await originalFetch(url,{...options('tab-session-002'),method:'DELETE'})).status,200);
+  state=await (await originalFetch(url,{headers:{Authorization:'Bearer verified'}})).json();assert.equal(state['LYR-ONLINE'].online,false);
+ }finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
+});
 test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['POST','products/00000000-0000-0000-0000-000000000000/version'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
 test('verified identity alone does not grant moderation; role and key are both required',async()=>{
  const express=require('express');const savedFetch=global.fetch;const oldKey=process.env.PRODUCT_REVIEW_KEY,oldFirebase=process.env.FIREBASE_WEB_API_KEY;process.env.PRODUCT_REVIEW_KEY='test-secret';process.env.FIREBASE_WEB_API_KEY='test-project';
