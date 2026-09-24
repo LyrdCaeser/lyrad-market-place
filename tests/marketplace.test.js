@@ -1,7 +1,9 @@
 const test=require('node:test');const assert=require('node:assert/strict');
-const {validateProduct,nextReview,normalizeVersion,normalizeIconData,decodeInstaller,scanWithLaa}=require('../lib/marketplace');
+const {validateProduct,nextReview,normalizeVersion,normalizeIconData,decodeInstaller,scanWithLaa,MAX_FILE,MAX_USER_STORAGE,MAX_ACCOUNT_STORAGE}=require('../lib/marketplace');
 const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
+test('upload limits allow 80 MB files, 128 MB for users and 1 GB for Admin/NPH',()=>{assert.equal(MAX_FILE,80*1024*1024);assert.equal(MAX_USER_STORAGE,128*1024*1024);assert.equal(MAX_ACCOUNT_STORAGE,1024*1024*1024);});
+test('version update UI includes progress and LAA terminal states',()=>{const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8');for(const text of ['version-upload-progress','version-upload-progress-bar','version-laa-terminal','LAA SANDBOX TERMINAL · UPDATE VERSION','beginVersionLaaTerminal(file,version)','Cập nhật hoàn tất'])assert.match(source,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));});
 test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
 test('sale requires price, payment and contact',()=>{for(const change of [{price:-1},{price:'abc'},{payment_method:''},{contact:''},{name:''},{name:'x'.repeat(161)}])assert.throws(()=>validateProduct({...valid,...change}));});
 test('pending can be approved, rejected or returned once',()=>{for(const status of ['approved','rejected','returned'])assert.doesNotThrow(()=>nextReview({status:'pending',return_count:0},status));});
