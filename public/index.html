@@ -953,18 +953,38 @@
 
             <!-- TAB QUẢN LÝ NGƯỜI DÙNG -->
             <div id="tab-users" class="admin-table-wrapper" style="display: none;">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>User ID (UID)</th>
-                            <th>Tên Hiển Thị</th>
-                            <th>Role / Danh Hiệu</th>
-                            <th>Level / EXP</th>
-                            <th>Trạng Thái Hệ Thống</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-user-tbody"></tbody>
-                </table>
+                <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+                    <button id="admin-users-registered-btn" class="admin-btn" style="width:auto; background:#0a84ff; color:#fff;" onclick="switchAdminUserView('registered')">👤 Tài khoản thành viên</button>
+                    <button id="admin-users-anonymous-btn" class="admin-btn" style="width:auto; background:#2c2c2e; color:#ffd60a; border:1px solid #555;" onclick="switchAdminUserView('anonymous')">🕶️ Khách vô danh (<span id="admin-anonymous-count">0</span>)</button>
+                </div>
+                <div id="admin-users-registered">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User ID (UID)</th>
+                                <th>Tên Hiển Thị</th>
+                                <th>Role / Danh Hiệu</th>
+                                <th>Level / EXP</th>
+                                <th>Trạng Thái Hệ Thống</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-user-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="admin-users-anonymous" style="display:none;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Guest ID</th>
+                                <th>Thời điểm truy cập</th>
+                                <th>Lần hoạt động cuối</th>
+                                <th>Thời điểm khóa</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-anonymous-tbody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- TAB ĐĂNG TẢI APK CHO NPH -->
@@ -1053,6 +1073,8 @@
         const DB_KEY_STORIES = 'lyrad_real_stories'; 
         const DB_KEY_TICKETS = 'lyrad_real_tickets';
         const DB_KEY_MAILBOX = 'lyrad_real_mailbox';
+        const DB_KEY_ANONYMOUS = 'lyrad_anonymous_guests';
+        const ANONYMOUS_SESSION_KEY = 'lyrad_anonymous_session';
 
         // BIẾN BỘ NHỚ TOÀN CỤC CHỨA DỮ LIỆU ĐỒNG BỘ TỪ NEON DB
         let globalDB = {
@@ -1061,7 +1083,8 @@
             [DB_KEY_APPS]: [],
             [DB_KEY_STORIES]: [],
             [DB_KEY_TICKETS]: [],
-            [DB_KEY_MAILBOX]: []
+            [DB_KEY_MAILBOX]: [],
+            [DB_KEY_ANONYMOUS]: []
         };
         let currentUser = null;
         let isAnonymous = false; // Phân định người dùng ảo tránh phá hoại
@@ -1165,17 +1188,8 @@
                 await firebase.auth().signOut();
                 localStorage.removeItem(DB_KEY_SESSION);
                 if (anonTimeout) clearTimeout(anonTimeout);
-
-                isAnonymous = true;
-                currentUser = {
-                    uid: 'ANON-' + Math.floor(100000 + Math.random() * 900000),
-                    name: 'Người Dùng Ẩn Danh',
-                    level: 1, currentExp: 0,
-                    status: 'Ẩn Danh',
-                    avatar: 'https://ui-avatars.com/api/?name=Anon&background=86868b',
-                    role: 'GUEST',
-                    title: 'Khách Tham Quan'
-                };
+                localStorage.removeItem(ANONYMOUS_SESSION_KEY);
+                startAnonymousSession();
 
                 updateExpUI();
                 renderPosts();
@@ -2453,6 +2467,109 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
+            renderAdminAnonymousList();
+        }
+
+        function switchAdminUserView(view) {
+            const showAnonymous = view === 'anonymous';
+            document.getElementById('admin-users-registered').style.display = showAnonymous ? 'none' : 'block';
+            document.getElementById('admin-users-anonymous').style.display = showAnonymous ? 'block' : 'none';
+            const registeredBtn = document.getElementById('admin-users-registered-btn');
+            const anonymousBtn = document.getElementById('admin-users-anonymous-btn');
+            registeredBtn.style.background = showAnonymous ? '#2c2c2e' : '#0a84ff';
+            registeredBtn.style.color = showAnonymous ? '#ddd' : '#fff';
+            anonymousBtn.style.background = showAnonymous ? '#ffd60a' : '#2c2c2e';
+            anonymousBtn.style.color = showAnonymous ? '#111' : '#ffd60a';
+            if (showAnonymous) renderAdminAnonymousList();
+        }
+
+        function formatAnonymousTime(value) {
+            const timestamp = Number(value);
+            return Number.isFinite(timestamp) && timestamp > 0
+                ? new Date(timestamp).toLocaleString('vi-VN')
+                : '—';
+        }
+
+        function renderAdminAnonymousList() {
+            const guests = Array.isArray(globalDB[DB_KEY_ANONYMOUS]) ? globalDB[DB_KEY_ANONYMOUS] : [];
+            const tbody = document.getElementById('admin-anonymous-tbody');
+            const count = document.getElementById('admin-anonymous-count');
+            if (count) count.textContent = guests.length.toLocaleString('vi-VN');
+            if (!tbody) return;
+            if (!guests.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#aaa;">Chưa ghi nhận khách vô danh.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = [...guests]
+                .sort((a, b) => Number(b.lastSeenAt || 0) - Number(a.lastSeenAt || 0))
+                .map(guest => {
+                    const locked = Boolean(guest.locked);
+                    const statusColor = locked ? '#ff453a' : '#34c759';
+                    return `<tr>
+                        <td>${guest.uid || 'ANON-UNKNOWN'}</td>
+                        <td>${formatAnonymousTime(guest.createdAt)}</td>
+                        <td>${formatAnonymousTime(guest.lastSeenAt)}</td>
+                        <td>${formatAnonymousTime(guest.lockedAt)}</td>
+                        <td><span style="color:${statusColor}; font-weight:bold;">${locked ? 'Đã khóa sau 30 giây' : 'Đang trải nghiệm'}</span></td>
+                    </tr>`;
+                }).join('');
+        }
+
+        async function persistAnonymousGuest(guest) {
+            const guests = Array.isArray(globalDB[DB_KEY_ANONYMOUS]) ? globalDB[DB_KEY_ANONYMOUS] : [];
+            const index = guests.findIndex(item => item.uid === guest.uid);
+            if (index === -1) guests.push(guest);
+            else guests[index] = { ...guests[index], ...guest };
+            globalDB[DB_KEY_ANONYMOUS] = guests;
+            renderAdminAnonymousList();
+            await saveNeonDB(DB_KEY_ANONYMOUS, guests);
+        }
+
+        function lockAnonymousGuest(guest) {
+            guest.locked = true;
+            guest.status = 'Đã khóa sau 30 giây';
+            guest.lastSeenAt = Date.now();
+            localStorage.setItem(ANONYMOUS_SESSION_KEY, JSON.stringify(guest));
+            persistAnonymousGuest(guest);
+            alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (30 giây). Vui lòng đăng nhập để tiếp tục truy cập trang web.");
+            openAuthModal();
+            document.getElementById('auth-close-btn').style.display = 'none'; // Bắt buộc đăng nhập
+        }
+
+        function startAnonymousSession() {
+            const now = Date.now();
+            let guest = null;
+            try { guest = JSON.parse(localStorage.getItem(ANONYMOUS_SESSION_KEY)); } catch (_) {}
+            if (!guest || !guest.uid || !Number(guest.createdAt)) {
+                guest = {
+                    uid: 'ANON-' + Math.floor(100000 + Math.random() * 900000),
+                    createdAt: now,
+                    lockedAt: now + 30000,
+                    locked: false
+                };
+            }
+            guest.lastSeenAt = now;
+            if (now >= Number(guest.lockedAt || 0)) guest.locked = true;
+            guest.status = guest.locked ? 'Đã khóa sau 30 giây' : 'Đang trải nghiệm';
+            localStorage.setItem(ANONYMOUS_SESSION_KEY, JSON.stringify(guest));
+
+            isAnonymous = true;
+            currentUser = {
+                uid: guest.uid,
+                name: 'Người Dùng Ẩn Danh',
+                level: 1, currentExp: 0,
+                status: guest.status,
+                avatar: 'https://ui-avatars.com/api/?name=Anon&background=86868b',
+                role: 'GUEST',
+                title: 'Khách Tham Quan'
+            };
+            persistAnonymousGuest(guest);
+            if (anonTimeout) clearTimeout(anonTimeout);
+            if (guest.locked) {
+                setTimeout(() => lockAnonymousGuest(guest), 0);
+                return;
+            }
+            anonTimeout = setTimeout(() => lockAnonymousGuest(guest), Math.max(0, guest.lockedAt - now));
         }
 
         function executeLAA(actionName, inputId) {
@@ -2581,7 +2698,7 @@
             }
 
             // Đảm bảo không lỗi mảng trống
-            ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories', 'lyrad_real_tickets', 'lyrad_real_mailbox'].forEach(key => {
+            ['lyrad_real_users', 'lyrad_real_posts', 'lyrad_real_apps', 'lyrad_real_stories', 'lyrad_real_tickets', 'lyrad_real_mailbox', 'lyrad_anonymous_guests'].forEach(key => {
                 if (!globalDB[key]) globalDB[key] = [];
             });
 
@@ -2597,23 +2714,8 @@
             
             // Nếu là người dùng mới KHÔNG đăng nhập
             if (!currentUser) {
-                isAnonymous = true;
-                currentUser = {
-                    uid: 'ANON-' + Math.floor(100000 + Math.random() * 900000),
-                    name: 'Người Dùng Ẩn Danh',
-                    level: 1, currentExp: 0,
-                    status: 'Ẩn Danh',
-                    avatar: 'https://ui-avatars.com/api/?name=Anon&background=86868b',
-                    role: 'GUEST',
-                    title: 'Khách Tham Quan'
-                };
-                
                 // Khách được xem danh sách và preview app/game trong 30 giây.
-                anonTimeout = setTimeout(() => {
-                    alert("⚠️ Hết thời gian trải nghiệm Ẩn Danh (30 giây). Vui lòng đăng nhập để tiếp tục truy cập trang web.");
-                    openAuthModal();
-                    document.getElementById('auth-close-btn').style.display = 'none'; // Bắt buộc đăng nhập
-                }, 30000);
+                startAnonymousSession();
             }
 
             // Render giao diện với Data Cloud Server

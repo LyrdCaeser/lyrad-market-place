@@ -57,7 +57,15 @@ test('guest catalog is read-only and requires login after 30 seconds',()=>{
  assert.match(html,/Đăng nhập để tải/);
  assert.match(html,/Chế độ khách chỉ xem/);
  assert.match(html,/Hết thời gian trải nghiệm Ẩn Danh \(30 giây\)/);
- assert.match(html,/\}, 30000\);/);
+ assert.match(html,/lockedAt: now \+ 30000/);
+ assert.match(html,/Math\.max\(0, guest\.lockedAt - now\)/);
+});
+test('anonymous guests are persisted and remain visible after their 30-second lock',()=>{
+ const html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
+ for(const text of ['lyrad_anonymous_guests','lyrad_anonymous_session','Khách vô danh','admin-anonymous-tbody','Đã khóa sau 30 giây']) assert.match(html,new RegExp(text));
+ assert.match(html,/persistAnonymousGuest\(guest\)/);
+ assert.match(html,/localStorage\.setItem\(ANONYMOUS_SESSION_KEY/);
+ assert.match(html,/saveNeonDB\(DB_KEY_ANONYMOUS, guests\)/);
 });
 test('unauthenticated writes and review access are rejected at server',async()=>{const express=require('express');const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')({query(){throw Error('DB must not be accessed');}}));const server=app.listen(0);await new Promise(r=>server.once('listening',r));try{for(const [method,path] of [['POST','products'],['POST','files'],['POST','products/00000000-0000-0000-0000-000000000000/version'],['GET','review'],['DELETE','history'],['PUT','products/00000000-0000-0000-0000-000000000000']]){const r=await fetch(`http://localhost:${server.address().port}/api/market/${path}`,{method});assert.equal(r.status,401);}}finally{server.close();}});
 test('verified identity alone does not grant moderation; role and key are both required',async()=>{
