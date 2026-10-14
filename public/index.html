@@ -1048,6 +1048,11 @@
                         <option value="">Đang tải danh sách sản phẩm...</option>
                     </select>
                     <div id="version-current-info" style="display:none; margin:0 0 12px; padding:10px 12px; border-radius:8px; background:#111; color:#aaa; font-size:12px; line-height:1.6;"></div>
+                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Đổi tên App/Game (giữ nguyên toàn bộ dữ liệu):</label>
+                    <input type="text" id="version-new-name" maxlength="160" class="admin-input" placeholder="Tên App/Game mới...">
+                    <div class="admin-btn-group" style="margin:0 0 14px;">
+                        <button type="button" id="btn-name-update" class="admin-btn" style="background:#bf5af2; color:#fff; border:1px solid #d9a0ff; box-shadow:0 0 14px rgba(191,90,242,.4);" onclick="market.updateName()">CẬP NHẬT TÊN APP/GAME</button>
+                    </div>
                     <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Đổi ảnh đại diện (giữ nguyên dữ liệu):</label>
                     <input type="file" id="version-new-icon" accept=".png,.jpg,.jpeg,.webp,.gif" class="admin-input" style="background:#1c1c1e; color:#aaa;">
                     <div class="admin-btn-group" style="margin:0 0 14px;">

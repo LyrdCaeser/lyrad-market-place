@@ -154,12 +154,14 @@ const market = (() => {
     const id=document.getElementById('version-product-select')?.value;
     const product=publicProducts.find(item=>item.id===id), info=document.getElementById('version-current-info'), file=document.getElementById('version-new-file');
     if(!info||!file)return;
-    if(!product){info.style.display='none';file.value='';return;}
+    const name=document.getElementById('version-new-name');
+    if(!product){info.style.display='none';file.value='';if(name)name.value='';return;}
     info.style.display='block';
     info.textContent=`Hiện tại: v${product.version||'1.0.0'} · ${labels[product.platform]} · ${Number(product.download_count)||0} lượt tải · ${product.filename}`;
     file.accept=installerRules(product.platform)?.accept||'';
     file.value='';
     document.getElementById('version-new-number').value='';
+    if(name)name.value=product.name;
     const icon=document.getElementById('version-new-icon');if(icon)icon.value='';
     message('version-manager-message','');
   }
@@ -214,6 +216,16 @@ const market = (() => {
       message('version-manager-message',`Đã cập nhật ${product.name} lên v${result.version}. App ID và dữ liệu cũ được giữ nguyên.`);
     }catch(error){if(document.getElementById('version-update-terminal')?.style.display!=='none')finishVersionTerminal({message:error.message},true);versionProgress(uploadedPercent,'Cập nhật thất bại: '+error.message,'error');message('version-manager-message',error.message);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=defaultText;}
   }
+  async function updateName(){
+    const id=document.getElementById('version-product-select').value,product=publicProducts.find(item=>item.id===id),input=document.getElementById('version-new-name'),btn=document.getElementById('btn-name-update');
+    if(!product)return message('version-manager-message','Chọn App/Game cần đổi tên.');
+    const name=input.value.trim();
+    if(!name||name.length>160)return message('version-manager-message','Tên App/Game phải từ 1 đến 160 ký tự.');
+    if(name===product.name)return message('version-manager-message','Tên mới đang giống tên hiện tại.');
+    if(!confirm(`Đổi tên "${product.name}" thành "${name}"? App ID và toàn bộ dữ liệu hiện tại sẽ được giữ nguyên.`))return;
+    btn.disabled=true;message('version-manager-message','Đang cập nhật tên App/Game…');
+    try{const result=await api('/products/'+encodeURIComponent(id)+'/name',{method:'PUT',body:JSON.stringify({name})},true);await refreshCatalog();await loadVersionManager(result.id);message('version-manager-message',`Đã đổi tên "${product.name}" thành "${result.name}". App ID, phiên bản, icon, lượt tải và dữ liệu được giữ nguyên.`);}catch(error){message('version-manager-message',error.message);}finally{btn.disabled=false;}
+  }
   async function updateIcon(){
     const id=document.getElementById('version-product-select').value,product=publicProducts.find(item=>item.id===id),file=document.getElementById('version-new-icon').files[0],btn=document.getElementById('btn-icon-update');
     if(!product)return message('version-manager-message','Chọn App/Game cần đổi ảnh đại diện.');
@@ -252,5 +264,5 @@ const market = (() => {
       if (user) syncRole().catch(() => {});
     });
   }, {once: true});
-  return {syncRole,setRole,filter,filterMobile,refreshCatalog,openSales,edit,resetForm,openReview,decide,clearHistory,downloadReview,selectPublish,publishCatalog,loadVersionManager,selectVersionProduct,updateVersion,updateIcon,reloadReview,lockReview:openReview};
+  return {syncRole,setRole,filter,filterMobile,refreshCatalog,openSales,edit,resetForm,openReview,decide,clearHistory,downloadReview,selectPublish,publishCatalog,loadVersionManager,selectVersionProduct,updateVersion,updateName,updateIcon,reloadReview,lockReview:openReview};
 })();

@@ -3,7 +3,7 @@ const {validateProduct,nextReview,normalizeVersion,normalizeIconData,decodeInsta
 const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('upload limits allow 80 MB files, 128 MB for users and 1 GB for Admin/NPH',()=>{assert.equal(MAX_FILE,80*1024*1024);assert.equal(MAX_USER_STORAGE,128*1024*1024);assert.equal(MAX_ACCOUNT_STORAGE,1024*1024*1024);});
-test('version update UI includes progress and its own non-LAA terminal',()=>{const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8');for(const text of ['version-upload-progress','version-upload-progress-bar','version-update-terminal','UPDATE VERSION TERMINAL','beginVersionTerminal(file,version)','Cập nhật hoàn tất'])assert.match(source,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));assert.doesNotMatch(source,/LAA SANDBOX TERMINAL · UPDATE VERSION/);});
+test('admin update UI includes rename, progress and its own non-LAA terminal',()=>{const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8'),html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');for(const text of ['version-new-name','btn-name-update','updateName','version-upload-progress','version-upload-progress-bar','version-update-terminal','UPDATE VERSION TERMINAL','beginVersionTerminal(file,version)','Cập nhật hoàn tất'])assert.match(source+html,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));assert.doesNotMatch(source,/LAA SANDBOX TERMINAL · UPDATE VERSION/);});
 test('supports Android, iOS, MobiConfig and Windows products',()=>{
  for(const platform of ['android','ios','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));
  assert.doesNotThrow(()=>validateProduct({...valid,platform:'mobileconfig',install_guide:'Mở Cài đặt và làm theo từng bước hiển thị.'}));
@@ -53,6 +53,22 @@ test('Admin can replace a catalog icon without replacing the product',async()=>{
  const png=Buffer.from('89504e470d0a1a0a00000000','hex'),icon='data:image/png;base64,'+png.toString('base64');
  const app=express();app.use(express.json({limit:'50mb'}));app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(resolve=>server.once('listening',resolve));
  try{const response=await originalFetch(`http://localhost:${server.address().port}/api/market/products/${productId}/icon`,{method:'PUT',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({icon_data:icon})});assert.equal(response.status,200);assert.equal(updated[0],productId);assert.equal(updated[1],icon);}
+ finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
+});
+test('Admin can rename a public App/Game without replacing its identity or data',async()=>{
+ const express=require('express'),originalFetch=global.fetch,oldKey=process.env.FIREBASE_WEB_API_KEY;process.env.FIREBASE_WEB_API_KEY='test';
+ const product={id:'00000000-0000-0000-0000-000000000088',name:'Tên cũ',file_id:'file-1',version:'3.2.1',download_count:456,icon_data:'icon-data'};let updateArgs,historyNote;
+ const client={query:async(sql,args)=>{
+  if(sql==='BEGIN'||sql==='COMMIT'||sql==='ROLLBACK')return {rows:[]};
+  if(sql.startsWith('SELECT id,name FROM lyrad_products'))return {rows:[{id:product.id,name:product.name}]};
+  if(sql.startsWith('UPDATE lyrad_products SET name')){updateArgs=args;product.name=args[1];return {rows:[]};}
+  if(sql.startsWith('INSERT INTO lyrad_product_history')){historyNote=args[3];return {rows:[]};}
+  throw new Error('Unexpected SQL: '+sql);
+ },release(){}};
+ const pool={query:async(sql)=>{if(sql.startsWith('SELECT db_data'))return {rows:[]};if(sql.startsWith('SELECT role'))return {rows:[{role:'ADMIN'}]};return {rows:[]};},connect:async()=>client};
+ global.fetch=(url,options)=>String(url).startsWith('https://identitytoolkit.googleapis.com/')?Promise.resolve({ok:true,json:async()=>({users:[{localId:'admin-id',email:'admin@example.com',emailVerified:true}]})}):originalFetch(url,options);
+ const app=express();app.use(express.json());app.use('/api/market',require('../lib/marketplace')(pool));const server=app.listen(0);await new Promise(resolve=>server.once('listening',resolve));
+ try{const response=await originalFetch(`http://localhost:${server.address().port}/api/market/products/${product.id}/name`,{method:'PUT',headers:{Authorization:'Bearer verified','Content-Type':'application/json'},body:JSON.stringify({name:'Tên mới'})});assert.equal(response.status,200);const body=await response.json();assert.equal(body.name,'Tên mới');assert.deepEqual(updateArgs,[product.id,'Tên mới']);assert.match(historyNote,/Tên cũ.*Tên mới/);assert.equal(product.file_id,'file-1');assert.equal(product.version,'3.2.1');assert.equal(product.download_count,456);assert.equal(product.icon_data,'icon-data');}
  finally{server.close();global.fetch=originalFetch;if(oldKey===undefined)delete process.env.FIREBASE_WEB_API_KEY;else process.env.FIREBASE_WEB_API_KEY=oldKey;}
 });
 test('LAA Sandbox reports risky installers without blocking publication',async()=>{
