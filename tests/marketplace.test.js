@@ -4,7 +4,12 @@ const fs=require('node:fs');
 const valid={name:'Ứng dụng',description:'Mô tả',platform:'android',category:'app',kind:'sale',price:25000,payment_method:'Chuyển khoản',contact:'seller@example.com'};
 test('upload limits allow 80 MB files, 128 MB for users and 1 GB for Admin/NPH',()=>{assert.equal(MAX_FILE,80*1024*1024);assert.equal(MAX_USER_STORAGE,128*1024*1024);assert.equal(MAX_ACCOUNT_STORAGE,1024*1024*1024);});
 test('version update UI includes progress and its own non-LAA terminal',()=>{const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8');for(const text of ['version-upload-progress','version-upload-progress-bar','version-update-terminal','UPDATE VERSION TERMINAL','beginVersionTerminal(file,version)','Cập nhật hoàn tất'])assert.match(source,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));assert.doesNotMatch(source,/LAA SANDBOX TERMINAL · UPDATE VERSION/);});
-test('supports APK and EXE; future platforms are not accidentally enabled',()=>{for(const platform of ['android','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));for(const platform of ['ios','linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));});
+test('supports Android, iOS, MobiConfig and Windows products',()=>{
+ for(const platform of ['android','ios','windows'])assert.doesNotThrow(()=>validateProduct({...valid,platform}));
+ assert.doesNotThrow(()=>validateProduct({...valid,platform:'mobileconfig',install_guide:'Mở Cài đặt và làm theo từng bước hiển thị.'}));
+ for(const platform of ['linux','unknown'])assert.throws(()=>validateProduct({...valid,platform}));
+ assert.throws(()=>validateProduct({...valid,platform:'mobileconfig',install_guide:'Quá ngắn'}),/HDSD/);
+});
 test('sale requires price, payment and contact',()=>{for(const change of [{price:-1},{price:'abc'},{payment_method:''},{contact:''},{name:''},{name:'x'.repeat(161)}])assert.throws(()=>validateProduct({...valid,...change}));});
 test('pending can be approved, rejected or returned once',()=>{for(const status of ['approved','rejected','returned'])assert.doesNotThrow(()=>nextReview({status:'pending',return_count:0},status));});
 test('second return is blocked, including after history deletion',()=>{assert.throws(()=>nextReview({status:'pending',return_count:1},'returned'));assert.doesNotThrow(()=>nextReview({status:'pending',return_count:1},'approved'));assert.doesNotThrow(()=>nextReview({status:'pending',return_count:1},'rejected'));});
@@ -15,6 +20,19 @@ test('version names and replacement installers are validated',()=>{
  const apk=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('new apk')]);
  assert.deepEqual(decodeInstaller('update.apk','android',apk.toString('base64')).bytes,apk);
  assert.throws(()=>decodeInstaller('update.exe','android',apk.toString('base64')));
+ const ipa=Buffer.concat([Buffer.from('504b0304','hex'),Buffer.from('Payload/Test.app')]);
+ assert.deepEqual(decodeInstaller('update.ipa','ios',ipa.toString('base64')).bytes,ipa);
+ const profile=Buffer.from('<?xml version="1.0"?><plist><dict><key>PayloadDisplayName</key><string>Test</string></dict></plist>');
+ assert.deepEqual(decodeInstaller('wifi.mobileconfig','mobileconfig',profile.toString('base64')).bytes,profile);
+ const signedProfile=Buffer.concat([Buffer.from([0x30,0x82,0x00,0x20]),Buffer.from('signed PayloadContent mobile profile')]);
+ assert.deepEqual(decodeInstaller('signed.mobileconfig','mobileconfig',signedProfile.toString('base64')).bytes,signedProfile);
+ assert.throws(()=>decodeInstaller('fake.mobileconfig','mobileconfig',Buffer.from('not a profile').toString('base64')));
+});
+test('catalog UI nests Android, iOS and MobiConfig under Mobile and renders detailed guides',()=>{
+ const source=fs.readFileSync(require.resolve('../public/marketplace.js'),'utf8');
+ const html=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
+ for(const text of ["['mobile','Mobile (PE)']","['android',labels.android]","['ios',labels.ios]","['mobileconfig',labels.mobileconfig]",'pub-install-guide','install_guide'])assert.match(source+html,new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+ assert.match(html,/Hướng dẫn sử dụng MobiConfig/);
 });
 test('product icons accept real safe image data URLs only',()=>{
  const png=Buffer.from('89504e470d0a1a0a00000000','hex');

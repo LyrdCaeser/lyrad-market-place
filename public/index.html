@@ -839,7 +839,7 @@
                 <button class="admin-tab-btn active" onclick="switchAdminTab('tab-laa', this)">Bảng Điều Khiển LAA</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-roles', this)">Phân Quyền & Cấp Bậc</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('tab-users', this)">Quản Lý Người Dùng</button>
-                <button class="admin-tab-btn" onclick="switchAdminTab('tab-publisher', this)">Đăng Tải APK / EXE (Publisher)</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('tab-publisher', this)">Đăng Tải APK / EXE / iOS / MobiConfig</button>
             </div>
 
             <div id="tab-laa" class="admin-grid">
@@ -991,7 +991,7 @@
             <div id="tab-publisher" class="admin-grid" style="display: none; grid-template-columns: 1fr; max-height: 60vh; overflow-y: auto;">
                 <div class="admin-card god-mode-card" style="background: rgba(52, 199, 89, 0.05); border-color: #34c759;">
                     <h4 style="color: #34c759; border-bottom-color: rgba(52, 199, 89, 0.5);">🚀 PUBLISHER UPLOAD CENTER</h4>
-                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên bản cài đặt APK hoặc EXE (tối đa 80 MB mỗi file). Hệ thống sẽ tự động cấp App ID và phân luồng mục hiển thị lên Market Place.</p>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 12px;">Khu vực dành riêng cho Nhà Phát Hành tải lên APK, EXE, IPA hoặc MobiConfig (tối đa 80 MB mỗi file). Hệ thống sẽ tự động cấp App ID và phân luồng mục hiển thị lên Market Place.</p>
                     
                     <input type="text" class="admin-input" id="pub-app-name" placeholder="Tên ứng dụng / Trò chơi (VD: Lyrad App)...">
                     <input type="text" class="admin-input" id="pub-app-version" value="1.0.0" maxlength="40" placeholder="Phiên bản phát hành (VD: 1.0.0)...">
@@ -1014,7 +1014,13 @@
                         <input type="file" id="pub-icon-file" accept=".png,.jpg,.jpeg,.webp,.gif" class="admin-input" style="display:none; background: #1c1c1e; color: #aaa;">
                     </div>
 
-                    <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">File Cài Đặt (APK / EXE):</label>
+                    <div id="pub-install-guide-group" style="display:none; margin-bottom:12px;">
+                        <label for="pub-install-guide" style="color:#ffd60a; font-size:12px; margin-bottom:4px; display:block;">HDSD MobiConfig chi tiết (bắt buộc):</label>
+                        <textarea id="pub-install-guide" class="admin-input" rows="8" maxlength="20000" placeholder="Ghi rõ từng bước tải profile, mở Cài đặt, xác nhận hồ sơ đã tải về, cài đặt và cách gỡ bỏ..."></textarea>
+                        <p style="font-size:12px; color:#aaa; margin-top:5px;">Hướng dẫn này sẽ hiển thị nguyên định dạng trong trang chi tiết MobiConfig.</p>
+                    </div>
+
+                    <label id="pub-installer-label" style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">File Cài Đặt (APK):</label>
                     <input type="file" id="pub-apk-file" accept=".apk" class="admin-input" style="background: #1c1c1e; color: #aaa;">
                     
                     <div class="admin-btn-group" style="margin-top: 10px;">
@@ -1035,7 +1041,7 @@
                 </div>
 
                 <div class="admin-card god-mode-card" style="background: rgba(10, 132, 255, 0.06); border-color: #0a84ff;">
-                    <h4 style="color: #0a84ff; border-bottom-color: rgba(10,132,255,0.45);">♻️ UPDATE VERSION APK / EXE</h4>
+                    <h4 style="color: #0a84ff; border-bottom-color: rgba(10,132,255,0.45);">♻️ UPDATE VERSION APK / EXE / IPA / MOBICONFIG</h4>
                     <p style="font-size:13px; color:#aaa; margin-bottom:14px;">Thay bản cài đặt của App/Game đã đăng nhưng giữ nguyên App ID, icon, lượt tải, đánh giá và toàn bộ dữ liệu hiện có.</p>
                     <label style="color:#aaa; font-size:12px; margin-bottom:4px; display:block;">Chọn App/Game cần cập nhật:</label>
                     <select id="version-product-select" class="admin-input" style="background:#1c1c1e;" onchange="market.selectVersionProduct()">
@@ -1925,6 +1931,11 @@
                         <div style="font-size:11px; font-family:monospace; color:var(--text-sub); margin-top:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; display:inline-block;">App ID: ${app.id}<br>Phiên bản: v${app.version || '1.0.0'}<br>Cập nhật: ${app.updatedAt ? new Date(app.updatedAt).toLocaleDateString('vi-VN') : '—'}<br>Hash: ${app.hash.substring(0,32)}...</div>
                     </div>
                 </div>
+
+                ${app.platform === 'mobileconfig' ? `<section class="mobileconfig-guide">
+                    <div class="detail-section-title">Hướng dẫn sử dụng MobiConfig</div>
+                    <div class="mobileconfig-guide-content">${app.installGuide || 'Nhà phát hành chưa cung cấp hướng dẫn.'}</div>
+                </section>` : ''}
 
                 <div class="detail-section-title">Đánh giá và Nhận xét</div>
                 

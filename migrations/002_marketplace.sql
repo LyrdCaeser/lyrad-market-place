@@ -1,6 +1,6 @@
 BEGIN;
 CREATE TABLE IF NOT EXISTS lyrad_platforms (code text PRIMARY KEY, label text NOT NULL, extension text NOT NULL, enabled boolean NOT NULL DEFAULT false);
-INSERT INTO lyrad_platforms VALUES ('android','Mobile (PE)','.apk',true),('windows','Máy Tính (PC)','.exe',true),('ios','iOS','.ipa',false),('linux','Linux','.AppImage',false) ON CONFLICT DO NOTHING;
+INSERT INTO lyrad_platforms VALUES ('android','Android','.apk',true),('windows','Máy Tính (PC)','.exe',true),('ios','iOS','.ipa',true),('mobileconfig','MobiConfig','.mobileconfig',true),('linux','Linux','.AppImage',false) ON CONFLICT(code) DO UPDATE SET label=EXCLUDED.label,extension=EXCLUDED.extension,enabled=EXCLUDED.enabled;
 -- Quyền này độc lập với dữ liệu hồ sơ có thể sửa từ trình duyệt.
 CREATE TABLE IF NOT EXISTS lyrad_market_roles (email text PRIMARY KEY, role text NOT NULL CHECK(role IN ('ADMIN','NPH','PUBLISHER')));
 CREATE TABLE IF NOT EXISTS lyrad_market_files (id uuid PRIMARY KEY, owner_id text NOT NULL, filename text NOT NULL, platform text NOT NULL REFERENCES lyrad_platforms(code), sha256 text NOT NULL, bytes bytea NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS lyrad_products (
  payment_method text NOT NULL DEFAULT '', contact text NOT NULL DEFAULT '', file_id uuid NOT NULL REFERENCES lyrad_market_files(id),
  status text NOT NULL CHECK(status IN ('pending','approved','rejected','returned')),
  return_count integer NOT NULL DEFAULT 0 CHECK(return_count BETWEEN 0 AND 1), review_note text NOT NULL DEFAULT '',
- created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+ install_guide text NOT NULL DEFAULT '',
+ created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(),
+ CONSTRAINT lyrad_products_mobileconfig_guide CHECK(platform <> 'mobileconfig' OR length(trim(install_guide)) >= 20)
 );
 CREATE TABLE IF NOT EXISTS lyrad_product_history (id bigserial PRIMARY KEY, product_id uuid NOT NULL REFERENCES lyrad_products(id), actor_id text NOT NULL, status text NOT NULL CHECK(status IN ('pending','approved','rejected','returned')), note text NOT NULL DEFAULT '', created_at timestamptz NOT NULL DEFAULT now());
 CREATE INDEX IF NOT EXISTS lyrad_products_status_created ON lyrad_products(status,created_at DESC);
